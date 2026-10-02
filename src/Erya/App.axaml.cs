@@ -5,6 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Erya.Core.Distributions;
 using Erya.Core.Distributions.Weasel;
+using Erya.ViewModels;
 
 namespace Erya;
 
@@ -27,7 +28,10 @@ public partial class App : Application
             // Day 6: OperatingSystem.IsLinux() → Fcitx5RimeLocator, IbusRimeLocator
             // macOS:  SquirrelLocator
 
-            desktop.MainWindow = new MainWindow(new DistributionManager([.. locators]));
+            desktop.MainWindow = new MainWindow
+            {
+                DataContext = new ShellViewModel(new DistributionManager([.. locators])),
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
