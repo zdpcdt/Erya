@@ -1,9 +1,10 @@
+using System;
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Erya.Core.Distributions;
 using Erya.Core.Distributions.Weasel;
-using Erya.ViewModels;
 
 namespace Erya;
 
@@ -18,12 +19,15 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // New frontends join the locator list here as they land
-            // (fcitx5-rime / ibus-rime, Squirrel, ...).
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel(new DistributionManager(new WeaselLocator())),
-            };
+            // One entry point for every desktop OS: platform differences live
+            // in per-OS locators, composed here in priority order. New
+            // frontends join as their locators land (Squirrel, fcitx5-rime…).
+            var locators = new List<IRimeDistributionLocator>();
+            if (OperatingSystem.IsWindows()) locators.Add(new WeaselLocator());
+            // Day 6: OperatingSystem.IsLinux() → Fcitx5RimeLocator, IbusRimeLocator
+            // macOS:  SquirrelLocator
+
+            desktop.MainWindow = new MainWindow(new DistributionManager([.. locators]));
         }
 
         base.OnFrameworkInitializationCompleted();

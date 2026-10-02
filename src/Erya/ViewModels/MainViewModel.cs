@@ -6,6 +6,7 @@ using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Services;
 
 namespace Erya.ViewModels;
 
@@ -27,6 +28,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _canDeploy;
 
+    /// <summary>Persistent detection state — banner material, not toast material.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasStatus))]
     private string _statusMessage = "";
@@ -35,14 +37,6 @@ public partial class MainViewModel : ObservableObject
     private NotificationType _statusType = NotificationType.Information;
 
     public bool HasStatus => !string.IsNullOrEmpty(StatusMessage);
-
-    public bool CanManageSchemas => Distribution is not null;
-
-    public void ShowStatus(NotificationType type, string message)
-    {
-        StatusType = type;
-        StatusMessage = message;
-    }
 
     public MainViewModel(DistributionManager distributions)
     {
@@ -87,8 +81,7 @@ public partial class MainViewModel : ObservableObject
         var dir = Distribution.UserDir;
         if (!Directory.Exists(dir))
         {
-            StatusType = NotificationType.Warning;
-            StatusMessage = $"用户目录尚不存在：{dir}（输入法首次部署后会自动创建）";
+            AppNotifications.Toast($"用户目录尚不存在：{dir}（输入法首次部署后会自动创建）", NotificationType.Warning);
             return;
         }
 
@@ -102,16 +95,12 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            StatusType = NotificationType.Information;
-            StatusMessage = "正在触发重新部署…";
             await Distribution.DeployAsync();
-            StatusType = NotificationType.Success;
-            StatusMessage = "已触发重新部署，修改过的 YAML 配置将重新生效。";
+            AppNotifications.Toast("已触发重新部署，修改过的 YAML 配置将重新生效。", NotificationType.Success);
         }
         catch (Exception ex)
         {
-            StatusType = NotificationType.Error;
-            StatusMessage = $"部署失败：{ex.Message}";
+            AppNotifications.Toast($"部署失败：{ex.Message}", NotificationType.Error);
         }
     }
 }

@@ -6,6 +6,7 @@ using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Services;
 
 namespace Erya.ViewModels;
 
@@ -29,9 +30,9 @@ public partial class SchemaItemViewModel : ObservableObject
 
 public partial class SchemaManagerViewModel : ObservableObject
 {
-    private readonly IRimeDistribution _distribution;
+    private readonly IRimeDistribution? _distribution;
 
-    public SchemaManagerViewModel(IRimeDistribution distribution) => _distribution = distribution;
+    public SchemaManagerViewModel(IRimeDistribution? distribution) => _distribution = distribution;
 
     public ObservableCollection<SchemaItemViewModel> Schemas { get; } = [];
 
@@ -55,16 +56,25 @@ public partial class SchemaManagerViewModel : ObservableObject
 
     public bool HasSchemas => Schemas.Count > 0;
 
-    public async Task LoadAsync()
+    [RelayCommand]
+    private async Task LoadAsync()
     {
         IsLoading = true;
         ErrorMessage = "";
         try
         {
+            if (_distribution is null)
+            {
+                Schemas.Clear();
+                Hint = "未检测到 RIME 发行版：请先安装小狼毫（Windows）并重新打开尔雅。";
+                return;
+            }
+
             var snapshot = await _distribution.GetSchemasAsync();
             Schemas.Clear();
             foreach (var schema in snapshot.Schemas)
                 Schemas.Add(new SchemaItemViewModel(schema.Id, schema.Name, snapshot.SelectedSchemaIds.Contains(schema.Id)));
+
             Hint = Schemas.Count == 0
                 ? "未发现任何输入方案：请先在小狼毫中部署一次（方案文件会出现在用户目录），或先安装方案（如雾凇拼音）。"
                 : "";
@@ -80,14 +90,10 @@ public partial class SchemaManagerViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Writes the selection as a patch and triggers a redeploy.
-    /// Returns the status to show in the main window, or null on failure
-    /// (the error is displayed inside this dialog).
-    /// </summary>
-    public async Task<(NotificationType Type, string Message)?> SaveAndDeployAsync()
+    [RelayCommand]
+    private async Task SaveAndDeployAsync()
     {
-        if (IsLoading || Schemas.Count == 0) return null;
+        if (_distribution is null || IsLoading || Schemas.Count == 0) return;
 
         IsBusy = true;
         try
@@ -97,15 +103,19 @@ public partial class SchemaManagerViewModel : ObservableObject
             await _distribution.SetSelectedSchemasAsync(ids);
 
             if (!_distribution.CanDeploy)
-                return (NotificationType.Warning, "方案已写入 default.custom.yaml，但未找到部署器，需手动重新部署后生效。");
+            {
+                AppNotifications.Notify("方案已保存",
+                    "已写入 default.custom.yaml，但未找到部署器，需手动重新部署后生效。",
+                    NotificationType.Warning);
+                return;
+            }
 
             await _distribution.DeployAsync();
-            return (NotificationType.Success, "方案已保存并触发重新部署。");
+            AppNotifications.Toast("方案已保存并触发重新部署。", NotificationType.Success);
         }
         catch (Exception ex)
         {
             ErrorMessage = $"保存失败：{ex.Message}";
-            return null;
         }
         finally
         {

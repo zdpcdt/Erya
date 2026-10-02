@@ -3,65 +3,69 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:u="https://irihi.tech/ursa"
-        xmlns:vm="clr-namespace:Erya.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="560"
+        mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
         x:Class="Erya.MainWindow"
-        x:DataType="vm:MainViewModel"
         Title="尔雅 Erya"
-        Width="860" Height="560"
-        MinWidth="700" MinHeight="460"
+        Width="1040" Height="680"
+        MinWidth="860" MinHeight="560"
         FontFamily="Inter, Microsoft YaHei UI, Segoe UI">
 
-    <Grid RowDefinitions="Auto,*" Margin="36,30">
+    <Panel>
+        <Grid ColumnDefinitions="Auto,*">
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Spacing="4">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="尔雅" FontSize="30" FontWeight="Bold" />
-                <TextBlock Text="Erya" FontSize="15" FontWeight="SemiBold"
-                           Opacity="0.45" VerticalAlignment="Bottom" Margin="0,0,0,6" />
-            </StackPanel>
-            <TextBlock Text="中州韵输入法引擎（RIME）· 可视化配置"
-                       Opacity="0.6" FontSize="13" />
-        </StackPanel>
+            <!-- Sidebar -->
+            <u:NavMenu Grid.Column="0" x:Name="Nav" Width="216"
+                       SelectionChanged="OnNavSelectionChanged">
 
-        <StackPanel Grid.Row="1" Spacing="18" Margin="0,22,0,0">
-
-            <u:Form LabelPosition="Left" LabelWidth="96">
-                <u:FormItem Label="发行版">
-                    <TextBlock Text="{Binding DetectionTitle}"
-                               VerticalAlignment="Center" FontWeight="SemiBold" />
-                </u:FormItem>
-                <u:FormItem Label="安装目录" IsVisible="{Binding InstallDirDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                    <TextBlock Text="{Binding InstallDirDisplay}"
-                               VerticalAlignment="Center" Opacity="0.72" TextWrapping="Wrap" />
-                </u:FormItem>
-                <u:FormItem Label="用户目录">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
-                        <u:IconButton Command="{Binding OpenUserDirCommand}"
-                                      ToolTip.Tip="在资源管理器中打开用户目录">
-                            <PathIcon Width="16" Height="16"
-                                      Data="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-                        </u:IconButton>
+                <u:NavMenu.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="20,22,20,14">
+                        <TextBlock Text="尔雅" FontSize="26" FontWeight="Bold" />
+                        <TextBlock Text="Erya" FontSize="13" FontWeight="SemiBold"
+                                   Opacity="0.4" VerticalAlignment="Bottom" Margin="0,0,0,5" />
                     </StackPanel>
-                </u:FormItem>
-                <u:FormItem Label="操作">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button Content="重新部署" Classes="primary"
-                                Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
-                        <Button Content="方案管理" IsEnabled="{Binding CanManageSchemas}"
-                                Click="OnManageSchemasClick" />
-                        <Button Content="备份恢复" IsEnabled="False" />
-                        <Button Content="主题外观" IsEnabled="False" />
-                    </StackPanel>
-                </u:FormItem>
-            </u:Form>
+                </u:NavMenu.Header>
 
-            <u:Banner Type="{Binding StatusType}"
-                      Content="{Binding StatusMessage}"
-                      ShowIcon="True"
-                      IsVisible="{Binding HasStatus}" />
-        </StackPanel>
-    </Grid>
+                <u:NavMenu.Items>
+                    <u:NavMenuItem Header="概览" Tag="overview" IsSelected="True">
+                        <u:NavMenuItem.Icon>
+                            <PathIcon Width="18" Height="18"
+                                      Data="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+                        </u:NavMenuItem.Icon>
+                    </u:NavMenuItem>
+                    <u:NavMenuItem Header="方案管理" Tag="schemas">
+                        <u:NavMenuItem.Icon>
+                            <PathIcon Width="18" Height="18"
+                                      Data="M3 5h2v2H3V5zm4 0h14v2H7V5zM3 11h2v2H3v-2zm4 0h14v2H7v-2zM3 17h2v2H3v-2zm4 0h14v2H7v-2z" />
+                        </u:NavMenuItem.Icon>
+                    </u:NavMenuItem>
+                    <u:NavMenuItem Header="备份恢复" Tag="backup" IsEnabled="False"
+                                   ToolTip.Tip="备份恢复功能即将上线">
+                        <u:NavMenuItem.Icon>
+                            <PathIcon Width="18" Height="18"
+                                      Data="M13 3a9 9 0 0 0-9 9H1l3.9 3.9L9 12H6a7 7 0 1 1 2.06 4.94l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8H12z" />
+                        </u:NavMenuItem.Icon>
+                    </u:NavMenuItem>
+                </u:NavMenu.Items>
+
+                <u:NavMenu.Footer>
+                    <TextBlock Text="Avalonia Port Challenge 2026"
+                               Opacity="0.35" FontSize="11" Margin="20,14" />
+                </u:NavMenu.Footer>
+            </u:NavMenu>
+
+            <!-- Content -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="28,16,28,0">
+                    <TextBlock x:Name="PageTitleText" Text="概览"
+                               FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                    <u:ThemeToggleButton Grid.Column="1" Mode="Controller"
+                                         ToolTip.Tip="切换浅色 / 深色主题" />
+                </Grid>
+                <ContentControl Grid.Row="1" x:Name="PageHost" Margin="28,12,28,24" />
+            </Grid>
+        </Grid>
+
+        <!-- Overlay dialogs (OverlayDialog.Show*) mount here -->
+        <u:OverlayDialogHost HostId="main" IsTopLevel="True" />
+    </Panel>
 </Window>

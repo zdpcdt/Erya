@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:Erya.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
+             x:Class="Erya.Views.SchemaManagerPage"
+             x:DataType="vm:SchemaManagerViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="勾选要启用的方案，列表顺序即方案切换顺序。" Opacity="0.6" />
+                <TextBlock Text="保存后写入 default.custom.yaml 补丁并触发重新部署。"
+                           Opacity="0.6" FontSize="12" />
+            </StackPanel>
+            <u:IconButton Grid.Column="1" VerticalAlignment="Top"
+                          Command="{Binding LoadCommand}"
+                          ToolTip.Tip="重新扫描方案列表">
+                <PathIcon Width="16" Height="16"
+                          Data="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+            </u:IconButton>
+        </Grid>
+
+        <!-- Schema list -->
+        <Grid Grid.Row="1" Margin="0,14">
+            <ScrollViewer IsVisible="{Binding HasSchemas}">
+                <ItemsControl ItemsSource="{Binding Schemas}" Margin="0,0,4,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SchemaItemViewModel">
+                            <CheckBox IsChecked="{Binding IsSelected}" Margin="0,5">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Id}" Opacity="0.45" FontSize="12"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Loading / empty states -->
+        <StackPanel Grid.Row="1" Margin="0,14" Spacing="10"
+                    IsVisible="{Binding !HasSchemas}">
+            <TextBlock Text="正在读取方案列表…" IsVisible="{Binding IsLoading}" Opacity="0.6" />
+            <u:Banner Type="Warning" Content="{Binding Hint}" ShowIcon="True"
+                      IsVisible="{Binding HasHint}" />
+        </StackPanel>
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
+            <u:Banner Grid.Row="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" Margin="0,0,0,10" />
+            <Button Grid.Row="1" Content="保存并部署" Classes="primary"
+                    HorizontalAlignment="Right" MinWidth="108"
+                    Command="{Binding SaveAndDeployCommand}" IsEnabled="{Binding !IsBusy}" />
+        </Grid>
+    </Grid>
+</UserControl>
