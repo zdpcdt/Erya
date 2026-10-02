@@ -1,14 +1,13 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:u="https://irihi.tech/ursa"
-        mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
-        x:Class="Erya.MainWindow"
-        Title="尔雅 Erya"
-        Width="1040" Height="680"
-        MinWidth="860" MinHeight="560"
-        FontFamily="Inter, Microsoft YaHei UI, Segoe UI">
+<u:UrsaWindow xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:u="https://irihi.tech/ursa"
+              mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
+              x:Class="Erya.MainWindow"
+              Title="尔雅 Erya"
+              Width="1040" Height="680"
+              MinWidth="860" MinHeight="560">
 
     <Panel>
         <Grid ColumnDefinitions="Auto,*">
@@ -18,7 +17,7 @@
                        SelectionChanged="OnNavSelectionChanged">
 
                 <u:NavMenu.Header>
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="20,22,20,14">
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="20,18,20,14">
                         <TextBlock Text="尔雅" FontSize="26" FontWeight="Bold" />
                         <TextBlock Text="Erya" FontSize="13" FontWeight="SemiBold"
                                    Opacity="0.4" VerticalAlignment="Bottom" Margin="0,0,0,5" />
@@ -55,12 +54,8 @@
 
             <!-- Content -->
             <Grid Grid.Column="1" RowDefinitions="Auto,*">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="28,16,28,0">
-                    <TextBlock x:Name="PageTitleText" Text="概览"
-                               FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
-                    <u:ThemeToggleButton Grid.Column="1" Mode="Controller"
-                                         ToolTip.Tip="切换浅色 / 深色主题" />
-                </Grid>
+                <TextBlock Grid.Row="0" x:Name="PageTitleText" Text="概览"
+                           FontSize="18" FontWeight="Bold" Margin="28,14,28,0" />
                 <ContentControl Grid.Row="1" x:Name="PageHost" Margin="28,12,28,24" />
             </Grid>
         </Grid>
@@ -68,4 +63,8 @@
         <!-- Overlay dialogs (OverlayDialog.Show*) mount here -->
         <u:OverlayDialogHost HostId="main" IsTopLevel="True" />
     </Panel>
-</Window>
+
+    <u:UrsaWindow.RightContent>
+        <u:ThemeToggleButton />
+    </u:UrsaWindow.RightContent>
+</u:UrsaWindow>

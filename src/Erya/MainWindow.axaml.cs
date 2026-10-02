@@ -8,7 +8,7 @@ using Ursa.Controls;
 
 namespace Erya;
 
-public partial class MainWindow : Window
+public partial class MainWindow : UrsaWindow
 {
     private readonly MainViewModel _overview;
     private readonly SchemaManagerViewModel _schemas;
