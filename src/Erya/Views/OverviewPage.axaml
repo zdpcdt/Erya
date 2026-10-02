@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:Erya.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="520"
+             x:Class="Erya.Views.OverviewPage"
+             x:DataType="vm:MainViewModel">
+
+    <StackPanel Spacing="18">
+
+        <u:Form LabelPosition="Left" LabelWidth="96">
+            <u:FormItem Label="发行版">
+                <TextBlock Text="{Binding DetectionTitle}"
+                           VerticalAlignment="Center" FontWeight="SemiBold" />
+            </u:FormItem>
+            <u:FormItem Label="安装目录" IsVisible="{Binding InstallDirDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="{Binding InstallDirDisplay}"
+                           VerticalAlignment="Center" Opacity="0.72" TextWrapping="Wrap" />
+            </u:FormItem>
+            <u:FormItem Label="用户目录">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
+                    <u:IconButton Command="{Binding OpenUserDirCommand}"
+                                  ToolTip.Tip="在资源管理器中打开用户目录">
+                        <PathIcon Width="16" Height="16"
+                                  Data="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                    </u:IconButton>
+                </StackPanel>
+            </u:FormItem>
+            <u:FormItem Label="操作">
+                <Button Content="重新部署" Classes="primary"
+                        Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
+            </u:FormItem>
+        </u:Form>
+
+        <u:Banner Type="{Binding StatusType}"
+                  Content="{Binding StatusMessage}"
+                  ShowIcon="True"
+                  IsVisible="{Binding HasStatus}" />
+    </StackPanel>
+</UserControl>
