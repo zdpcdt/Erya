@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Erya.Core/Erya.Core.csproj" />
+  <Project Path="src/Erya/Erya.csproj" />
+</Solution>
