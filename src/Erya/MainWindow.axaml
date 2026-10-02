@@ -3,8 +3,11 @@
               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
               xmlns:u="https://irihi.tech/ursa"
+              xmlns:vm="clr-namespace:Erya.ViewModels"
+              xmlns:views="clr-namespace:Erya.Views"
               mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
               x:Class="Erya.MainWindow"
+              x:DataType="vm:ShellViewModel"
               Title="尔雅 Erya"
               Width="1040" Height="680"
               MinWidth="860" MinHeight="560">
@@ -13,8 +16,11 @@
         <Grid ColumnDefinitions="Auto,*">
 
             <!-- Sidebar -->
-            <u:NavMenu Grid.Column="0" x:Name="Nav" Width="216"
-                       SelectionChanged="OnNavSelectionChanged">
+            <u:NavMenu Grid.Column="0" Width="216"
+                       ItemsSource="{Binding NavItems}"
+                       SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
+                       HeaderBinding="{Binding Header}"
+                       IconBinding="{Binding Icon}">
 
                 <u:NavMenu.Header>
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="20,18,20,14">
@@ -24,28 +30,6 @@
                     </StackPanel>
                 </u:NavMenu.Header>
 
-                <u:NavMenu.Items>
-                    <u:NavMenuItem Header="概览" Tag="overview" IsSelected="True">
-                        <u:NavMenuItem.Icon>
-                            <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconHome}" />
-                        </u:NavMenuItem.Icon>
-                    </u:NavMenuItem>
-                    <u:NavMenuItem Header="方案管理" Tag="schemas">
-                        <u:NavMenuItem.Icon>
-                            <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconCheckList}" />
-                        </u:NavMenuItem.Icon>
-                    </u:NavMenuItem>
-                    <u:NavMenuItem Header="备份恢复" Tag="backup" IsEnabled="False"
-                                   ToolTip.Tip="备份恢复功能即将上线">
-                        <u:NavMenuItem.Icon>
-                            <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconRestore}" />
-                        </u:NavMenuItem.Icon>
-                    </u:NavMenuItem>
-                </u:NavMenu.Items>
-
                 <u:NavMenu.Footer>
                     <TextBlock Text="Avalonia Port Challenge 2026"
                                Opacity="0.35" FontSize="11" Margin="20,14" />
@@ -54,9 +38,18 @@
 
             <!-- Content -->
             <Grid Grid.Column="1" RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" x:Name="PageTitleText" Text="概览"
+                <TextBlock Grid.Row="0" Text="{Binding PageTitle}"
                            FontSize="18" FontWeight="Bold" Margin="28,14,28,0" />
-                <ContentControl Grid.Row="1" x:Name="PageHost" Margin="28,12,28,24" />
+                <ContentControl Grid.Row="1" Margin="28,12,28,24" Content="{Binding CurrentPage}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="vm:MainViewModel">
+                            <views:OverviewPage />
+                        </DataTemplate>
+                        <DataTemplate DataType="vm:SchemaManagerViewModel">
+                            <views:SchemaManagerPage />
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
             </Grid>
         </Grid>
 
