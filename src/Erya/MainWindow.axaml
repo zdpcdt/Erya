@@ -18,9 +18,18 @@
             <!-- Sidebar -->
             <u:NavMenu Grid.Column="0" Width="216"
                        ItemsSource="{Binding NavItems}"
-                       SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
-                       HeaderBinding="{Binding Header}"
-                       IconBinding="{Binding Icon}">
+                       SelectedItem="{Binding SelectedNav, Mode=TwoWay}">
+
+                <u:NavMenu.HeaderTemplate>
+                    <!-- 显式模板而非 HeaderBinding：数据驱动下 Header 的显示由模板保证，
+                         且 x:DataType 提供编译期检查（BindingBase 复制在真机上不可靠）。 -->
+                    <DataTemplate x:DataType="vm:NavItem">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Width="18" Height="18" Data="{Binding Icon}" />
+                            <TextBlock Text="{Binding Header}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </u:NavMenu.HeaderTemplate>
 
                 <u:NavMenu.Header>
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="20,18,20,14">
