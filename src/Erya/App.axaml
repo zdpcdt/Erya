@@ -6,6 +6,16 @@
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
                   且 Default 下 Ursa 首次点击会抛 "Invalid state"（Ursa 2.2.0）。 -->
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Semi 图标几何：PathIcon Data={StaticResource SemiIcon*} 使用 -->
+                <ResourceInclude Source="avares://Semi.Avalonia/Icons/StrokedIcons.axaml" />
+                <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
