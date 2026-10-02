@@ -25,7 +25,7 @@
                     <u:IconButton Command="{Binding OpenUserDirCommand}"
                                   ToolTip.Tip="在资源管理器中打开用户目录">
                         <PathIcon Width="16" Height="16"
-                                  Data="{StaticResource SemiIconFolderOpenStroked}" />
+                                  Data="{StaticResource SemiIconFolderOpen}" />
                     </u:IconButton>
                 </StackPanel>
             </u:FormItem>

@@ -28,20 +28,20 @@
                     <u:NavMenuItem Header="概览" Tag="overview" IsSelected="True">
                         <u:NavMenuItem.Icon>
                             <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconHomeStroked}" />
+                                      Data="{StaticResource SemiIconHome}" />
                         </u:NavMenuItem.Icon>
                     </u:NavMenuItem>
                     <u:NavMenuItem Header="方案管理" Tag="schemas">
                         <u:NavMenuItem.Icon>
                             <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconChecklistStroked}" />
+                                      Data="{StaticResource SemiIconCheckList}" />
                         </u:NavMenuItem.Icon>
                     </u:NavMenuItem>
                     <u:NavMenuItem Header="备份恢复" Tag="backup" IsEnabled="False"
                                    ToolTip.Tip="备份恢复功能即将上线">
                         <u:NavMenuItem.Icon>
                             <PathIcon Width="18" Height="18"
-                                      Data="{StaticResource SemiIconRestoreStroked}" />
+                                      Data="{StaticResource SemiIconRestore}" />
                         </u:NavMenuItem.Icon>
                     </u:NavMenuItem>
                 </u:NavMenu.Items>

@@ -21,7 +21,7 @@
                           Command="{Binding LoadCommand}"
                           ToolTip.Tip="重新扫描方案列表">
                 <PathIcon Width="16" Height="16"
-                          Data="{StaticResource SemiIconRedoStroked}" />
+                          Data="{StaticResource SemiIconRefresh}" />
             </u:IconButton>
         </Grid>
 
