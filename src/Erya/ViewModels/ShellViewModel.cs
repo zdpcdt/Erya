@@ -9,7 +9,11 @@ using Erya.Services;
 namespace Erya.ViewModels;
 
 /// <summary>Sidebar entry; selection is driven by NavMenu's TwoWay SelectedItem binding.</summary>
-public sealed record NavItem(string Key, string Header, Geometry? Icon);
+public sealed record NavItem(string Key, string Header, Geometry? Icon)
+{
+    // Fallback display (container renders ToString) should never leak internals.
+    public override string ToString() => Header;
+}
 
 public partial class ShellViewModel : ObservableObject
 {

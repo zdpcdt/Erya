@@ -2,4 +2,5 @@
   <Project Path="src/Erya.Core/Erya.Core.csproj" />
   <Project Path="src/Erya/Erya.csproj" />
   <Project Path="tests/Erya.Core.Tests/Erya.Core.Tests.csproj" />
+  <Project Path="tests/Erya.UiTests/Erya.UiTests.csproj" />
 </Solution>
