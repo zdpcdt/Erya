@@ -11,8 +11,8 @@
 🚧 项目启动于 2026-10（Avalonia Port Challenge 2026 参赛作品，移植自 Qt 版 [rimetool](https://github.com/yanhuacuo/rimetool) 的功能设计，并借鉴 WPF 版 [RimeControl](https://github.com/qzly/RimeControl) 的备份恢复思路）。
 
 - [x] 发行版抽象层（`IRimeDistribution`）与小狼毫检测
-- [x] 主界面外壳（Semi.Avalonia）
-- [ ] 方案管理（Day 3）
+- [x] 主界面外壳（Semi.Avalonia + Ursa）
+- [x] 方案管理（勾选启用/停用输入方案，写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
 - [ ] 备份恢复（Day 4）
 - [ ] 一键安装配置方案（Day 5）
 - [ ] Linux 验证（Day 6）
@@ -22,7 +22,7 @@
 | 组件 | 选型 |
 |---|---|
 | UI 框架 | Avalonia 12 / .NET 10 |
-| 主题 | [Semi.Avalonia](https://github.com/irihi-tech/Semi.Avalonia) |
+| 主题 | [Semi.Avalonia](https://github.com/irihi-tech/Semi.Avalonia) + [Ursa](https://github.com/irihi-tech/Ursa) |
 | MVVM | CommunityToolkit.Mvvm |
 | YAML | YamlDotNet |
 

@@ -1,7 +1,6 @@
 using Erya.Core.Models;
 
 namespace Erya.Core.Distributions;
-
 /// <summary>
 /// A RIME distribution (frontend) detected on the current machine —
 /// Weasel (Windows), Squirrel (macOS), fcitx5-rime / ibus-rime (Linux).
@@ -41,10 +40,11 @@ public interface IRimeDistribution
     Task DeployAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Lists schemas visible to the engine: entries from <c>default.yaml</c>
-    /// schema_list, with <c>default.custom.yaml</c> patches applied.
+    /// Lists schemas visible to the engine: every <c>*.schema.yaml</c> found
+    /// on disk, plus which ids are currently active (effective
+    /// <c>schema_list</c>: <c>default.custom.yaml</c> patch over <c>default.yaml</c>).
     /// </summary>
-    Task<IReadOnlyList<RimeSchema>> GetSchemasAsync(CancellationToken cancellationToken = default);
+    Task<RimeSchemaSnapshot> GetSchemasAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Persists the selected schema list by writing a

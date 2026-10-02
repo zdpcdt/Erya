@@ -36,6 +36,14 @@ public partial class MainViewModel : ObservableObject
 
     public bool HasStatus => !string.IsNullOrEmpty(StatusMessage);
 
+    public bool CanManageSchemas => Distribution is not null;
+
+    public void ShowStatus(NotificationType type, string message)
+    {
+        StatusType = type;
+        StatusMessage = message;
+    }
+
     public MainViewModel(DistributionManager distributions)
     {
         _distributions = distributions;

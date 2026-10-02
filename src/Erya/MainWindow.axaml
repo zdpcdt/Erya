@@ -50,7 +50,8 @@
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Button Content="重新部署" Classes="primary"
                                 Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
-                        <Button Content="方案管理" IsEnabled="False" />
+                        <Button Content="方案管理" IsEnabled="{Binding CanManageSchemas}"
+                                Click="OnManageSchemasClick" />
                         <Button Content="备份恢复" IsEnabled="False" />
                         <Button Content="主题外观" IsEnabled="False" />
                     </StackPanel>
