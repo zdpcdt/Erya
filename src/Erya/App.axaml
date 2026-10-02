@@ -2,7 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:semi="https://irihi.tech/semi"
              x:Class="Erya.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
+             <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
+                  且 Default 下 Ursa 首次点击会抛 "Invalid state"（Ursa 2.2.0）。 -->
 
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
