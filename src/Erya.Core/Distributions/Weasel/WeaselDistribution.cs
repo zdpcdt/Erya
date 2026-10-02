@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Erya.Core.Configuration;
 using Erya.Core.Models;
 
 namespace Erya.Core.Distributions.Weasel;
@@ -42,9 +43,20 @@ public sealed class WeaselDistribution : IRimeDistribution
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyList<RimeSchema>> GetSchemasAsync(CancellationToken cancellationToken = default)
-        => throw new NotImplementedException("TODO(Day 3): merge default.yaml schema_list with default.custom.yaml patches via YamlDotNet.");
+    public Task<RimeSchemaSnapshot> GetSchemasAsync(CancellationToken cancellationToken = default)
+    {
+        // Shipped schemas (luna_pinyin & co.) live in <install>\data until the
+        // user customizes them; the user directory shadows that copy.
+        var catalog = InstallDir is { } install
+            ? new RimeSchemaCatalog(UserDir, [Path.Combine(install, "data")])
+            : new RimeSchemaCatalog(UserDir);
+        return Task.FromResult(catalog.LoadSnapshot());
+    }
 
     public Task SetSelectedSchemasAsync(IReadOnlyList<string> schemaIds, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException("TODO(Day 3): write default.custom.yaml patch, never touch schema-shipped default.yaml.");
+    {
+        var catalog = new RimeSchemaCatalog(UserDir);
+        catalog.WriteSelectedSchemas(schemaIds);
+        return Task.CompletedTask;
+    }
 }
