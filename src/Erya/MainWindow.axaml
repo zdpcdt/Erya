@@ -70,6 +70,6 @@
     </Panel>
 
     <u:UrsaWindow.RightContent>
-        <u:ThemeToggleButton />
+        <u:ThemeToggleButton IsThreeState="True" />
     </u:UrsaWindow.RightContent>
 </u:UrsaWindow>
