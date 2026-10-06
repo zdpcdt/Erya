@@ -57,6 +57,9 @@
                         <DataTemplate DataType="vm:SchemaManagerViewModel">
                             <views:SchemaManagerPage />
                         </DataTemplate>
+                        <DataTemplate DataType="vm:BackupRestoreViewModel">
+                            <views:BackupRestorePage />
+                        </DataTemplate>
                     </ContentControl.DataTemplates>
                 </ContentControl>
             </Grid>
