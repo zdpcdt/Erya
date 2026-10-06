@@ -13,7 +13,7 @@
 - [x] 发行版抽象层（`IRimeDistribution`）与小狼毫检测
 - [x] 主界面外壳（Semi.Avalonia + Ursa）
 - [x] 方案管理（勾选启用/停用输入方案，写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
-- [ ] 备份恢复（Day 4）
+- [x] 备份恢复（zip 打包用户目录；恢复前自动在备份旁生成安全备份，恢复后自动触发重新部署）
 - [ ] 一键安装配置方案（Day 5）
 - [ ] Linux 验证（Day 6）
 
@@ -22,7 +22,7 @@
 | 组件 | 选型 |
 |---|---|
 | UI 框架 | Avalonia 12 / .NET 10 |
-| 主题 | [Semi.Avalonia](https://github.com/irihi-tech/Semi.Avalonia) + [Ursa](https://github.com/irihi-tech/Ursa) |
+| 主题 | [Semi.Avalonia](https://github.com/irihitech/Semi.Avalonia) + [Ursa](https://github.com/irihitech/Ursa.Avalonia) |
 | MVVM | CommunityToolkit.Mvvm |
 | YAML | YamlDotNet |
 

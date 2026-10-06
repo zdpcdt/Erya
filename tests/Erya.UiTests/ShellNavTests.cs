@@ -54,4 +54,35 @@ public class ShellNavTests
         Assert.IsType<SchemaManagerViewModel>(vm.CurrentPage);
         Assert.Equal("方案管理", vm.PageTitle);
     }
+
+    [AvaloniaFact]
+    public void Backup_nav_switches_page_and_lazy_loads_once()
+    {
+        var icons = new ResourceDictionary
+        {
+            ["SemiIconHome"] = new StreamGeometry(),
+            ["SemiIconCheckList"] = new StreamGeometry(),
+            ["SemiIconRestore"] = new StreamGeometry(),
+        };
+        Application.Current!.Resources.MergedDictionaries.Add(icons);
+
+        var vm = new ShellViewModel(new DistributionManager());
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        vm.SelectedNav = vm.NavItems[2];
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var backup = Assert.IsType<BackupRestoreViewModel>(vm.CurrentPage);
+        Assert.Equal("备份恢复", vm.PageTitle);
+        Assert.True(backup.HasHint); // no distribution in the test harness → Load ran
+        Assert.Equal(2, window.GetVisualDescendants().OfType<PathPicker>().Count());
+
+        vm.SelectedNav = vm.NavItems[0];
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        vm.SelectedNav = vm.NavItems[2];
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Assert.Same(backup, vm.CurrentPage); // page instance is reused, no reload loop
+    }
 }

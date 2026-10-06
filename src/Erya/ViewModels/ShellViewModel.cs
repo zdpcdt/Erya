@@ -19,7 +19,9 @@ public partial class ShellViewModel : ObservableObject
 {
     private readonly MainViewModel _overview;
     private readonly SchemaManagerViewModel _schemas;
+    private readonly BackupRestoreViewModel _backup;
     private bool _schemasLoaded;
+    private bool _backupLoaded;
 
     public IReadOnlyList<NavItem> NavItems { get; }
 
@@ -36,6 +38,7 @@ public partial class ShellViewModel : ObservableObject
     {
         _overview = new MainViewModel(distributions);
         _schemas = new SchemaManagerViewModel(_overview.Distribution);
+        _backup = new BackupRestoreViewModel(_overview.Distribution);
 
         NavItems =
         [
@@ -68,8 +71,16 @@ public partial class ShellViewModel : ObservableObject
                 }
                 CurrentPage = _schemas;
                 break;
+            case "backup":
+                if (!_backupLoaded)
+                {
+                    _backupLoaded = true;
+                    _backup.LoadCommand.Execute(null);
+                }
+                CurrentPage = _backup;
+                break;
             default:
-                // Placeholder entries (备份恢复 lands on Day 4) — acknowledge instead of switching.
+                // Placeholder for pages not yet implemented — acknowledge instead of switching.
                 AppNotifications.Toast("「" + value.Header + "」即将上线。", NotificationType.Information);
                 break;
         }

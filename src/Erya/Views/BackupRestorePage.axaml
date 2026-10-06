@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:Erya.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
+             x:Class="Erya.Views.BackupRestorePage"
+             x:DataType="vm:BackupRestoreViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- User directory the operations act on -->
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock Text="备份与恢复均针对 RIME 用户目录（方案配置、自定义补丁、用户词典）。"
+                       Opacity="0.6" />
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasUserDir}">
+                <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
+                <u:IconButton Command="{Binding OpenUserDirCommand}"
+                              ToolTip.Tip="在资源管理器中打开用户目录">
+                    <PathIcon Width="16" Height="16"
+                              Data="{StaticResource SemiIconFolderOpen}" />
+                </u:IconButton>
+            </StackPanel>
+            <TextBlock Text="{Binding UserDirSummary}" FontSize="12" Opacity="0.6"
+                       IsVisible="{Binding UserDirExists}" />
+        </StackPanel>
+
+        <!-- Two operations -->
+        <StackPanel Grid.Row="1" Margin="0,18" Spacing="24">
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="备份" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="将用户目录打包为一个 zip 压缩包，用于存档或迁移。build 目录是部署产物，不参与备份。"
+                           Opacity="0.6" FontSize="12" />
+                <u:PathPicker UsePickerType="SaveFile"
+                              Title="选择备份保存位置"
+                              ButtonContent="选择位置并备份…"
+                              SuggestedStartPath="{Binding DefaultStartFolder}"
+                              SuggestedFileName="{Binding BackupFileName}"
+                              DefaultFileExtension="zip"
+                              FileFilter="[备份压缩包, *.zip]"
+                              IsOmitCommandOnCancel="True"
+                              Command="{Binding BackupCommand}"
+                              IsEnabled="{Binding HasUserDir}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="恢复" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="从备份压缩包写回用户目录：同名文件被覆盖，恢复前自动在备份所在目录生成安全备份。完成后自动触发重新部署。"
+                           Opacity="0.6" FontSize="12" />
+                <u:PathPicker UsePickerType="OpenFile"
+                              Title="选择要恢复的备份压缩包"
+                              ButtonContent="选择备份文件…"
+                              SuggestedStartPath="{Binding DefaultStartFolder}"
+                              FileFilter="[备份压缩包, *.zip]"
+                              IsOmitCommandOnCancel="True"
+                              Command="{Binding PickRestoreSourceCommand}" />
+                <Button Content="从备份恢复" Classes="primary" HorizontalAlignment="Left"
+                        MinWidth="108" Margin="0,2,0,0"
+                        Command="{Binding RestoreCommand}"
+                        IsEnabled="{Binding CanRestore}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Inline states -->
+        <StackPanel Grid.Row="2" Spacing="10">
+            <TextBlock Text="正在处理…" IsVisible="{Binding IsBusy}" Opacity="0.6" />
+            <u:Banner Type="Warning" Content="{Binding Hint}" ShowIcon="True"
+                      IsVisible="{Binding HasHint}" />
+            <u:Banner Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" />
+        </StackPanel>
+    </Grid>
+</UserControl>
