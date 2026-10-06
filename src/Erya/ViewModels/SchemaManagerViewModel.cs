@@ -66,7 +66,7 @@ public partial class SchemaManagerViewModel : ObservableObject
             if (_distribution is null)
             {
                 Schemas.Clear();
-                Hint = "未检测到 RIME 发行版：请先安装小狼毫（Windows）并重新打开尔雅。";
+                Hint = "未检测到 RIME 发行版：" + InstallHints.ForCurrentOs;
                 return;
             }
 

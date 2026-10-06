@@ -10,12 +10,12 @@
 
 🚧 项目启动于 2026-10（Avalonia Port Challenge 2026 参赛作品，移植自 Qt 版 [rimetool](https://github.com/yanhuacuo/rimetool) 的功能设计，并借鉴 WPF 版 [RimeControl](https://github.com/qzly/RimeControl) 的备份恢复思路）。
 
-- [x] 发行版抽象层（`IRimeDistribution`）与小狼毫检测
+- [x] 发行版抽象层（`IRimeDistribution`）；Windows 小狼毫、Linux fcitx5-rime / ibus-rime、macOS 鼠鬚管的检测与部署
 - [x] 主界面外壳（Semi.Avalonia + Ursa）
 - [x] 方案管理（勾选启用/停用输入方案，写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
 - [x] 备份恢复（zip 打包用户目录；恢复前自动在备份旁生成安全备份，恢复后自动触发重新部署）
 - [ ] 一键安装配置方案（Day 5）
-- [ ] Linux 验证（Day 6）
+- [ ] Linux / macOS 真机验证（定位器与部署已实现，开发机为 Windows；可用 `ERYA_FCITX5_RIME_HOME` / `ERYA_IBUS_RIME_HOME` / `ERYA_SQUIRREL_APP` 环境变量在 CI 指向测试目录）
 
 ## 技术栈
 
