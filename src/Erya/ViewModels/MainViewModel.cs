@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
@@ -51,7 +50,7 @@ public partial class MainViewModel : ObservableObject
         {
             DetectionTitle = "未检测到 RIME 发行版";
             StatusType = NotificationType.Warning;
-            StatusMessage = "请先安装小狼毫（Windows）：https://rime.im/download 。安装完成后重新打开尔雅。";
+            StatusMessage = InstallHints.ForCurrentOs;
             return;
         }
 
@@ -85,7 +84,7 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true });
+        AppShell.OpenFolder(dir);
     }
 
     [RelayCommand]

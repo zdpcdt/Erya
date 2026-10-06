@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -75,7 +74,7 @@ public partial class BackupRestoreViewModel : ObservableObject
             UserDir = "";
             UserDirExists = false;
             UserDirSummary = "";
-            Hint = "未检测到 RIME 发行版：请先安装小狼毫（Windows）并重新打开尔雅。";
+            Hint = "未检测到 RIME 发行版：" + InstallHints.ForCurrentOs;
             return;
         }
 
@@ -98,7 +97,7 @@ public partial class BackupRestoreViewModel : ObservableObject
             return;
         }
 
-        Process.Start(new ProcessStartInfo(UserDir) { UseShellExecute = true });
+        AppShell.OpenFolder(UserDir);
     }
 
     /// <summary>PathPicker hands the picked items to Command as IStorageItem list.</summary>
