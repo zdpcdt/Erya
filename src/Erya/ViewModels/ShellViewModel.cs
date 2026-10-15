@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
 using Erya.Services;
 using Erya.ViewModels.Advanced;
@@ -38,6 +39,10 @@ public partial class ShellViewModel : ObservableObject
 
     [ObservableProperty]
     private string _pageTitle = "";
+
+    /// <summary>Global redeploy action — bound to Ctrl+R / Cmd+R in the window.</summary>
+    [RelayCommand]
+    private void Deploy() => _overview.DeployCommand.Execute(null);
 
     public ShellViewModel(DistributionManager distributions)
     {
