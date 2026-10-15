@@ -38,7 +38,7 @@ public class ShellNavTests
     private static readonly string[] AllIconKeys =
     [
         "SemiIconHome", "SemiIconCheckList", "SemiIconSetting",
-        "SemiIconColorPalette", "SemiIconRestore",
+        "SemiIconColorPalette", "SemiIconCode", "SemiIconRestore",
     ];
 
     [AvaloniaFact]
@@ -103,7 +103,7 @@ public class ShellNavTests
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        vm.SelectedNav = vm.NavItems[4];
+        vm.SelectedNav = vm.NavItems[5];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var backup = Assert.IsType<BackupRestoreViewModel>(vm.CurrentPage);
@@ -113,7 +113,7 @@ public class ShellNavTests
 
         vm.SelectedNav = vm.NavItems[0];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        vm.SelectedNav = vm.NavItems[4];
+        vm.SelectedNav = vm.NavItems[5];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         Assert.Same(backup, vm.CurrentPage); // page instance is reused, no reload loop
     }

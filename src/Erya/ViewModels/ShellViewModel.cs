@@ -5,6 +5,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Erya.Core.Distributions;
 using Erya.Services;
+using Erya.ViewModels.Advanced;
 using Erya.ViewModels.Settings;
 
 namespace Erya.ViewModels;
@@ -22,6 +23,7 @@ public partial class ShellViewModel : ObservableObject
     private readonly SchemaManagerViewModel _schemas;
     private readonly SettingsEditorViewModel _inputSettings;
     private readonly SettingsEditorViewModel _appearance;
+    private readonly AdvancedSettingsViewModel _advanced;
     private readonly BackupRestoreViewModel _backup;
     private readonly Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
     private IRimeDistribution? _distribution;
@@ -44,6 +46,7 @@ public partial class ShellViewModel : ObservableObject
         _schemas = new SchemaManagerViewModel(_distribution);
         _inputSettings = new SettingsEditorViewModel(_distribution, "default");
         _appearance = new SettingsEditorViewModel(_distribution, "ui");
+        _advanced = new AdvancedSettingsViewModel(_distribution);
         _backup = new BackupRestoreViewModel(_distribution);
 
         NavItems =
@@ -52,11 +55,13 @@ public partial class ShellViewModel : ObservableObject
             new NavItem("schemas", "方案管理", Icon("SemiIconCheckList")),
             new NavItem("inputSettings", "输入设置", Icon("SemiIconSetting")),
             new NavItem("appearance", "外观设置", Icon("SemiIconColorPalette")),
+            new NavItem("advanced", "高级设置", Icon("SemiIconCode")),
             new NavItem("backup", "备份恢复", Icon("SemiIconRestore")),
         ];
         _lazyPages["schemas"] = (false, _schemas);
         _lazyPages["inputSettings"] = (false, _inputSettings);
         _lazyPages["appearance"] = (false, _appearance);
+        _lazyPages["advanced"] = (false, _advanced);
         _lazyPages["backup"] = (false, _backup);
 
         // Two-way binding pushes this into NavMenu, selecting the item visually.
@@ -87,6 +92,9 @@ public partial class ShellViewModel : ObservableObject
                     break;
                 case SettingsEditorViewModel settings:
                     settings.LoadCommand.Execute(null);
+                    break;
+                case AdvancedSettingsViewModel advanced:
+                    advanced.LoadCommand.Execute(null);
                     break;
                 case BackupRestoreViewModel backup:
                     backup.LoadCommand.Execute(null);

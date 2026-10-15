@@ -93,4 +93,33 @@ public sealed class RimeConfigStore
     /// <summary>Removes keys from the patch file; true when the file existed and was processed.</summary>
     public bool RemovePatchKeys(string baseFileName, IEnumerable<string> keys)
         => CustomYamlPatcher.Remove(CustomPath(baseFileName), Path.GetFileName(CustomPath(baseFileName)), keys);
+
+    /// <summary>Current text of the patch file ("" when missing) — source-editor material.</summary>
+    public string ReadCustomText(string baseFileName)
+        => File.Exists(CustomPath(baseFileName)) ? File.ReadAllText(CustomPath(baseFileName)) : "";
+
+    /// <summary>
+    /// Replaces the patch file wholesale (source mode). The text must parse as
+    /// a YAML mapping — anything else is refused; the previous file is kept
+    /// as <c>.bak</c>.
+    /// </summary>
+    public void WriteCustomText(string baseFileName, string text)
+    {
+        var stream = new YamlStream();
+        try
+        {
+            stream.Load(new StringReader(text));
+        }
+        catch (Exception ex) when (ex is YamlDotNet.Core.YamlException or ArgumentException)
+        {
+            throw new InvalidOperationException($"YAML 解析失败：{ex.Message}", ex);
+        }
+        if (stream.Documents is [var document, ..] && document.RootNode is not YamlMappingNode)
+            throw new InvalidOperationException("补丁文件必须是 YAML 映射（键值对）。");
+
+        var path = CustomPath(baseFileName);
+        Directory.CreateDirectory(UserDir);
+        if (File.Exists(path)) File.WriteAllText(path + ".bak", File.ReadAllText(path));
+        File.WriteAllText(path, text);
+    }
 }
