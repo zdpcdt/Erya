@@ -100,7 +100,13 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
 
     public bool IsSupported => UnsupportedReason.Length == 0;
 
-    public bool IsDirty => Sections.SelectMany(s => s.Fields).Any(f => f.HasPendingEdits);
+    public bool IsDirty => Sections.SelectMany(s => s.Fields).Any(f => f.HasPendingEdits)
+                           || (SchemeLibrary?.HasPendingEdits ?? false);
+
+    /// <summary>皮肤库（仅外观目标且前端带 preset_color_schemes 时存在）。</summary>
+    public ColorSchemeLibraryViewModel? SchemeLibrary { get; private set; }
+
+    public bool HasSchemeLibrary => SchemeLibrary is not null;
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -142,6 +148,14 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             }
 
             Subtitle = $"显示合并后的生效值；修改会保存到 {Path.GetFileName(_store.CustomPath(targetFile))} 补丁，重新部署后生效。";
+
+            if (_target == "ui")
+            {
+                SchemeLibrary = new ColorSchemeLibraryViewModel(_store, targetFile);
+                SchemeLibrary.EditsPending += (_, _) => OnPropertyChanged(nameof(IsDirty));
+                SchemeLibrary.Load();
+                OnPropertyChanged(nameof(HasSchemeLibrary));
+            }
         }
         catch (Exception ex)
         {
@@ -168,6 +182,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     private void Revert()
     {
         foreach (var field in Sections.SelectMany(s => s.Fields)) field.Revert();
+        SchemeLibrary?.Revert();
         OnPropertyChanged(nameof(IsDirty));
     }
 
@@ -184,6 +199,14 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             var value = field.PendingValue();
             if (value is not null) writes[field.KeyPath] = value;
             else if (field.PendingRemoval()) removals.Add(field.KeyPath);
+        }
+        if (SchemeLibrary?.PendingValue() is { } schemes)
+        {
+            writes["preset_color_schemes"] = schemes;
+        }
+        else if (SchemeLibrary is { HasPendingEdits: true })
+        {
+            removals.Add("preset_color_schemes"); // all schemes removed
         }
         if (writes.Count == 0 && removals.Count == 0) return;
 
