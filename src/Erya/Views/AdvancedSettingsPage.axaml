@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
              xmlns:adv="clr-namespace:Erya.ViewModels.Advanced"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="620"
              x:Class="Erya.Views.AdvancedSettingsPage"
@@ -21,9 +22,8 @@
             <CheckBox Grid.Column="3" Content="仅显示已修改" IsChecked="{Binding OnlyModified}"
                       Margin="14,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding !IsSourceMode}" />
             <u:IconButton Grid.Column="4" Command="{Binding LoadCommand}" ToolTip.Tip="重新读取"
-                          Margin="10,0,0,0" VerticalAlignment="Center">
-                <PathIcon Width="16" Height="16" Data="{StaticResource SemiIconRefresh}" />
-            </u:IconButton>
+                          Icon="{StaticResource SemiIconRefresh}"
+                          Margin="10,0,0,0" VerticalAlignment="Center" />
             <Button Grid.Column="5" Content="部署" Command="{Binding DeployCommand}"
                     ToolTip.Tip="重新部署（使修改生效）" VerticalAlignment="Center" />
         </Grid>
@@ -44,11 +44,20 @@
                                        TextTrimming="CharacterEllipsis" MaxWidth="360" />
                             <TextBox Text="{Binding EditText, Mode=TwoWay}" MinWidth="160" MaxWidth="360"
                                      IsVisible="{Binding IsEditing}" />
-                            <Button Content="✓" Padding="8,2" IsVisible="{Binding IsEditing}"
-                                    Command="{Binding ApplyEditCommand}" CommandParameter="{Binding}"
-                                    Classes="primary" />
-                            <Button Content="✕" Padding="8,2" IsVisible="{Binding IsEditing}"
-                                    Command="{Binding CancelEditCommand}" CommandParameter="{Binding}" />
+                            <u:IconButton Classes="Primary" IsVisible="{Binding IsEditing}"
+                                          Command="{Binding ApplyEditCommand}" CommandParameter="{Binding}"
+                                          ToolTip.Tip="应用修改">
+                                <u:IconButton.Icon>
+                                    <tdicon:CheckCircle Width="16" Height="16" />
+                                </u:IconButton.Icon>
+                            </u:IconButton>
+                            <u:IconButton IsVisible="{Binding IsEditing}"
+                                          Command="{Binding CancelEditCommand}" CommandParameter="{Binding}"
+                                          ToolTip.Tip="取消修改">
+                                <u:IconButton.Icon>
+                                    <tdicon:Close Width="16" Height="16" />
+                                </u:IconButton.Icon>
+                            </u:IconButton>
                             <Button Content="编辑" FontSize="11" Padding="8,2"
                                     IsVisible="{Binding IsEditable}"
                                     Command="{Binding BeginEditCommand}" CommandParameter="{Binding}" />
@@ -79,7 +88,7 @@
                       IsVisible="{Binding HasError}" />
             <Button Grid.Column="1" Content="重新加载" Command="{Binding LoadSourceCommand}"
                     IsVisible="{Binding IsSourceMode}" Margin="0,0,10,0" />
-            <Button Grid.Column="2" Content="保存补丁" Classes="primary" MinWidth="108"
+            <Button Grid.Column="2" Content="保存补丁" Classes="Primary" MinWidth="108"
                     IsVisible="{Binding IsSourceMode}"
                     Command="{Binding SaveSourceCommand}" IsEnabled="{Binding !IsBusy}" />
         </Grid>

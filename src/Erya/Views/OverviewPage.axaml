@@ -23,14 +23,12 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
                     <u:IconButton Command="{Binding OpenUserDirCommand}"
-                                  ToolTip.Tip="在资源管理器中打开用户目录">
-                        <PathIcon Width="16" Height="16"
-                                  Data="{StaticResource SemiIconFolderOpen}" />
-                    </u:IconButton>
+                                  Icon="{StaticResource SemiIconFolderOpen}"
+                                  ToolTip.Tip="在资源管理器中打开用户目录" />
                 </StackPanel>
             </u:FormItem>
             <u:FormItem Label="操作">
-                <Button Content="重新部署" Classes="primary"
+                <Button Content="重新部署" Classes="Primary"
                         Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
             </u:FormItem>
         </u:Form>

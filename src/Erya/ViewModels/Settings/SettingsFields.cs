@@ -110,6 +110,11 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
     public double Step => Field.Step ?? 1;
     public bool IsInteger => Step % 1 == 0;
     public string Format => IsInteger ? "0" : "0.##";
+    public bool IsStepper => Field.Type == "stepper";
+    public bool IsSlider => Field.Type == "slider";
+
+    /// <summary>滑块行的右侧数值摘要（步进器自带数字框，不需要）。</summary>
+    public string? Note => IsSlider ? Value.ToString("0.#") : null;
 
     public override void Load(object? mergedValue, bool inPatch)
     {
@@ -129,7 +134,11 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
         ? IsInteger ? (long)Math.Round(Value) : Value
         : null;
 
-    partial void OnValueChanged(double value) => HasPendingEdits = Math.Abs(value - _loaded) > 1e-9;
+    partial void OnValueChanged(double value)
+    {
+        HasPendingEdits = Math.Abs(value - _loaded) > 1e-9;
+        OnPropertyChanged(nameof(Note));
+    }
 }
 
 public sealed partial class TextFieldViewModel : SettingsFieldViewModel
@@ -218,17 +227,21 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
     }
 }
 
-/// <summary>hotkeyList / hotkeyPairList: an editable list of key-combo strings.</summary>
+/// <summary>hotkeyList 中的一行：可观察，供 KeyGestureInput 双向绑定写回。</summary>
+public sealed partial class HotkeyRowViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private string _value = "";
+}
+
+/// <summary>hotkeyList / hotkeyPairList: an editable list of key-combo rows.</summary>
 public sealed partial class ListFieldViewModel : SettingsFieldViewModel
 {
     private IReadOnlyList<string> _loaded = [];
 
-    public ListFieldViewModel(SettingsField field) : base(field)
-    {
-        Items.CollectionChanged += (_, _) => RecomputeDirty();
-    }
+    public ListFieldViewModel(SettingsField field) : base(field) { }
 
-    public ObservableCollection<string> Items { get; } = [];
+    public ObservableCollection<HotkeyRowViewModel> Items { get; } = [];
 
     public IReadOnlyList<string>? ItemLabels => Field.ItemLabels;
 
@@ -242,12 +255,12 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
         // Fixed pairs always keep their slots so the file keeps the pair shape.
         if (ItemLabels is { } labels)
         {
-            foreach (var item in _loaded) Items.Add(item);
-            for (int i = _loaded.Count; i < labels.Count; i++) Items.Add("");
+            foreach (var item in _loaded) AddRow(item);
+            for (int i = _loaded.Count; i < labels.Count; i++) AddRow("");
         }
         else
         {
-            foreach (var item in _loaded) Items.Add(item);
+            foreach (var item in _loaded) AddRow(item);
         }
         IsModified = inPatch;
         HasPendingEdits = false;
@@ -256,27 +269,46 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
     public override void Revert()
     {
         Items.Clear();
-        foreach (var item in _loaded) Items.Add(item);
+        foreach (var item in _loaded) AddRow(item);
         HasPendingEdits = false;
     }
 
     public override object? PendingValue() => !HasPendingEdits || Items.Count == 0
         ? null
-        : Items.Select(i => (object?)i).ToList();
+        : Items.Select(i => (object?)i.Value).ToList();
 
     [RelayCommand]
     private void AddItem()
     {
         var item = NewItem.Trim();
-        if (item.Length == 0 || Items.Contains(item)) return;
+        if (item.Length == 0 || Items.Any(i => i.Value == item)) return;
         NewItem = "";
-        Items.Add(item);
+        AddRow(item);
+        RecomputeDirty();
     }
 
     [RelayCommand]
-    private void RemoveItem(string item) => Items.Remove(item);
+    private void RemoveItem(HotkeyRowViewModel row)
+    {
+        row.PropertyChanged -= OnRowChanged;
+        Items.Remove(row);
+        RecomputeDirty();
+    }
 
-    private void RecomputeDirty() => HasPendingEdits = !_loaded.SequenceEqual(Items);
+    private void AddRow(string value)
+    {
+        var row = new HotkeyRowViewModel { Value = value };
+        row.PropertyChanged += OnRowChanged;
+        Items.Add(row);
+    }
+
+    private void OnRowChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(HotkeyRowViewModel.Value))
+            RecomputeDirty();
+    }
+
+    private void RecomputeDirty() => HasPendingEdits = !_loaded.SequenceEqual(Items.Select(i => i.Value));
 }
 
 public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
@@ -298,6 +330,16 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
     public string UnsetLabel => "未设置";
 
     public IReadOnlyList<string> Options => [UnsetLabel, .. Choices];
+
+    /// <summary>行右侧摘要：已自定义的键位数。</summary>
+    public string Summary
+    {
+        get
+        {
+            var count = Rows.Count(r => r.Selection is not null);
+            return count == 0 ? "未设置" : $"已设 {count} 项";
+        }
+    }
 
     public override void Load(object? mergedValue, bool inPatch)
     {
@@ -326,6 +368,7 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
     {
         if (e.PropertyName != nameof(KeyMappingRowViewModel.Selection)) return;
         HasPendingEdits = Rows.Any(r => r.IsDirty);
+        OnPropertyChanged(nameof(Summary));
     }
 }
 
@@ -378,6 +421,16 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
 
     public ObservableCollection<CheckOptionViewModel> Options { get; } = [];
 
+    /// <summary>行右侧摘要：已启用的选项数。</summary>
+    public string EnabledSummary
+    {
+        get
+        {
+            var count = Options.Count(o => o.IsChecked);
+            return count == 0 ? "未启用" : $"已启用 {count} 项";
+        }
+    }
+
     public override void Load(object? mergedValue, bool inPatch)
     {
         _loaded = ToStringList(mergedValue);
@@ -401,6 +454,7 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
     {
         if (e.PropertyName != nameof(CheckOptionViewModel.IsChecked)) return;
         HasPendingEdits = !_loaded.SequenceEqual(Options.Where(o => o.IsChecked).Select(o => o.Value));
+        OnPropertyChanged(nameof(EnabledSummary));
     }
 }
 

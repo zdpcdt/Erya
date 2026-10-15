@@ -17,10 +17,8 @@
             <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasUserDir}">
                 <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
                 <u:IconButton Command="{Binding OpenUserDirCommand}"
-                              ToolTip.Tip="在资源管理器中打开用户目录">
-                    <PathIcon Width="16" Height="16"
-                              Data="{StaticResource SemiIconFolderOpen}" />
-                </u:IconButton>
+                              Icon="{StaticResource SemiIconFolderOpen}"
+                              ToolTip.Tip="在资源管理器中打开用户目录" />
             </StackPanel>
             <TextBlock Text="{Binding UserDirSummary}" FontSize="12" Opacity="0.6"
                        IsVisible="{Binding UserDirExists}" />
@@ -56,7 +54,7 @@
                               FileFilter="[备份压缩包, *.zip]"
                               IsOmitCommandOnCancel="True"
                               Command="{Binding PickRestoreSourceCommand}" />
-                <Button Content="从备份恢复" Classes="primary" HorizontalAlignment="Left"
+                <Button Content="从备份恢复" Classes="Primary" HorizontalAlignment="Left"
                         MinWidth="108" Margin="0,2,0,0"
                         Command="{Binding RestoreCommand}"
                         IsEnabled="{Binding CanRestore}" />

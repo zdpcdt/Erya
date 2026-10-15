@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.SchemaManagerPage"
@@ -19,10 +20,8 @@
             </StackPanel>
             <u:IconButton Grid.Column="1" VerticalAlignment="Top"
                           Command="{Binding LoadCommand}"
-                          ToolTip.Tip="重新扫描方案列表">
-                <PathIcon Width="16" Height="16"
-                          Data="{StaticResource SemiIconRefresh}" />
-            </u:IconButton>
+                          Icon="{StaticResource SemiIconRefresh}"
+                          ToolTip.Tip="重新扫描方案列表" />
         </Grid>
 
         <!-- Schema list -->
@@ -41,14 +40,22 @@
                                         </StackPanel>
                                     </CheckBox>
                                     <!-- 顺序调整仅对已启用方案有意义 -->
-                                    <Button Content="↑" Padding="8,2" FontSize="12"
-                                            Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveUpCommand}"
-                                            CommandParameter="{Binding}"
-                                            IsVisible="{Binding IsSelected}" ToolTip.Tip="上移（提升切换顺序）" />
-                                    <Button Content="↓" Padding="8,2" FontSize="12"
-                                            Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveDownCommand}"
-                                            CommandParameter="{Binding}"
-                                            IsVisible="{Binding IsSelected}" ToolTip.Tip="下移" />
+                                    <u:IconButton IsVisible="{Binding IsSelected}"
+                                                  Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveUpCommand}"
+                                                  CommandParameter="{Binding}"
+                                                  ToolTip.Tip="上移（提升切换顺序）">
+                                        <u:IconButton.Icon>
+                                            <tdicon:ChevronUp Width="16" Height="16" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>
+                                    <u:IconButton IsVisible="{Binding IsSelected}"
+                                                  Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveDownCommand}"
+                                                  CommandParameter="{Binding}"
+                                                  ToolTip.Tip="下移">
+                                        <u:IconButton.Icon>
+                                            <tdicon:ChevronDown Width="16" Height="16" />
+                                        </u:IconButton.Icon>
+                                    </u:IconButton>
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -61,7 +68,7 @@
                                      Watermark="方案 ID，如 my_pinyin" />
                             <TextBox Text="{Binding NewSchemaName, Mode=TwoWay}" MinWidth="150"
                                      Watermark="名称（可留空）" />
-                            <Button Content="创建" Classes="primary"
+                            <Button Content="创建" Classes="Primary"
                                     Command="{Binding AddSchemaCommand}" IsEnabled="{Binding !IsBusy}"
                                     ToolTip.Tip="在用户目录创建最小可部署的方案文件（回声脚手架）" />
                         </StackPanel>
@@ -82,7 +89,7 @@
         <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
             <u:Banner Grid.Row="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
                       IsVisible="{Binding HasError}" Margin="0,0,0,10" />
-            <Button Grid.Row="1" Content="保存并部署" Classes="primary"
+            <Button Grid.Row="1" Content="保存并部署" Classes="Primary"
                     HorizontalAlignment="Right" MinWidth="108"
                     Command="{Binding SaveAndDeployCommand}" IsEnabled="{Binding !IsBusy}" />
         </Grid>
