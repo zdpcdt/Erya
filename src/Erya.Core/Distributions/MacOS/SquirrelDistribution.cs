@@ -30,6 +30,9 @@ public sealed class SquirrelDistribution : RimeDistributionBase
 
     public override Version? Version { get; }
 
+    /// <summary>Squirrel reads its panel looks and per-app behavior from squirrel.yaml.</summary>
+    public override string? UiConfigFile => "squirrel.yaml";
+
     public override bool CanDeploy => File.Exists(_binaryPath);
 
     public override Task DeployAsync(CancellationToken cancellationToken = default)

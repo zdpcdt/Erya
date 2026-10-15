@@ -73,7 +73,10 @@ public sealed class DistributionLocatorTests : IDisposable
     public void Squirrel_locator_ignores_env_pointing_at_a_non_app_directory()
     {
         Environment.SetEnvironmentVariable(SquirrelLocator.InstallDirEnv, _root); // no Contents/MacOS/Squirrel
-        Assert.Null(new SquirrelLocator().Locate());
+        // The env dir must be ignored; on a mac that really has Squirrel the
+        // locator then legitimately finds the system install, so only assert
+        // that the bogus dir never wins.
+        Assert.NotEqual(_root, new SquirrelLocator().Locate()?.InstallDir);
     }
 
     // ---------- Linux fcitx5-rime ----------

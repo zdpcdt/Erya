@@ -13,7 +13,9 @@ public abstract class RimeDistributionBase : IRimeDistribution
     /// <summary>
     /// Extra directories scanned for <c>*.schema.yaml</c> after the user dir
     /// (distribution-bundled schemas). Missing directories are skipped by the
-    /// catalog, so candidates may be listed unconditionally.
+    /// catalog, so candidates may be listed unconditionally. The same
+    /// directories also hold shared base config (<c>default.yaml</c> & co.)
+    /// resolved by <see cref="GetConfigStore"/>.
     /// </summary>
     protected string[] SchemaSearchDirs { get; init; } = [];
 
@@ -26,6 +28,11 @@ public abstract class RimeDistributionBase : IRimeDistribution
     public virtual string? InstallDir => null;
 
     public abstract string UserDir { get; }
+
+    /// <summary>Overridden by frontends that read an appearance YAML (squirrel/weasel).</summary>
+    public virtual string? UiConfigFile => null;
+
+    public RimeConfigStore GetConfigStore() => new(UserDir, SchemaSearchDirs);
 
     public abstract bool CanDeploy { get; }
 
