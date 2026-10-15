@@ -50,11 +50,86 @@ public partial class SchemaManagerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorMessage = "";
 
+    /// <summary>Inputs of the 添加新方案 form.</summary>
+    [ObservableProperty]
+    private string _newSchemaId = "";
+
+    [ObservableProperty]
+    private string _newSchemaName = "";
+
     public bool HasHint => Hint.Length > 0;
 
     public bool HasError => ErrorMessage.Length > 0;
 
     public bool HasSchemas => Schemas.Count > 0;
+
+    /// <summary>已启用方案间的顺序即 Ctrl+` 切换顺序。</summary>
+    [RelayCommand]
+    private void MoveUp(SchemaItemViewModel? item)
+    {
+        SwapWithNeighbor(item, direction: -1);
+        OnPropertyChanged(nameof(HasSchemas));
+    }
+
+    [RelayCommand]
+    private void MoveDown(SchemaItemViewModel? item) => SwapWithNeighbor(item, direction: 1);
+
+    /// <summary>
+    /// Swaps <paramref name="item"/> with the previous/next <b>selected</b>
+    /// row, skipping unchecked rows in between — only the relative order of
+    /// enabled schemas reaches the saved schema_list.
+    /// </summary>
+    private void SwapWithNeighbor(SchemaItemViewModel? item, int direction)
+    {
+        if (item is null || !item.IsSelected || IsLoading) return;
+
+        int index = Schemas.IndexOf(item);
+        if (index < 0) return;
+
+        int neighbor = index + direction;
+        while (neighbor >= 0 && neighbor < Schemas.Count && !Schemas[neighbor].IsSelected)
+            neighbor += direction;
+        if (neighbor < 0 || neighbor >= Schemas.Count) return;
+
+        Schemas.Move(index, neighbor);
+    }
+
+    [RelayCommand]
+    private async Task AddSchemaAsync()
+    {
+        if (_distribution is null || IsLoading || IsBusy) return;
+
+        var id = NewSchemaId.Trim();
+        if (id.Length == 0)
+        {
+            ErrorMessage = "请输入方案 ID（如 my_pinyin）。";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            ErrorMessage = "";
+            await _distribution.CreateSchemaStubAsync(id, NewSchemaName.Trim());
+            NewSchemaId = "";
+            NewSchemaName = "";
+            await LoadAsync();
+
+            // Offer the fresh schema pre-checked; saving is still explicit.
+            var created = Schemas.FirstOrDefault(s => s.Id == id);
+            if (created is not null) created.IsSelected = true;
+
+            AppNotifications.Toast($"已创建 {id}.schema.yaml（回声脚手架），勾选保存后即可启用。", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"创建方案失败：{ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     [RelayCommand]
     private async Task LoadAsync()
