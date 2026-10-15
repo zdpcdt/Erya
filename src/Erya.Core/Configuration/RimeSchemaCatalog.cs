@@ -81,6 +81,44 @@ public sealed class RimeSchemaCatalog
         => DefaultCustomYamlEditor.WriteSchemaListPatch(_userDir, schemaIds);
 
     /// <summary>
+    /// Creates a minimal working <c>&lt;id&gt;.schema.yaml</c> in the user
+    /// directory — an echo scaffold that deploys cleanly and can be filled in
+    /// (or replaced by a real schema) later. Returns the file path.
+    /// </summary>
+    public string CreateSchemaStub(string schemaId, string name)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(schemaId, @"^[A-Za-z0-9_][A-Za-z0-9_.\-]*$"))
+            throw new InvalidOperationException(
+                $"方案 ID 只能包含字母、数字、下划线、点、横线，且以字母或数字开头：{schemaId}");
+
+        var path = Path.Combine(_userDir, $"{schemaId}.schema.yaml");
+        if (File.Exists(path) || DiscoverSchemaNames().ContainsKey(schemaId))
+            throw new InvalidOperationException($"方案已存在：{schemaId}.schema.yaml");
+
+        Directory.CreateDirectory(_userDir);
+        var safeName = string.IsNullOrWhiteSpace(name) ? schemaId : name;
+        File.WriteAllText(path, $"""
+            # {safeName} —— 由「尔雅」创建的基础方案文件，可按需修改
+            schema:
+              schema_id: {schemaId}
+              name: {safeName}
+              version: "1.0"
+              author_list:
+                - 尔雅 Erya
+            engine:
+              processors:
+                - ascii_composer
+                - express_editor
+              segmentors:
+                - abc_segmentor
+                - fallback_segmentor
+              translators:
+                - echo_translator
+            """);
+        return path;
+    }
+
+    /// <summary>
     /// Scans <c>*.schema.yaml</c> files across all search directories and maps
     /// schema id → display name (<c>schema/name</c> in the file). The user
     /// directory is scanned first, so a customized local copy shadows the
