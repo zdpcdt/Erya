@@ -32,6 +32,9 @@ public sealed class WeaselDistribution : RimeDistributionBase
     public override string UserDir => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Rime");
 
+    /// <summary>Weasel reads its panel looks and per-app behavior from weasel.yaml.</summary>
+    public override string? UiConfigFile => "weasel.yaml";
+
     public override bool CanDeploy => DeployerPath is not null && File.Exists(DeployerPath);
 
     public override Task DeployAsync(CancellationToken cancellationToken = default)
