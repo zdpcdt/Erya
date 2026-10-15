@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
+        xmlns:vm="clr-namespace:Erya.Controls.Demo"
+        mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="860"
+        x:Class="Erya.Controls.Demo.MainWindow"
+        x:DataType="vm:DemoViewModel"
+        Title="Erya.Controls Demo"
+        Width="720" Height="860"
+        MinWidth="560" MinHeight="480">
+
+    <ScrollViewer Padding="24,18,24,24">
+        <StackPanel Spacing="20" MaxWidth="620" HorizontalAlignment="Stretch">
+
+            <!--  右侧操作区：常用输入控件  -->
+            <c:CellGroup Header="基础输入" Description="左侧说明、右侧操作；行本身不响应点击（桌面习惯）。">
+                <c:Cell Content="切换时提交英文" Description="中英切换瞬间直接上屏对应文字">
+                    <c:Cell.RightContent>
+                        <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
+                                      OnContent="开" OffContent="关"
+                                      IsChecked="{Binding AutoCommitAscii}" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Content="候选词个数" Description="清空输入试试：错误只在右侧显示红色感叹号，悬停可看原因">
+                    <c:Cell.RightContent>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <NumericUpDown Name="PageSizeBox"
+                                           Classes="silent-errors"
+                                           Value="{Binding PageSize}"
+                                           Minimum="3" Maximum="10"
+                                           Width="130" HorizontalAlignment="Right" />
+                            <c:ValidationErrorIcon Target="{Binding #PageSizeBox}"
+                                                    VerticalAlignment="Center" />
+                        </StackPanel>
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Content="不可用状态" Description="IsEnabled=False 时整行弱化" IsEnabled="False" Note="跟随系统">
+                    <c:Cell.RightContent>
+                        <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
+                                      OnContent="开" OffContent="关"
+                                      IsChecked="True" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
+
+            <!--  更多输入控件：TextBox / ComboBox / Slider  -->
+            <c:CellGroup Header="更多输入控件" Description="操作区可以放任何控件：文本、下拉、滑块……">
+                <c:Cell Content="自定义短语" Description="以指定前缀开头时进入简单拼字模式">
+                    <c:Cell.RightContent>
+                        <TextBox Text="{Binding CustomPhrase}" PlaceholderText="/sl"
+                                 Width="180" HorizontalAlignment="Right" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Content="候选排序">
+                    <c:Cell.RightContent>
+                        <ComboBox SelectedIndex="0" MinWidth="150" HorizontalAlignment="Right">
+                            <ComboBoxItem Content="按输入频率" />
+                            <ComboBoxItem Content="按字典序" />
+                            <ComboBoxItem Content="最近优先" />
+                        </ComboBox>
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Content="候选文字字号" Note="{Binding FontPointSummary}">
+                    <c:Cell.RightContent>
+                        <Slider Minimum="9" Maximum="28" Value="{Binding FontPoint}"
+                                Width="180" HorizontalAlignment="Right" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
+
+            <!--  行内详情（点开）：每个选项占一排，参考 Windows 设置  -->
+            <c:CellGroup Header="行内详情" Description="点击行首展开/收起；详情区域内的点击与悬停不会收起/高亮整行。">
+                <c:Cell Content="模糊音"
+                        Description="z↔zh、c↔ch、s↔sh，前后鼻音等"
+                        Note="{Binding FuzzySummary}">
+                    <c:Cell.Detail>
+                        <StackPanel Spacing="10">
+                            <CheckBox Content="z / zh（平翘舌）" IsChecked="{Binding FuzzyZh}" />
+                            <CheckBox Content="c / ch" />
+                            <CheckBox Content="s / sh" />
+                            <CheckBox Content="an / ang（前后鼻音）" IsChecked="{Binding FuzzyNasal}" />
+                            <CheckBox Content="en / eng" />
+                            <CheckBox Content="in / ing" />
+                            <CheckBox Content="h / f" IsChecked="{Binding FuzzyHF}" />
+                            <CheckBox Content="l / n" />
+                        </StackPanel>
+                    </c:Cell.Detail>
+                </c:Cell>
+                <c:Cell Content="初始输入状态" Description="每个选项一排的单选示例">
+                    <c:Cell.Detail>
+                        <StackPanel Spacing="10">
+                            <RadioButton Content="中文" GroupName="demo-initial" IsChecked="True" />
+                            <RadioButton Content="英文" GroupName="demo-initial" />
+                        </StackPanel>
+                    </c:Cell.Detail>
+                </c:Cell>
+                <c:Cell Content="用户词库" Description="详情里放任意操作控件">
+                    <c:Cell.Detail>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="打开用户目录" />
+                            <Button Content="导出词条" />
+                        </StackPanel>
+                    </c:Cell.Detail>
+                </c:Cell>
+            </c:CellGroup>
+
+            <!--  跳转行 / 图标  -->
+            <c:CellGroup Header="更多" Description="ShowChevron + Command 即跳转行；Icon 直接给 Semi 图标几何。">
+                <c:Cell Content="当前方案"
+                        Icon="{DynamicResource SemiIconLanguage}"
+                        Note="明月拼音·简化字" ShowChevron="True" />
+                <c:Cell Content="高级设置"
+                        Icon="{DynamicResource SemiIconConfigStroked}"
+                        Description="键位、日志、部署等进阶选项" ShowChevron="True" />
+                <c:Cell Content="关于"
+                        Icon="{DynamicResource SemiIconInfoCircle}"
+                        Note="v0.1.0" ShowChevron="True" />
+            </c:CellGroup>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>

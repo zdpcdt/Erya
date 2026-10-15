@@ -1,0 +1,198 @@
+<!--
+    Cell / CellGroup / ValidationErrorIcon 的 Semi 风格默认样式。颜色/圆角/字号
+    取自 Semi 主题 token（SemiColor* / SemiBorderRadius* / SemiFontSize*），跟随
+    浅色/深色变体自动切换。使用方需要在 Application 资源中合并本字典，并在
+    Application.Styles 引入 CellStyles.axaml（行间分隔线、方位圆角、silent-errors）。
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Erya.Controls">
+    <Design.PreviewWith>
+        <StackPanel Width="420" Margin="20" Spacing="16">
+            <c:CellGroup Header="基础" Description="左说明右操作">
+                <c:Cell Content="普通行" Description="右侧操作区示例" ShowChevron="True" Note="值" />
+                <c:Cell Content="模糊音" Description="点开行内详情">
+                    <c:Cell.Detail>
+                        <StackPanel Spacing="8">
+                            <CheckBox Content="平翘舌" IsChecked="True" />
+                            <CheckBox Content="前后鼻音" />
+                        </StackPanel>
+                    </c:Cell.Detail>
+                </c:Cell>
+            </c:CellGroup>
+        </StackPanel>
+    </Design.PreviewWith>
+
+    <!--  分组卡片：卡片圆角由 CornerRadius 决定，行按方位继承（CellStyles.axaml）  -->
+    <ControlTheme x:Key="{x:Type c:CellGroup}" TargetType="c:CellGroup">
+        <Setter Property="CornerRadius" Value="{DynamicResource SemiBorderRadiusMedium}" />
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:CellGroup">
+                <StackPanel Spacing="6">
+                    <ContentPresenter Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                      FontSize="13" FontWeight="SemiBold"
+                                      Foreground="{DynamicResource SemiColorText2}"
+                                      IsVisible="{TemplateBinding Header, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <ContentPresenter Content="{TemplateBinding Description}"
+                                      ContentTemplate="{TemplateBinding DescriptionTemplate}"
+                                      FontSize="12" TextWrapping="Wrap"
+                                      Foreground="{DynamicResource SemiColorText3}"
+                                      IsVisible="{TemplateBinding Description, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <Border Background="{DynamicResource SemiColorBackground1}"
+                            BorderBrush="{DynamicResource SemiColorBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" />
+                    </Border>
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <!--  单行  -->
+    <ControlTheme x:Key="{x:Type c:Cell}" TargetType="c:Cell">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource SemiBorderRadiusMedium}" />
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:Cell">
+                <StackPanel>
+                    <Border Name="PART_Root"
+                            MinHeight="{TemplateBinding MinHeight}"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+
+                            <ContentPresenter Name="PART_Icon"
+                                              Grid.Column="0"
+                                              Width="20" Height="20" Margin="0,0,12,0"
+                                              Content="{TemplateBinding Icon}"
+                                              ContentTemplate="{TemplateBinding IconTemplate}"
+                                              Foreground="{DynamicResource SemiColorText1}"
+                                              IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <ContentPresenter.DataTemplates>
+                                    <DataTemplate DataType="Geometry">
+                                        <PathIcon Theme="{DynamicResource InnerPathIcon}"
+                                                  Data="{Binding}"
+                                                  Foreground="{DynamicResource SemiColorText1}" />
+                                    </DataTemplate>
+                                </ContentPresenter.DataTemplates>
+                            </ContentPresenter>
+
+                            <StackPanel Grid.Column="1" Margin="0,0,12,0" Spacing="2" VerticalAlignment="Center">
+                                <ContentPresenter Name="PART_Content"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  FontSize="14"
+                                                  Foreground="{DynamicResource SemiColorText0}"
+                                                  IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <ContentPresenter Name="PART_Description"
+                                                  Content="{TemplateBinding Description}"
+                                                  ContentTemplate="{TemplateBinding DescriptionTemplate}"
+                                                  FontSize="12" TextWrapping="Wrap"
+                                                  Foreground="{DynamicResource SemiColorText2}"
+                                                  IsVisible="{TemplateBinding Description, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <ContentPresenter Name="PART_Note"
+                                                  Content="{TemplateBinding Note}"
+                                                  ContentTemplate="{TemplateBinding NoteTemplate}"
+                                                  FontSize="14"
+                                                  Foreground="{DynamicResource SemiColorText2}"
+                                                  IsVisible="{TemplateBinding Note, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <ContentPresenter Name="PART_Right"
+                                                  Content="{TemplateBinding RightContent}"
+                                                  ContentTemplate="{TemplateBinding RightContentTemplate}"
+                                                  IsVisible="{TemplateBinding RightContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <!--  InnerPathIcon：模板内定尺寸渲染，展开时旋转 180°（位置不漂移）  -->
+                                <PathIcon Name="PART_Chevron"
+                                          Theme="{DynamicResource InnerPathIcon}"
+                                          Data="{DynamicResource SemiIconChevronRightStroked}"
+                                          Foreground="{DynamicResource SemiColorText3}"
+                                          IsVisible="False"
+                                          RenderTransformOrigin="50%,50%">
+                                    <PathIcon.RenderTransform>
+                                        <RotateTransform Angle="0" />
+                                    </PathIcon.RenderTransform>
+                                </PathIcon>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!--  点开的详细设置：顶部分隔线 + 内容区；区域内的点击不会收缩（见 Cell.cs）  -->
+                    <Border Name="PART_DetailHost"
+                            BorderBrush="{DynamicResource SemiColorBorder}"
+                            BorderThickness="0,1,0,0"
+                            IsVisible="{TemplateBinding IsExpanded}">
+                        <ContentPresenter Name="PART_Detail"
+                                          Margin="16,12"
+                                          Content="{TemplateBinding Detail}"
+                                          ContentTemplate="{TemplateBinding DetailTemplate}" />
+                    </Border>
+
+                    <!--  组内分隔线（默认隐藏；可见性由 CellStyles.axaml 的应用级样式控制）  -->
+                    <Border Name="PART_Separator"
+                            Height="1"
+                            Background="{DynamicResource SemiColorBorder}" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+
+        <!--  悬停/按压高亮：指针在详情区域内时不显示（:over-detail 由 Cell.cs 维护）  -->
+        <Style Selector="^:pointerover:not(:over-detail) /template/ Border#PART_Root">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+        </Style>
+        <Style Selector="^:pressed:not(:over-detail) /template/ Border#PART_Root">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="^:focus-visible /template/ Border#PART_Root">
+            <Setter Property="BorderBrush" Value="{DynamicResource SemiColorFocusBorder}" />
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <!--  展开时行下方连着详情区，高亮用方角  -->
+        <Style Selector="^:expanded /template/ Border#PART_Root">
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <!--  分隔线默认隐藏：默认值走样式而非本地值，应用级样式才能覆盖  -->
+        <Style Selector="^ /template/ Border#PART_Separator">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="^[ShowChevron=True] /template/ PathIcon#PART_Chevron">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="^:has-detail /template/ PathIcon#PART_Chevron">
+            <Setter Property="IsVisible" Value="True" />
+            <!--  可展开行：收起时向下（点开），展开时旋转 180° 向上（收起）  -->
+            <Setter Property="Data" Value="{DynamicResource SemiIconChevronDownStroked}" />
+        </Style>
+        <Style Selector="^:has-detail:expanded /template/ PathIcon#PART_Chevron">
+            <Setter Property="RenderTransform">
+                <RotateTransform Angle="180" />
+            </Setter>
+        </Style>
+    </ControlTheme>
+
+    <!--  校验错误指示器：无错时零占位，有错时显示红色感叹号 + Tooltip  -->
+    <ControlTheme x:Key="{x:Type c:ValidationErrorIcon}" TargetType="c:ValidationErrorIcon">
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:ValidationErrorIcon">
+                <Border Name="PART_Root"
+                        Background="Transparent"
+                        IsVisible="{TemplateBinding HasErrors}"
+                        ToolTip.Tip="{TemplateBinding Message}">
+                    <PathIcon Theme="{DynamicResource InnerPathIcon}"
+                              Data="{DynamicResource SemiIconAlertCircle}"
+                              Foreground="{DynamicResource SemiColorDanger}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

@@ -12,6 +12,8 @@
                 <!-- Semi 图标几何：PathIcon Data={StaticResource SemiIcon*} 使用 -->
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/StrokedIcons.axaml" />
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
+                <!-- Cell / CellGroup（设置中心风格行控件，Semi 风格；示例见 demo/Erya.Controls.Demo） -->
+                <ResourceInclude Source="avares://Erya.Controls/CellTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
@@ -19,5 +21,6 @@
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
+        <StyleInclude Source="avares://Erya.Controls/CellStyles.axaml" />
     </Application.Styles>
 </Application>
