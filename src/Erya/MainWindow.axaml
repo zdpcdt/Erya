@@ -14,6 +14,12 @@
               Width="1040" Height="680"
               MinWidth="860" MinHeight="560">
 
+    <!-- Ctrl+R on Windows/Linux, Cmd+R on macOS -->
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding DeployCommand}" />
+        <KeyBinding Gesture="Meta+R" Command="{Binding DeployCommand}" />
+    </Window.KeyBindings>
+
     <Panel>
         <Grid ColumnDefinitions="Auto,*">
 
