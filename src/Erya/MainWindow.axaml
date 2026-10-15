@@ -4,6 +4,7 @@
               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
               xmlns:u="https://irihi.tech/ursa"
               xmlns:vm="clr-namespace:Erya.ViewModels"
+              xmlns:settings="clr-namespace:Erya.ViewModels.Settings"
               xmlns:views="clr-namespace:Erya.Views"
               mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
               x:Class="Erya.MainWindow"
@@ -56,6 +57,9 @@
                         </DataTemplate>
                         <DataTemplate DataType="vm:SchemaManagerViewModel">
                             <views:SchemaManagerPage />
+                        </DataTemplate>
+                        <DataTemplate DataType="settings:SettingsEditorViewModel">
+                            <views:SettingsPage />
                         </DataTemplate>
                         <DataTemplate DataType="vm:BackupRestoreViewModel">
                             <views:BackupRestorePage />

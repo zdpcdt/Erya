@@ -1,0 +1,186 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="620"
+             x:Class="Erya.Views.SettingsPage"
+             x:DataType="sf:SettingsEditorViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
+            <u:IconButton Grid.Column="1" VerticalAlignment="Top"
+                          Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置">
+                <PathIcon Width="16" Height="16" Data="{StaticResource SemiIconRefresh}" />
+            </u:IconButton>
+        </Grid>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="1" Margin="0,12" IsVisible="{Binding IsSupported}">
+            <ItemsControl ItemsSource="{Binding Sections}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="sf:SettingsSectionViewModel">
+                        <StackPanel Spacing="4" Margin="0,10">
+                            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="Bold" />
+                            <TextBlock Text="{Binding Description}" Opacity="0.55" FontSize="12"
+                                       IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding Fields}" Margin="0,6,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="sf:SettingsFieldViewModel">
+                                        <Grid ColumnDefinitions="270,*,Auto" MinHeight="34" Margin="0,7">
+
+                                            <!-- Label + description + patch badge -->
+                                            <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,16,0" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                    <Border IsVisible="{Binding IsModified}" Background="#4C7BE4D8"
+                                                            CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
+                                                        <TextBlock Text="已修改" FontSize="10" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Description}" Opacity="0.5" FontSize="11"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                            </StackPanel>
+
+                                            <!-- Editor controls by field type -->
+                                            <ContentControl Grid.Column="1" VerticalAlignment="Center">
+                                                <ContentControl.DataTemplates>
+                                                    <DataTemplate x:DataType="sf:ToggleFieldViewModel">
+                                                        <ToggleSwitch IsChecked="{Binding IsChecked}" />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:NumberFieldViewModel">
+                                                        <NumericUpDown Value="{Binding Value}"
+                                                                       Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                       Increment="{Binding Step}" FormatString="{Binding Format}"
+                                                                       Width="150" HorizontalAlignment="Left" />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:TextFieldViewModel">
+                                                        <TextBox Text="{Binding Text}" Watermark="{Binding Placeholder}"
+                                                                 Width="260" HorizontalAlignment="Left" />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:ChoiceFieldViewModel">
+                                                        <ComboBox ItemsSource="{Binding Options}"
+                                                                  SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                                  MinWidth="170" HorizontalAlignment="Left" />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:ListFieldViewModel">
+                                                        <StackPanel Spacing="5">
+                                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate x:DataType="x:String">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                                                            <TextBox Text="{Binding Mode=TwoWay}" MinWidth="170"
+                                                                                     Watermark="如 Control+grave / F4" />
+                                                                            <Button Content="✕" Classes="danger" Padding="8,2"
+                                                                                    Command="{Binding $parent[ContentControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
+                                                                                    CommandParameter="{Binding}" />
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                <TextBox Text="{Binding NewItem, Mode=TwoWay}" MinWidth="170"
+                                                                         Watermark="新增快捷键，如 Control+space" Name="NewItem" />
+                                                                <Button Content="添加" Command="{Binding AddItemCommand}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:KeyMappingFieldViewModel">
+                                                        <ItemsControl ItemsSource="{Binding Rows}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="sf:KeyMappingRowViewModel">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
+                                                                        <TextBlock Text="{Binding Key}" Width="110"
+                                                                                   VerticalAlignment="Center" Opacity="0.7" />
+                                                                        <ComboBox ItemsSource="{Binding $parent[ContentControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
+                                                                                  SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                                                  MinWidth="170" HorizontalAlignment="Left" />
+                                                                    </StackPanel>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:CheckListFieldViewModel">
+                                                        <ItemsControl ItemsSource="{Binding Options}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="sf:CheckOptionViewModel">
+                                                                    <CheckBox Content="{Binding Value}" IsChecked="{Binding IsChecked}"
+                                                                              Margin="0,2,16,2" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="sf:AppOptionsFieldViewModel">
+                                                        <StackPanel Spacing="6">
+                                                            <ItemsControl ItemsSource="{Binding Rows}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
+                                                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,3">
+                                                                            <TextBox Grid.Column="0" Text="{Binding AppId, Mode=TwoWay}"
+                                                                                     Watermark="应用标识（macOS Bundle ID / Windows exe 名）"
+                                                                                     MinWidth="220" HorizontalAlignment="Left" />
+                                                                            <CheckBox Grid.Column="1" Content="默认英文" IsChecked="{Binding AsciiMode}"
+                                                                                      Margin="14,0,0,0" VerticalAlignment="Center" />
+                                                                            <CheckBox Grid.Column="2" Content="Vim 模式" IsChecked="{Binding VimMode}"
+                                                                                      Margin="14,0,0,0" VerticalAlignment="Center" />
+                                                                            <Button Grid.Column="3" Content="删除" Classes="danger"
+                                                                                    Margin="14,0,0,0"
+                                                                                    Command="{Binding $parent[ContentControl].((sf:AppOptionsFieldViewModel)DataContext).RemoveRowCommand}"
+                                                                                    CommandParameter="{Binding}" />
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Button Content="添加应用" HorizontalAlignment="Left"
+                                                                    Command="{Binding AddRowCommand}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ContentControl.DataTemplates>
+                                            </ContentControl>
+
+                                            <!-- Per-field patch undo -->
+                                            <Button Grid.Column="2" Content="撤销修改" FontSize="11" Padding="8,2"
+                                                    Margin="12,0,0,0" VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsModified}"
+                                                    Command="{Binding UndoPatchCommand}" CommandParameter="{Binding}"
+                                                    ToolTip.Tip="从补丁中删除此键，恢复发行版默认值" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- States -->
+        <StackPanel Grid.Row="1" Margin="0,14" Spacing="10" IsVisible="{Binding !IsSupported}">
+            <u:Banner Type="Information" Content="{Binding UnsupportedReason}" ShowIcon="True" />
+        </StackPanel>
+        <TextBlock Grid.Row="1" Text="正在读取设置…" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
+            <u:Banner Grid.Row="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" Margin="0,0,0,10" />
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                <Button Content="还原更改" Command="{Binding RevertCommand}" IsEnabled="{Binding IsDirty}" />
+                <Button Content="保存并部署" Classes="primary" MinWidth="108"
+                        Command="{Binding SaveAndDeployCommand}"
+                        IsEnabled="{Binding IsDirty}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

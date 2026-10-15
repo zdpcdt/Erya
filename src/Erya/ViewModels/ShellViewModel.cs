@@ -5,6 +5,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Erya.Core.Distributions;
 using Erya.Services;
+using Erya.ViewModels.Settings;
 
 namespace Erya.ViewModels;
 
@@ -19,9 +20,11 @@ public partial class ShellViewModel : ObservableObject
 {
     private readonly MainViewModel _overview;
     private readonly SchemaManagerViewModel _schemas;
+    private readonly SettingsEditorViewModel _inputSettings;
+    private readonly SettingsEditorViewModel _appearance;
     private readonly BackupRestoreViewModel _backup;
-    private bool _schemasLoaded;
-    private bool _backupLoaded;
+    private readonly Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
+    private IRimeDistribution? _distribution;
 
     public IReadOnlyList<NavItem> NavItems { get; }
 
@@ -37,15 +40,24 @@ public partial class ShellViewModel : ObservableObject
     public ShellViewModel(DistributionManager distributions)
     {
         _overview = new MainViewModel(distributions);
-        _schemas = new SchemaManagerViewModel(_overview.Distribution);
-        _backup = new BackupRestoreViewModel(_overview.Distribution);
+        _distribution = _overview.Distribution;
+        _schemas = new SchemaManagerViewModel(_distribution);
+        _inputSettings = new SettingsEditorViewModel(_distribution, "default");
+        _appearance = new SettingsEditorViewModel(_distribution, "ui");
+        _backup = new BackupRestoreViewModel(_distribution);
 
         NavItems =
         [
             new NavItem("overview", "概览", Icon("SemiIconHome")),
             new NavItem("schemas", "方案管理", Icon("SemiIconCheckList")),
+            new NavItem("inputSettings", "输入设置", Icon("SemiIconSetting")),
+            new NavItem("appearance", "外观设置", Icon("SemiIconColorPalette")),
             new NavItem("backup", "备份恢复", Icon("SemiIconRestore")),
         ];
+        _lazyPages["schemas"] = (false, _schemas);
+        _lazyPages["inputSettings"] = (false, _inputSettings);
+        _lazyPages["appearance"] = (false, _appearance);
+        _lazyPages["backup"] = (false, _backup);
 
         // Two-way binding pushes this into NavMenu, selecting the item visually.
         _selectedNav = NavItems[0];
@@ -58,32 +70,30 @@ public partial class ShellViewModel : ObservableObject
         if (value is null) return;
 
         PageTitle = value.Header;
-        switch (value.Key)
+        if (value.Key == "overview")
         {
-            case "overview":
-                CurrentPage = _overview;
-                break;
-            case "schemas":
-                if (!_schemasLoaded)
-                {
-                    _schemasLoaded = true;
-                    _schemas.LoadCommand.Execute(null);
-                }
-                CurrentPage = _schemas;
-                break;
-            case "backup":
-                if (!_backupLoaded)
-                {
-                    _backupLoaded = true;
-                    _backup.LoadCommand.Execute(null);
-                }
-                CurrentPage = _backup;
-                break;
-            default:
-                // Placeholder for pages not yet implemented — acknowledge instead of switching.
-                AppNotifications.Toast("「" + value.Header + "」即将上线。", NotificationType.Information);
-                break;
+            CurrentPage = _overview;
+            return;
         }
+
+        if (!_lazyPages.TryGetValue(value.Key, out var entry)) return;
+        if (!entry.Loaded)
+        {
+            _lazyPages[value.Key] = (true, entry.Page);
+            switch (entry.Page)
+            {
+                case SchemaManagerViewModel schemas:
+                    schemas.LoadCommand.Execute(null);
+                    break;
+                case SettingsEditorViewModel settings:
+                    settings.LoadCommand.Execute(null);
+                    break;
+                case BackupRestoreViewModel backup:
+                    backup.LoadCommand.Execute(null);
+                    break;
+            }
+        }
+        CurrentPage = entry.Page;
     }
 
     private static Geometry? Icon(string resourceKey)
