@@ -11,13 +11,20 @@ using Erya.ViewModels.Settings;
 using Ursa.Controls;
 using Xunit;
 
+// 挂上真正的 Erya App：App.axaml 的资源与样式（Semi 主题、图标、Cell 主题）
+// 才会在 headless 会话中生效，控件模板才能套用。
+[assembly: AvaloniaTestApplication(typeof(Erya.UiTests.TestAppBuilder))]
+
 namespace Erya.UiTests;
 
 public static class TestAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UseHeadless(new AvaloniaHeadlessPlatformOptions());
+            // UseHeadlessDrawing=false + UseSkia：走真实 CPU Skia 渲染，测试里才能
+            // 用 RenderTargetBitmap 导出控件截图做视觉验收（Skia 同时提供字体管理器）。
+            .UseSkia()
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }
 
 /// <summary>
@@ -28,12 +35,14 @@ public static class TestAppBuilder
 /// </summary>
 public class ShellNavTests
 {
-    private static ResourceDictionary Icons(params string[] keys)
+    public static ResourceDictionary IconDictionary(params string[] keys)
     {
         var icons = new ResourceDictionary();
         foreach (var key in keys) icons[key] = new StreamGeometry();
         return icons;
     }
+
+    private static ResourceDictionary Icons(params string[] keys) => IconDictionary(keys);
 
     private static readonly string[] AllIconKeys =
     [

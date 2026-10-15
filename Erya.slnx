@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="src/Erya.Core/Erya.Core.csproj" />
+  <Project Path="src/Erya.Controls/Erya.Controls.csproj" />
   <Project Path="src/Erya/Erya.csproj" />
+  <Project Path="demo/Erya.Controls.Demo/Erya.Controls.Demo.csproj" />
   <Project Path="tests/Erya.Core.Tests/Erya.Core.Tests.csproj" />
   <Project Path="tests/Erya.UiTests/Erya.UiTests.csproj" />
 </Solution>

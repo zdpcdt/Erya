@@ -1,0 +1,47 @@
+<!--
+    Cell 的跨控件样式（ControlTheme 内不允许写后代选择器，故独立成文件）。
+    使用方需要在 Application.Styles 中引入本文件。内容：
+    1. 组内相邻行之间显示分隔线，最后一行不画；
+    2. 行的悬停/按压圆角按首行/末行方位继承分组卡片圆角（CornerRadiusMixerConverter）；
+    3. silent-errors：屏蔽 NumericUpDown / TextBox 内建的红底+错误文字 UI，
+       配合 ValidationErrorIcon 使用（错误改为右侧红色感叹号）。
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="clr-namespace:Erya.Controls"
+        xmlns:iri="https://irihi.tech/shared">
+
+    <!--  1. 行间分隔线：组内显示，最后一行隐藏  -->
+    <Style Selector="c|CellGroup c|Cell /template/ Border#PART_Separator">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="c|CellGroup c|Cell:nth-last-child(1) /template/ Border#PART_Separator">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!--  2. 行圆角与卡片边缘对齐：首行只圆上方、末行只圆下方、中间行方角、唯一行全圆  -->
+    <Style Selector="c|CellGroup c|Cell">
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="c|CellGroup c|Cell:nth-child(1)">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter Top}}" />
+    </Style>
+    <Style Selector="c|CellGroup c|Cell:nth-last-child(1)">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter Bottom}}" />
+    </Style>
+    <Style Selector="c|CellGroup c|Cell:nth-child(1):nth-last-child(1)">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter All}}" />
+    </Style>
+
+    <!--  3. silent-errors：内建 DataValidationErrors 换成 Semi 的静默主题（不画错误 UI）；
+         控件本身的 :error 红底样式仍在，如需完全安静可再覆盖  -->
+    <Style Selector="NumericUpDown.silent-errors /template/ DataValidationErrors">
+        <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+    </Style>
+    <Style Selector="TextBox.silent-errors /template/ DataValidationErrors">
+        <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+    </Style>
+</Styles>

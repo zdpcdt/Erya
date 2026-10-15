@@ -22,5 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Erya.Core\Erya.Core.csproj" />
+    <ProjectReference Include="..\Erya.Controls\Erya.Controls.csproj" />
   </ItemGroup>
 </Project>
