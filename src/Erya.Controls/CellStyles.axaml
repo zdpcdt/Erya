@@ -11,15 +11,23 @@
         xmlns:c="clr-namespace:Erya.Controls"
         xmlns:iri="https://irihi.tech/shared">
 
-    <!--  1. 行间分隔线：组内显示，最后一行隐藏  -->
+    <!--  1. 行间分隔线：组内显示，最后一行隐藏（直接子行 + ItemsSource 生成两种形态）  -->
     <Style Selector="c|CellGroup c|Cell /template/ Border#PART_Separator">
         <Setter Property="IsVisible" Value="True" />
     </Style>
     <Style Selector="c|CellGroup c|Cell:nth-last-child(1) /template/ Border#PART_Separator">
         <Setter Property="IsVisible" Value="False" />
     </Style>
+    <!--  ItemsSource 生成的行：容器是 ContentPresenter，Cell 包在里面  -->
+    <Style Selector="c|CellGroup ContentPresenter c|Cell /template/ Border#PART_Separator">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="c|CellGroup ContentPresenter:nth-last-child(1) c|Cell /template/ Border#PART_Separator">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
 
-    <!--  2. 行圆角与卡片边缘对齐：首行只圆上方、末行只圆下方、中间行方角、唯一行全圆  -->
+    <!--  2. 行圆角与卡片边缘对齐：首行只圆上方、末行只圆下方、中间行方角、唯一行全圆
+          （同样区分直接子行与 presenter 包裹行两种形态）  -->
     <Style Selector="c|CellGroup c|Cell">
         <Setter Property="CornerRadius" Value="0" />
     </Style>
@@ -32,6 +40,21 @@
                 Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter Bottom}}" />
     </Style>
     <Style Selector="c|CellGroup c|Cell:nth-child(1):nth-last-child(1)">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter All}}" />
+    </Style>
+    <Style Selector="c|CellGroup ContentPresenter c|Cell">
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="c|CellGroup ContentPresenter:nth-child(1) c|Cell">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter Top}}" />
+    </Style>
+    <Style Selector="c|CellGroup ContentPresenter:nth-last-child(1) c|Cell">
+        <Setter Property="CornerRadius"
+                Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter Bottom}}" />
+    </Style>
+    <Style Selector="c|CellGroup ContentPresenter:nth-child(1):nth-last-child(1) c|Cell">
         <Setter Property="CornerRadius"
                 Value="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType={x:Type c:CellGroup}}, Converter={iri:CornerRadiusMixerConverter All}}" />
     </Style>
