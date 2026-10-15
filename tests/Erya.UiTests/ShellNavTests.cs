@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Erya;
 using Erya.Core.Distributions;
 using Erya.ViewModels;
+using Erya.ViewModels.Settings;
 using Ursa.Controls;
 using Xunit;
 
@@ -27,16 +28,23 @@ public static class TestAppBuilder
 /// </summary>
 public class ShellNavTests
 {
+    private static ResourceDictionary Icons(params string[] keys)
+    {
+        var icons = new ResourceDictionary();
+        foreach (var key in keys) icons[key] = new StreamGeometry();
+        return icons;
+    }
+
+    private static readonly string[] AllIconKeys =
+    [
+        "SemiIconHome", "SemiIconCheckList", "SemiIconSetting",
+        "SemiIconColorPalette", "SemiIconRestore",
+    ];
+
     [AvaloniaFact]
     public void Nav_selection_binds_and_icons_resolve()
     {
-        var icons = new ResourceDictionary
-        {
-            ["SemiIconHome"] = new StreamGeometry(),
-            ["SemiIconCheckList"] = new StreamGeometry(),
-            ["SemiIconRestore"] = new StreamGeometry(),
-        };
-        Application.Current!.Resources.MergedDictionaries.Add(icons);
+        Application.Current!.Resources.MergedDictionaries.Add(Icons(AllIconKeys));
 
         var vm = new ShellViewModel(new DistributionManager());
         Assert.All(vm.NavItems, i => Assert.IsAssignableFrom<Geometry>(i.Icon));
@@ -56,22 +64,46 @@ public class ShellNavTests
     }
 
     [AvaloniaFact]
-    public void Backup_nav_switches_page_and_lazy_loads_once()
+    public void Settings_pages_lazy_load_and_render_from_schema()
     {
-        var icons = new ResourceDictionary
-        {
-            ["SemiIconHome"] = new StreamGeometry(),
-            ["SemiIconCheckList"] = new StreamGeometry(),
-            ["SemiIconRestore"] = new StreamGeometry(),
-        };
-        Application.Current!.Resources.MergedDictionaries.Add(icons);
+        Application.Current!.Resources.MergedDictionaries.Add(Icons(AllIconKeys));
 
         var vm = new ShellViewModel(new DistributionManager());
         var window = new MainWindow { DataContext = vm };
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
+        // No distribution in the headless harness → page loads with a hint, no fields.
+        vm.SelectedNav = vm.NavItems[2]; // 输入设置
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var input = Assert.IsType<SettingsEditorViewModel>(vm.CurrentPage);
+        Assert.Equal("输入设置", vm.PageTitle);
+        Assert.False(input.IsSupported); // no RIME frontend in the test harness
+
+        vm.SelectedNav = vm.NavItems[3]; // 外观设置
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Assert.IsType<SettingsEditorViewModel>(vm.CurrentPage);
+        Assert.Equal("外观设置", vm.PageTitle);
+
+        // Pages are reused on revisit, no reload loop.
+        vm.SelectedNav = vm.NavItems[0];
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         vm.SelectedNav = vm.NavItems[2];
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Assert.Same(input, vm.CurrentPage);
+    }
+
+    [AvaloniaFact]
+    public void Backup_nav_switches_page_and_lazy_loads_once()
+    {
+        Application.Current!.Resources.MergedDictionaries.Add(Icons(AllIconKeys));
+
+        var vm = new ShellViewModel(new DistributionManager());
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        vm.SelectedNav = vm.NavItems[4];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var backup = Assert.IsType<BackupRestoreViewModel>(vm.CurrentPage);
@@ -81,7 +113,7 @@ public class ShellNavTests
 
         vm.SelectedNav = vm.NavItems[0];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        vm.SelectedNav = vm.NavItems[2];
+        vm.SelectedNav = vm.NavItems[4];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         Assert.Same(backup, vm.CurrentPage); // page instance is reused, no reload loop
     }

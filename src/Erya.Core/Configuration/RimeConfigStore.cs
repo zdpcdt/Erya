@@ -66,6 +66,26 @@ public sealed class RimeConfigStore
     public IReadOnlyList<KeyValuePair<string, YamlNode>> ReadPatch(string baseFileName)
         => CustomYamlPatcher.ReadFlatPatch(CustomPath(baseFileName));
 
+    /// <summary>Patch entries as CLR values, keyed by flatten path — what the settings UI diffs against.</summary>
+    public IReadOnlyDictionary<string, object?> ReadPatchValues(string baseFileName)
+        => CustomYamlPatcher.ReadFlatPatch(CustomPath(baseFileName))
+            .GroupBy(kv => kv.Key) // last shape wins, matching librime's merge order
+            .ToDictionary(g => g.Key, g => PatchYaml.ToClrValue(g.Last().Value));
+
+    /// <summary>Mapping keys under a merged path (e.g. color scheme names under preset_color_schemes).</summary>
+    public IReadOnlyList<string> ListMappingKeys(string baseFileName, string keyPath)
+    {
+        var merged = LoadMerged(baseFileName);
+        return merged is { } root && MergedConfig.TryGetByPath(root, keyPath) is YamlMappingNode map
+            ? map.Children.Keys
+                .OfType<YamlScalarNode>()
+                .Select(k => k.Value)
+                .Where(v => v is not null)
+                .Select(v => v!)
+                .ToList()
+            : [];
+    }
+
     /// <summary>Writes keys (flatten-path → CLR value) into the patch file.</summary>
     public void WritePatch(string baseFileName, IReadOnlyDictionary<string, object?> patch)
         => CustomYamlPatcher.Write(CustomPath(baseFileName), Path.GetFileName(CustomPath(baseFileName)), patch);
