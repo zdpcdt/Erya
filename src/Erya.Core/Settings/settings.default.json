@@ -1,0 +1,138 @@
+{
+  "targetFile": "default.yaml",
+  "sections": [
+    {
+      "id": "menu",
+      "title": "候选词菜单",
+      "description": "所有方案共有的候选窗行为。",
+      "fields": [
+        {
+          "id": "pageSize",
+          "label": "候选词个数",
+          "description": "每页显示的候选词数量",
+          "type": "stepper",
+          "keyPath": "menu/page_size",
+          "min": 3,
+          "max": 10,
+          "step": 1,
+          "default": 5
+        }
+      ]
+    },
+    {
+      "id": "switcher",
+      "title": "方案选单",
+      "fields": [
+        {
+          "id": "caption",
+          "label": "标题",
+          "type": "text",
+          "keyPath": "switcher/caption"
+        },
+        {
+          "id": "hotkeys",
+          "label": "快捷键",
+          "description": "触发方案选单的全局快捷键，如 Control+grave 或 F4",
+          "type": "hotkeyList",
+          "keyPath": "switcher/hotkeys"
+        },
+        {
+          "id": "saveOptions",
+          "label": "记忆选项",
+          "description": "在方案选单中切换后需要记住的状态",
+          "type": "checkList",
+          "keyPath": "switcher/save_options",
+          "choices": ["ascii_punct", "traditionalization", "emoji", "full_shape", "search_single_char"]
+        },
+        {
+          "id": "foldOptions",
+          "label": "折叠菜单",
+          "type": "toggle",
+          "keyPath": "switcher/fold_options"
+        },
+        {
+          "id": "abbreviateOptions",
+          "label": "折叠缩写",
+          "type": "toggle",
+          "keyPath": "switcher/abbreviate_options"
+        },
+        {
+          "id": "optionSeparator",
+          "label": "选项分隔符",
+          "type": "text",
+          "keyPath": "switcher/option_list_separator"
+        }
+      ]
+    },
+    {
+      "id": "asciiComposer",
+      "title": "中英切换",
+      "fields": [
+        {
+          "id": "capsLockMode",
+          "label": "保持 Caps Lock 原功能",
+          "description": "开启后 Caps Lock 用于切换大写锁定；关闭则用于切换中英文输入状态",
+          "type": "toggle",
+          "keyPath": "ascii_composer/good_old_caps_lock"
+        },
+        {
+          "id": "switchKey",
+          "label": "切换按键行为",
+          "description": "按下该键切换到英文时的行为：行内英文会在回车上屏后切回中文",
+          "type": "keyMapping",
+          "keyPath": "ascii_composer/switch_key",
+          "choices": ["commit_code", "commit_text", "inline_ascii", "clear", "noop"],
+          "keys": ["Caps_Lock", "Shift_L", "Shift_R", "Control_L", "Control_R"]
+        }
+      ]
+    },
+    {
+      "id": "keyBinder",
+      "title": "功能快捷键",
+      "fields": [
+        {
+          "id": "selectPair",
+          "label": "以词定字",
+          "type": "hotkeyPairList",
+          "keyPath": "key_binder/select_pair",
+          "itemLabels": ["首字", "末字"]
+        },
+        {
+          "id": "cursorPair",
+          "label": "移动光标",
+          "type": "hotkeyPairList",
+          "keyPath": "key_binder/cursor_pair",
+          "itemLabels": ["上个拼音", "下个拼音"]
+        },
+        {
+          "id": "pagePair",
+          "label": "翻页",
+          "type": "hotkeyPairList",
+          "keyPath": "key_binder/page_pair",
+          "itemLabels": ["上页", "下页"]
+        }
+      ]
+    },
+    {
+      "id": "punctuator",
+      "title": "数字与标点",
+      "fields": [
+        {
+          "id": "digitSeparators",
+          "label": "数字分隔符",
+          "description": "连续输入数字时不上屏的分隔字符，如 \"',\"",
+          "type": "text",
+          "keyPath": "punctuator/digit_separators"
+        },
+        {
+          "id": "digitSeparatorAction",
+          "label": "分隔符行为",
+          "description": "commit 为上屏分隔符，noop 为不处理",
+          "type": "enum",
+          "keyPath": "punctuator/digit_separator_action",
+          "choices": ["commit", "noop"]
+        }
+      ]
+    }
+  ]
+}
