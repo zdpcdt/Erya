@@ -164,6 +164,42 @@ public class CellControlTests
     }
 
     [AvaloniaFact]
+    public void Pressing_key_gesture_input_inside_detail_focuses_it_and_keeps_row_open()
+    {
+        // 真实输入管线：按下事件在详情区域内终结，行按钮收不到按压；
+        // 焦点转发给 KeyGestureInput（它自己不处理按压）。
+        var input = new Ursa.Controls.KeyGestureInput { Width = 230 };
+        var cell = new Cell
+        {
+            Content = "方案选单快捷键",
+            Detail = new StackPanel { Children = { input } },
+        };
+        var group = new CellGroup();
+        group.Items.Add(cell);
+        var window = new Window { Width = 480, Height = 320, Content = group };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        cell.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var root = cell.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Name == "PART_Root");
+        var onInput = input.TranslatePoint(new Point(40, 10), window)!.Value;
+        window.MouseDown(onInput, Avalonia.Input.MouseButton.Left);
+        window.MouseUp(onInput, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(cell.IsExpanded); // 不收起
+        Assert.Same(input, window.FocusManager?.GetFocusedElement()); // 且获得焦点
+
+        var onHeader = root.TranslatePoint(new Point(60, 10), window)!.Value;
+        window.MouseDown(onHeader, Avalonia.Input.MouseButton.Left);
+        window.MouseUp(onHeader, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(cell.IsExpanded); // 行首点击才收起
+    }
+
+    [AvaloniaFact]
     public void Plain_cell_without_detail_shows_no_chevron_and_never_expands()
     {
         var cell = new Cell { Content = "普通行" };

@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:semi="https://irihi.tech/semi"
+             xmlns:u="https://irihi.tech/ursa"
              x:Class="Erya.App"
              RequestedThemeVariant="Default">
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
@@ -21,6 +22,12 @@
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
+        <!--  ColorPicker（皮肤库取色）的 Semi 主题  -->
+        <semi:ColorPickerSemiTheme />
         <StyleInclude Source="avares://Erya.Controls/CellStyles.axaml" />
+        <!--  Ursa NumericUpDown 的静默校验（错误改由 ValidationErrorIcon 显示；控件库不依赖 Ursa，故置于应用层）  -->
+        <Style Selector="u|NumericUpDown.silent-errors /template/ DataValidationErrors">
+            <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+        </Style>
     </Application.Styles>
 </Application>

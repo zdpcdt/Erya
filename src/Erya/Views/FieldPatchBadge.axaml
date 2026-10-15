@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d" d:DesignWidth="120" d:DesignHeight="24"
+             x:Class="Erya.Views.FieldPatchBadge"
+             x:DataType="sf:SettingsFieldViewModel">
+    <!--  该键已写入 .custom.yaml 补丁：徽标 + 一键撤销（恢复发行版默认值）。
+          DataContext 为任意 SettingsFieldViewModel 子类型。  -->
+    <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsModified}">
+        <Border Background="#4C7BE4D8" CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
+            <TextBlock Text="已修改" FontSize="10" />
+        </Border>
+        <Button Content="撤销" FontSize="11" Padding="8,2" VerticalAlignment="Center"
+                Command="{Binding UndoPatchCommand}" CommandParameter="{Binding}"
+                ToolTip.Tip="从补丁中删除此键，恢复发行版默认值" />
+    </StackPanel>
+</UserControl>
