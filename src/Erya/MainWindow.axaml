@@ -5,6 +5,7 @@
               xmlns:u="https://irihi.tech/ursa"
               xmlns:vm="clr-namespace:Erya.ViewModels"
               xmlns:settings="clr-namespace:Erya.ViewModels.Settings"
+              xmlns:adv="clr-namespace:Erya.ViewModels.Advanced"
               xmlns:views="clr-namespace:Erya.Views"
               mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
               x:Class="Erya.MainWindow"
@@ -60,6 +61,9 @@
                         </DataTemplate>
                         <DataTemplate DataType="settings:SettingsEditorViewModel">
                             <views:SettingsPage />
+                        </DataTemplate>
+                        <DataTemplate DataType="adv:AdvancedSettingsViewModel">
+                            <views:AdvancedSettingsPage />
                         </DataTemplate>
                         <DataTemplate DataType="vm:BackupRestoreViewModel">
                             <views:BackupRestorePage />
