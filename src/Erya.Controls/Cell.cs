@@ -52,6 +52,7 @@ public class Cell : Button
         {
             old.PointerEntered -= OnDetailPointerEntered;
             old.PointerExited -= OnDetailPointerExited;
+            old.RemoveHandler(InputElement.PointerPressedEvent, OnDetailPointerPressed);
         }
         base.OnApplyTemplate(e);
         _detailHost = e.NameScope.Find(PART_DetailHost) as Control;
@@ -59,7 +60,25 @@ public class Cell : Button
         {
             neu.PointerEntered += OnDetailPointerEntered;
             neu.PointerExited += OnDetailPointerExited;
+            // 按下事件在详情区域内终结，不冒泡给行按钮（否则 KeyGestureInput 等
+            // 不自行处理按压的控件会触发行的按下-抬起，导致行收起）。
+            neu.AddHandler(InputElement.PointerPressedEvent, OnDetailPointerPressed);
         }
+    }
+
+    private void OnDetailPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // 给按下位置最近的可聚焦控件（KeyGestureInput 等）转发焦点——
+        // 这些控件自己不处理按压，被拦掉冒泡后仍要能用键盘录入。
+        if (e.Source is Visual source && _detailHost is { } host)
+        {
+            source.GetSelfAndVisualAncestors()
+                .OfType<InputElement>()
+                .TakeWhile(i => !ReferenceEquals(i, host))
+                .FirstOrDefault(i => i.Focusable)
+                ?.Focus(Avalonia.Input.NavigationMethod.Pointer);
+        }
+        e.Handled = true;
     }
 
     private void OnDetailPointerEntered(object? sender, PointerEventArgs e)
