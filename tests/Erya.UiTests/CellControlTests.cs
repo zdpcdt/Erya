@@ -1,6 +1,7 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Data;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -47,6 +48,61 @@ public class CellControlTests
     private sealed class PageSizeModel
     {
         public int PageSize { get; set; } = 5;
+    }
+
+    [AvaloniaFact]
+    public void Display_only_cells_have_no_hover_feedback_but_interactive_cells_do()
+    {
+        var plain = new Cell { Content = "纯展示", RightContent = new ToggleSwitch() };
+        var expandable = new Cell { Content = "可展开", Detail = new TextBlock { Text = "详情" } };
+        var group = new CellGroup();
+        group.Items.Add(plain);
+        group.Items.Add(expandable);
+        var window = new Window { Width = 480, Height = 300, Content = group };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var plainRoot = plain.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Name == "PART_Root");
+        var expandRoot = expandable.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Name == "PART_Root");
+
+        // 只有交互行可聚焦
+        Assert.False(plain.Focusable);
+        Assert.True(expandable.Focusable);
+
+        // 悬停纯展示行：无高亮
+        var onPlain = plainRoot.TranslatePoint(new Point(60, 8), window)!.Value;
+        window.MouseMove(onPlain, Avalonia.Input.RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(Avalonia.Media.Brushes.Transparent, plainRoot.Background);
+
+        // 悬停可展开行：出现高亮
+        var onExpand = expandRoot.TranslatePoint(new Point(60, 8), window)!.Value;
+        window.MouseMove(onExpand, Avalonia.Input.RawInputModifiers.None);
+        Dispatcher.UIThread.RunJobs();
+        Assert.NotEqual(Avalonia.Media.Brushes.Transparent, expandRoot.Background);
+    }
+
+    [AvaloniaFact]
+    public void Icon_slot_keeps_space_when_icon_is_empty()
+    {
+        var withIcon = new Cell { Content = "有图标", Icon = new StreamGeometry() };
+        var withoutIcon = new Cell { Content = "无图标" };
+        var group = new CellGroup();
+        group.Items.Add(withIcon);
+        group.Items.Add(withoutIcon);
+        ShowInWindow(group);
+
+        // 空图标也占位，保证标题左缘对齐
+        ContentPresenter IconOf(Cell cell) => cell.GetVisualDescendants().OfType<ContentPresenter>()
+            .Single(p => p.Name == "PART_Icon");
+        ContentPresenter TitleOf(Cell cell) => cell.GetVisualDescendants().OfType<ContentPresenter>()
+            .Single(p => p.Name == "PART_Content");
+
+        Assert.True(IconOf(withoutIcon).IsVisible);
+        Assert.Equal(IconOf(withIcon).Bounds.Width, IconOf(withoutIcon).Bounds.Width, 0.5);
+        Assert.Equal(TitleOf(withIcon).Bounds.X, TitleOf(withoutIcon).Bounds.X, 0.5);
     }
 
     [AvaloniaFact]

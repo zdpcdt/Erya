@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:ip="https://irihi.tech/iconica/iconpark"
              x:Class="Erya.App"
              RequestedThemeVariant="Default">
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
@@ -28,6 +29,11 @@
         <!--  Ursa NumericUpDown 的静默校验（错误改由 ValidationErrorIcon 显示；控件库不依赖 Ursa，故置于应用层）  -->
         <Style Selector="u|NumericUpDown.silent-errors /template/ DataValidationErrors">
             <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+        </Style>
+        <!--  IconPark 图标默认双色调；设置行内统一为单色线形（跟随主题文字色）  -->
+        <Style Selector=":is(ip|IconParkBase)">
+            <Setter Property="Mode" Value="Line" />
+            <Setter Property="OuterStroke" Value="{DynamicResource SemiColorText1}" />
         </Style>
     </Application.Styles>
 </Application>

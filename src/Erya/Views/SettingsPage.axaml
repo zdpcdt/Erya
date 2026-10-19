@@ -17,6 +17,7 @@
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
             <u:IconButton Grid.Column="1" VerticalAlignment="Top"
+                          Theme="{DynamicResource SolidIconButton}"
                           Icon="{StaticResource SemiIconRefresh}"
                           Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
         </Grid>
@@ -42,13 +43,14 @@
                                             <ContentControl.DataTemplates>
 
                                                 <DataTemplate x:DataType="sf:ToggleFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Setting1 Width="20" Height="20" />
-                                                        </c:Cell.Icon>
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}">
+                                                        <c:Cell.Trailing>
+                                                            <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldPatchBadge />
+                                                                <views:FieldUndoButton />
                                                                 <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
                                                                               IsChecked="{Binding IsChecked}" />
                                                             </StackPanel>
@@ -57,14 +59,15 @@
                                                 </DataTemplate>
 
                                                 <DataTemplate x:DataType="sf:NumberFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}"
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Note}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Calculation Width="20" Height="20" />
-                                                        </c:Cell.Icon>
+                                                        <c:Cell.Trailing>
+                                                            <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldPatchBadge />
+                                                                <views:FieldUndoButton />
                                                                 <StackPanel Orientation="Horizontal" Spacing="8"
                                                                             IsVisible="{Binding IsStepper}">
                                                                     <u:NumericDoubleUpDown x:Name="Nu" Classes="silent-errors"
@@ -86,13 +89,14 @@
                                                 </DataTemplate>
 
                                                 <DataTemplate x:DataType="sf:TextFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Edit2 Width="20" Height="20" />
-                                                        </c:Cell.Icon>
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}">
+                                                        <c:Cell.Trailing>
+                                                            <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldPatchBadge />
+                                                                <views:FieldUndoButton />
                                                                 <TextBox Text="{Binding Text}" PlaceholderText="{Binding Placeholder}"
                                                                          Width="240" />
                                                             </StackPanel>
@@ -101,13 +105,14 @@
                                                 </DataTemplate>
 
                                                 <DataTemplate x:DataType="sf:ChoiceFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Menu Width="20" Height="20" />
-                                                        </c:Cell.Icon>
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}">
+                                                        <c:Cell.Trailing>
+                                                            <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldPatchBadge />
+                                                                <views:FieldUndoButton />
                                                                 <ComboBox ItemsSource="{Binding Options}"
                                                                           SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
                                                                           MinWidth="170" />
@@ -118,13 +123,14 @@
 
                                                 <!--  hotkeyList / hotkeyPairList：行内摘要 + 点开录入按键组合  -->
                                                 <DataTemplate x:DataType="sf:ListFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}"
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Items.Count, StringFormat=已设 {0} 项}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Keyboard Width="20" Height="20" />
-                                                        </c:Cell.Icon>
-                                                        <c:Cell.RightContent>
+                                                        <c:Cell.Trailing>
                                                             <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
+                                                        <c:Cell.RightContent>
+                                                            <views:FieldUndoButton />
                                                         </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
@@ -162,13 +168,14 @@
 
                                                 <!--  keyMapping：每键一行下拉  -->
                                                 <DataTemplate x:DataType="sf:KeyMappingFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}"
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Summary}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:Command Width="20" Height="20" />
-                                                        </c:Cell.Icon>
-                                                        <c:Cell.RightContent>
+                                                        <c:Cell.Trailing>
                                                             <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
+                                                        <c:Cell.RightContent>
+                                                            <views:FieldUndoButton />
                                                         </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
@@ -192,13 +199,14 @@
 
                                                 <!--  checkList：每项一排  -->
                                                 <DataTemplate x:DataType="sf:CheckListFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}"
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding EnabledSummary}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:CheckCircle Width="20" Height="20" />
-                                                        </c:Cell.Icon>
-                                                        <c:Cell.RightContent>
+                                                        <c:Cell.Trailing>
                                                             <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
+                                                        <c:Cell.RightContent>
+                                                            <views:FieldUndoButton />
                                                         </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
@@ -217,13 +225,14 @@
 
                                                 <!--  appOptions：每应用一行  -->
                                                 <DataTemplate x:DataType="sf:AppOptionsFieldViewModel">
-                                                    <c:Cell Content="{Binding Label}" Description="{Binding Description}"
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Rows.Count, StringFormat={}{0} 个应用}">
-                                                        <c:Cell.Icon>
-                                                            <tdicon:App Width="20" Height="20" />
-                                                        </c:Cell.Icon>
-                                                        <c:Cell.RightContent>
+                                                        <c:Cell.Trailing>
                                                             <views:FieldPatchBadge />
+                                                        </c:Cell.Trailing>
+                                                        <c:Cell.RightContent>
+                                                            <views:FieldUndoButton />
                                                         </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="12" MaxWidth="560">
@@ -301,9 +310,11 @@
                                                     <TextBlock Text=" ní hǎo" Foreground="{Binding CommentTextPreview}" FontSize="11" />
                                                 </StackPanel>
                                             </Border>
-                                            <Button Content="删除" Classes="Danger" Theme="{DynamicResource SolidButton}"
-                                                    VerticalAlignment="Center"
-                                                    Command="{Binding RemoveCommand}" />
+                                            <u:IconButton Classes="Danger" Theme="{DynamicResource SolidIconButton}"
+                                                          Icon="{StaticResource SemiIconDelete}"
+                                                          VerticalAlignment="Center"
+                                                          Command="{Binding RemoveCommand}"
+                                                          ToolTip.Tip="删除此皮肤" />
                                         </StackPanel>
                                     </c:Cell.RightContent>
                                     <c:Cell.Detail>

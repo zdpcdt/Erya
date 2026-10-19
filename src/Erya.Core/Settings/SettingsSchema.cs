@@ -69,6 +69,13 @@ public sealed class SettingsField
     /// <summary>Per-item labels for fixed-size pair lists (e.g. 上页/下页).</summary>
     public List<string>? ItemLabels { get; set; }
 
+    /// <summary>
+    /// 行首图标，形如 "td:Keyboard"（Irihi.Iconica.TDesign）、"ip:UpOne"
+    /// （Irihi.Iconica.IconPark）、"semi:SemiIconFont"（Semi 图标资源键）。
+    /// 按字段语义挑选，宁缺勿滥；缺失时不显示图标（行内仍占位保持对齐）。
+    /// </summary>
+    public string? Icon { get; set; }
+
     /// <summary>CLR form of <see cref="Default"/> (null when absent or JSON null).</summary>
     public object? DefaultValue() => Default.ValueKind switch
     {

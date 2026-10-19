@@ -11,15 +11,17 @@ using Avalonia.VisualTree;
 namespace Erya.Controls;
 
 /// <summary>
-/// 设置中心风格的一行：左侧图标（Icon）+ 标题（Content）+ 说明（Description），
-/// 右侧当前值（Note）与操作区（RightContent，放 ToggleSwitch、RadioButton、
-/// NumericUpDown 等），行尾可带指示箭头。整行继承 Button：绑定 Command 时点击
-/// 整行触发命令；设置 Detail 时点击行首区域展开/收起内嵌的详细设置。
+/// 设置中心风格的一行：左侧图标（Icon）+ 标题（Content）+ 标题右侧补充内容
+/// （Trailing，放“已修改”徽标）+ 说明（Description），右侧当前值（Note）与
+/// 操作区（RightContent，放 ToggleSwitch、RadioButton、NumericUpDown 等），
+/// 行尾可带指示箭头。整行继承 Button，但只有可展开（Detail）、可跳转
+/// （Command / ShowChevron）的行才是“交互行”：有悬停/按压反馈、可聚焦；
+/// 纯展示或右侧是输入控件的行无任何点击反馈（桌面习惯）。
 /// Detail 行的箭头收起时向下、展开时向上；详情区域内的点击与悬停
 /// （多选框、按钮、空白）不会触发整行的收缩/悬停高亮。
 /// 默认样式见 CellTheme.axaml（Semi 风格，配 CellGroup 使用）。
 /// </summary>
-[PseudoClasses(":expanded", ":has-detail", ":over-detail")]
+[PseudoClasses(":expanded", ":has-detail", ":over-detail", ":interactive")]
 public class Cell : Button
 {
     public const string PART_DetailHost = "PART_DetailHost";
@@ -27,12 +29,14 @@ public class Cell : Button
     private const string ClassExpanded = ":expanded";
     private const string ClassHasDetail = ":has-detail";
     private const string ClassOverDetail = ":over-detail";
+    private const string ClassInteractive = ":interactive";
 
     private Control? _detailHost;
 
     public Cell()
     {
         Click += OnCellClick;
+        UpdateInteractive();
     }
 
     private void OnCellClick(object? sender, RoutedEventArgs e)
@@ -163,6 +167,25 @@ public class Cell : Button
         set => SetValue(RightContentTemplateProperty, value);
     }
 
+    public static readonly StyledProperty<object?> TrailingProperty =
+        AvaloniaProperty.Register<Cell, object?>(nameof(Trailing));
+
+    /// <summary>标题右侧的补充内容（如“已修改”徽标 + 撤销按钮）。</summary>
+    public object? Trailing
+    {
+        get => GetValue(TrailingProperty);
+        set => SetValue(TrailingProperty, value);
+    }
+
+    public static readonly StyledProperty<IDataTemplate?> TrailingTemplateProperty =
+        AvaloniaProperty.Register<Cell, IDataTemplate?>(nameof(TrailingTemplate));
+
+    public IDataTemplate? TrailingTemplate
+    {
+        get => GetValue(TrailingTemplateProperty);
+        set => SetValue(TrailingTemplateProperty, value);
+    }
+
     public static readonly StyledProperty<object?> DetailProperty =
         AvaloniaProperty.Register<Cell, object?>(nameof(Detail));
 
@@ -209,6 +232,7 @@ public class Cell : Button
         {
             if (change.NewValue is null) IsExpanded = false;
             PseudoClasses.Set(ClassHasDetail, change.NewValue is not null);
+            UpdateInteractive();
         }
         else if (change.Property == IsExpandedProperty)
         {
@@ -216,5 +240,20 @@ public class Cell : Button
             // 收起后详情不再可悬停；残留的 :over-detail 会让下次悬停行首时无高亮。
             if (!IsExpanded) PseudoClasses.Set(ClassOverDetail, false);
         }
+        else if (change.Property == CommandProperty || change.Property == ShowChevronProperty)
+        {
+            UpdateInteractive();
+        }
+    }
+
+    /// <summary>
+    /// 交互行（可展开 / 可跳转）才有悬停/按压反馈并可聚焦；纯展示或右侧是
+    /// 输入控件的行保持安静（桌面习惯，避免“整行都能点”的错觉）。
+    /// </summary>
+    private void UpdateInteractive()
+    {
+        var interactive = Detail is not null || Command is not null || ShowChevron;
+        PseudoClasses.Set(ClassInteractive, interactive);
+        Focusable = interactive;
     }
 }

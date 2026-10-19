@@ -10,6 +10,7 @@
           "id": "colorScheme",
           "label": "亮色皮肤",
           "type": "enum",
+          "icon": "td:Sunny",
           "keyPath": "style/color_scheme",
           "choicesRef": "preset_color_schemes"
         },
@@ -18,6 +19,7 @@
           "label": "暗色皮肤",
           "description": "系统深色模式下使用的皮肤",
           "type": "enum",
+          "icon": "td:Moon",
           "keyPath": "style/color_scheme_dark",
           "choicesRef": "preset_color_schemes"
         },
@@ -26,21 +28,30 @@
           "label": "排列方式",
           "description": "stacked 为竖排，linear 为横排",
           "type": "segmented",
+          "icon": "td:Layout",
           "keyPath": "style/candidate_list_layout",
-          "choices": ["stacked", "linear"]
+          "choices": [
+            "stacked",
+            "linear"
+          ]
         },
         {
           "id": "textOrientation",
           "label": "文字方向",
           "type": "segmented",
+          "icon": "td:Vertical",
           "keyPath": "style/text_orientation",
-          "choices": ["horizontal", "vertical"]
+          "choices": [
+            "horizontal",
+            "vertical"
+          ]
         },
         {
           "id": "inlinePreedit",
           "label": "内嵌编码",
           "description": "在应用光标处显示输入中的编码",
           "type": "toggle",
+          "icon": "td:Text",
           "keyPath": "style/inline_preedit"
         },
         {
@@ -67,12 +78,14 @@
           "label": "字体",
           "description": "如 微软雅黑 (Microsoft YaHei)",
           "type": "text",
+          "icon": "semi:SemiIconFont",
           "keyPath": "style/font_face"
         },
         {
           "id": "fontPoint",
           "label": "字号",
           "type": "stepper",
+          "icon": "ip:FontSize",
           "keyPath": "style/font_point",
           "min": 10,
           "max": 32,
@@ -83,6 +96,7 @@
           "id": "cornerRadius",
           "label": "圆角",
           "type": "stepper",
+          "icon": "td:Round",
           "keyPath": "style/corner_radius",
           "min": 0,
           "max": 20,
@@ -101,6 +115,7 @@
           "id": "lineSpacing",
           "label": "候选行距",
           "type": "stepper",
+          "icon": "td:LineHeight",
           "keyPath": "style/line_spacing",
           "min": 0,
           "max": 12,
@@ -119,6 +134,7 @@
           "id": "alpha",
           "label": "透明度",
           "type": "slider",
+          "icon": "td:Alpha",
           "keyPath": "style/alpha",
           "min": 0,
           "max": 1,
@@ -136,6 +152,7 @@
           "id": "appsTable",
           "label": "应用列表",
           "type": "appOptions",
+          "icon": "td:App",
           "keyPath": "app_options"
         }
       ]

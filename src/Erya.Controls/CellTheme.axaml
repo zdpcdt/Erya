@@ -73,8 +73,8 @@
                                               Width="20" Height="20" Margin="0,0,12,0"
                                               Content="{TemplateBinding Icon}"
                                               ContentTemplate="{TemplateBinding IconTemplate}"
-                                              Foreground="{DynamicResource SemiColorText1}"
-                                              IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                              Foreground="{DynamicResource SemiColorText1}">
+                                <!--  无图标时也占位，保证行间文字对齐  -->
                                 <ContentPresenter.DataTemplates>
                                     <DataTemplate DataType="Geometry">
                                         <PathIcon Theme="{DynamicResource InnerPathIcon}"
@@ -85,12 +85,20 @@
                             </ContentPresenter>
 
                             <StackPanel Grid.Column="1" Margin="0,0,12,0" Spacing="2" VerticalAlignment="Center">
-                                <ContentPresenter Name="PART_Content"
-                                                  Content="{TemplateBinding Content}"
-                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                  FontSize="14"
-                                                  Foreground="{DynamicResource SemiColorText0}"
-                                                  IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ContentPresenter Name="PART_Content"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      FontSize="14"
+                                                      Foreground="{DynamicResource SemiColorText0}"
+                                                      IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <!--  标题右侧补充内容（如“已修改”徽标）  -->
+                                    <ContentPresenter Name="PART_Trailing"
+                                                      VerticalAlignment="Center"
+                                                      Content="{TemplateBinding Trailing}"
+                                                      ContentTemplate="{TemplateBinding TrailingTemplate}"
+                                                      IsVisible="{TemplateBinding Trailing, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                </StackPanel>
                                 <ContentPresenter Name="PART_Description"
                                                   Content="{TemplateBinding Description}"
                                                   ContentTemplate="{TemplateBinding DescriptionTemplate}"
@@ -144,11 +152,12 @@
             </ControlTemplate>
         </Setter>
 
-        <!--  悬停/按压高亮：指针在详情区域内时不显示（:over-detail 由 Cell.cs 维护）  -->
-        <Style Selector="^:pointerover:not(:over-detail) /template/ Border#PART_Root">
+        <!--  悬停/按压高亮：仅交互行（可展开/可跳转），且指针不在详情区域内
+              （:over-detail 由 Cell.cs 维护）  -->
+        <Style Selector="^:interactive:pointerover:not(:over-detail) /template/ Border#PART_Root">
             <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
         </Style>
-        <Style Selector="^:pressed:not(:over-detail) /template/ Border#PART_Root">
+        <Style Selector="^:interactive:pressed:not(:over-detail) /template/ Border#PART_Root">
             <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
         </Style>
         <Style Selector="^:focus-visible /template/ Border#PART_Root">
