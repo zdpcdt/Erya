@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls.Notifications;
@@ -21,12 +22,12 @@ public sealed record NavItem(string Key, string Header, Geometry? Icon)
 public partial class ShellViewModel : ObservableObject
 {
     private readonly MainViewModel _overview;
-    private readonly SchemaManagerViewModel _schemas;
-    private readonly SettingsEditorViewModel _inputSettings;
-    private readonly SettingsEditorViewModel _appearance;
-    private readonly AdvancedSettingsViewModel _advanced;
-    private readonly BackupRestoreViewModel _backup;
-    private readonly Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
+    private SchemaManagerViewModel _schemas = null!;
+    private SettingsEditorViewModel _inputSettings = null!;
+    private SettingsEditorViewModel _appearance = null!;
+    private AdvancedSettingsViewModel _advanced = null!;
+    private BackupRestoreViewModel _backup = null!;
+    private Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
     private IRimeDistribution? _distribution;
 
     public IReadOnlyList<NavItem> NavItems { get; }
@@ -44,15 +45,13 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand]
     private void Deploy() => _overview.DeployCommand.Execute(null);
 
-    public ShellViewModel(DistributionManager distributions)
+    public ShellViewModel(DistributionManager distributions, AppPreferences? preferences = null)
     {
-        _overview = new MainViewModel(distributions);
-        _distribution = _overview.Distribution;
-        _schemas = new SchemaManagerViewModel(_distribution);
-        _inputSettings = new SettingsEditorViewModel(_distribution, "default");
-        _appearance = new SettingsEditorViewModel(_distribution, "ui");
-        _advanced = new AdvancedSettingsViewModel(_distribution);
-        _backup = new BackupRestoreViewModel(_distribution);
+        _overview = new MainViewModel(distributions, preferences);
+        BuildPages();
+        // A frontend switch rebuilds every page against the new distribution;
+        // unsaved edits on other pages are deliberately dropped (rare action).
+        _overview.DistributionChanged += RebuildPages;
 
         NavItems =
         [
@@ -63,16 +62,32 @@ public partial class ShellViewModel : ObservableObject
             new NavItem("advanced", "高级设置", Icon("SemiIconCode")),
             new NavItem("backup", "备份恢复", Icon("SemiIconRestore")),
         ];
-        _lazyPages["schemas"] = (false, _schemas);
-        _lazyPages["inputSettings"] = (false, _inputSettings);
-        _lazyPages["appearance"] = (false, _appearance);
-        _lazyPages["advanced"] = (false, _advanced);
-        _lazyPages["backup"] = (false, _backup);
+        InitializeLazyPages();
 
         // Two-way binding pushes this into NavMenu, selecting the item visually.
         _selectedNav = NavItems[0];
         CurrentPage = _overview;
         PageTitle = _selectedNav.Header;
+    }
+
+    private void BuildPages()
+    {
+        _distribution = _overview.Distribution;
+        _schemas = new SchemaManagerViewModel(_distribution);
+        _inputSettings = new SettingsEditorViewModel(_distribution, "default");
+        _appearance = new SettingsEditorViewModel(_distribution, "ui");
+        _advanced = new AdvancedSettingsViewModel(_distribution);
+        _backup = new BackupRestoreViewModel(_distribution);
+    }
+
+    private void InitializeLazyPages()
+    {
+        _lazyPages = [];
+        _lazyPages["schemas"] = (false, _schemas);
+        _lazyPages["inputSettings"] = (false, _inputSettings);
+        _lazyPages["appearance"] = (false, _appearance);
+        _lazyPages["advanced"] = (false, _advanced);
+        _lazyPages["backup"] = (false, _backup);
     }
 
     partial void OnSelectedNavChanged(NavItem? value)
@@ -90,23 +105,47 @@ public partial class ShellViewModel : ObservableObject
         if (!entry.Loaded)
         {
             _lazyPages[value.Key] = (true, entry.Page);
-            switch (entry.Page)
-            {
-                case SchemaManagerViewModel schemas:
-                    schemas.LoadCommand.Execute(null);
-                    break;
-                case SettingsEditorViewModel settings:
-                    settings.LoadCommand.Execute(null);
-                    break;
-                case AdvancedSettingsViewModel advanced:
-                    advanced.LoadCommand.Execute(null);
-                    break;
-                case BackupRestoreViewModel backup:
-                    backup.LoadCommand.Execute(null);
-                    break;
-            }
+            LoadPage(entry.Page);
         }
         CurrentPage = entry.Page;
+    }
+
+    /// <summary>Frontend switch: fresh page VMs bound to the new distribution.</summary>
+    private void RebuildPages()
+    {
+        BuildPages();
+        InitializeLazyPages();
+
+        // Stay on the same page; load the fresh instance immediately.
+        if (SelectedNav is { Key: not "overview" } nav && _lazyPages.TryGetValue(nav.Key, out var entry))
+        {
+            _lazyPages[nav.Key] = (true, entry.Page);
+            LoadPage(entry.Page);
+            CurrentPage = entry.Page;
+        }
+        else
+        {
+            CurrentPage = _overview;
+        }
+    }
+
+    private static void LoadPage(ObservableObject page)
+    {
+        switch (page)
+        {
+            case SchemaManagerViewModel schemas:
+                schemas.LoadCommand.Execute(null);
+                break;
+            case SettingsEditorViewModel settings:
+                settings.LoadCommand.Execute(null);
+                break;
+            case AdvancedSettingsViewModel advanced:
+                advanced.LoadCommand.Execute(null);
+                break;
+            case BackupRestoreViewModel backup:
+                backup.LoadCommand.Execute(null);
+                break;
+        }
     }
 
     private static Geometry? Icon(string resourceKey)

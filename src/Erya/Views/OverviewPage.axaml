@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:dist="clr-namespace:Erya.Core.Distributions;assembly=Erya.Core"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="520"
              x:Class="Erya.Views.OverviewPage"
@@ -11,6 +12,18 @@
     <StackPanel Spacing="18">
 
         <u:Form LabelPosition="Left" LabelWidth="96">
+            <u:FormItem Label="输入前端" IsVisible="{Binding HasMultipleDistributions}">
+                <ComboBox ItemsSource="{Binding AvailableDistributions}"
+                          SelectedItem="{Binding Distribution, Mode=TwoWay}"
+                          MinWidth="300" HorizontalAlignment="Left"
+                          ToolTip.Tip="本机安装了多个 RIME 前端，选择尔雅要管理的那个；切换后其他页面会重新加载">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="dist:IRimeDistribution">
+                            <TextBlock Text="{Binding DisplayName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </u:FormItem>
             <u:FormItem Label="发行版">
                 <TextBlock Text="{Binding DetectionTitle}"
                            VerticalAlignment="Center" FontWeight="SemiBold" />

@@ -183,6 +183,38 @@ public sealed class DistributionLocatorTests : IDisposable
         Assert.Equal(userDir, distribution.UserDir);
     }
 
+    // ---------- manager ----------
+
+    [Fact]
+    public void LocateAll_returns_every_env_overridden_frontend_in_locator_order()
+    {
+        Write("fcitx5-rime-home/.keep", "");
+        Write("ibus-rime-home/.keep", "");
+        Environment.SetEnvironmentVariable(Fcitx5RimeLocator.UserDirEnv, Path.Combine(_root, "fcitx5-rime-home"));
+        Environment.SetEnvironmentVariable(IbusRimeLocator.UserDirEnv, Path.Combine(_root, "ibus-rime-home"));
+
+        var manager = new DistributionManager(new Fcitx5RimeLocator(), new IbusRimeLocator());
+
+        // Order is the switcher's fallback priority: fcitx5 first, ibus second.
+        Assert.Equal(["fcitx5-rime", "ibus-rime"], manager.LocateAll().Select(d => d.Id));
+    }
+
+    [Fact]
+    public void LocateAll_skips_locators_that_find_nothing()
+    {
+        Write("ibus-rime-home/.keep", "");
+        Environment.SetEnvironmentVariable(IbusRimeLocator.UserDirEnv, Path.Combine(_root, "ibus-rime-home"));
+        // Shield the real fcitx5 user dir so the test stays hermetic on a
+        // machine that actually uses fcitx5-rime (same trick as the null test).
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", Path.Combine(_root, "empty-xdg"));
+
+        var manager = new DistributionManager(new Fcitx5RimeLocator(), new IbusRimeLocator());
+
+        var all = manager.LocateAll();
+        Assert.Equal(["ibus-rime"], all.Select(d => d.Id));
+        Assert.Equal("ibus-rime", manager.Locate()?.Id);
+    }
+
     // ---------- shared ----------
 
     [Fact]
