@@ -18,17 +18,25 @@ internal static class InstallHints
             : "请先安装 fcitx5-rime 或 ibus-rime（发行版软件仓库），安装完成后重新打开尔雅。";
 
     /// <summary>
-    /// Per-OS hint shown when a distribution was found but its deployer was
-    /// not. On Linux this names the distro's librime tools package, whose
-    /// name is anything but uniform: librime-bin (Debian), librime (Arch,
-    /// Fedora), rime (openSUSE).
+    /// Hint shown when a distribution was found but its deployer was not.
+    /// Branches on the DISTRIBUTION (not the running OS — in production the
+    /// two always match, and distro-based branching keeps the Linux package
+    /// hints testable on any dev machine). On Linux this names the distro's
+    /// librime tools package, whose name is anything but uniform:
+    /// librime-bin (Debian), librime (Arch, Fedora), rime (openSUSE).
     /// </summary>
     public static string DeployerMissingHint(IRimeDistribution? distribution, string? osReleaseContent = null)
-        => OperatingSystem.IsWindows()
-            ? "未找到部署器 WeaselDeployer.exe，无法触发重新部署（小狼毫是否完整安装？）。"
-            : OperatingSystem.IsMacOS()
-                ? "未找到鼠鬚管部署器，无法触发重新部署。"
-                : LinuxDeployerHint(distribution, osReleaseContent);
+        => distribution?.Id switch
+        {
+            "weasel" => "未找到部署器 WeaselDeployer.exe，无法触发重新部署（小狼毫是否完整安装？）。",
+            "squirrel" => "未找到鼠鬚管部署器，无法触发重新部署。",
+            "fcitx5-rime" or "ibus-rime" => LinuxDeployerHint(distribution, osReleaseContent),
+            _ => OperatingSystem.IsWindows()
+                ? "未找到部署器 WeaselDeployer.exe，无法触发重新部署（小狼毫是否完整安装？）。"
+                : OperatingSystem.IsMacOS()
+                    ? "未找到鼠鬚管部署器，无法触发重新部署。"
+                    : LinuxDeployerHint(null, osReleaseContent),
+        };
 
     private static string LinuxDeployerHint(IRimeDistribution? distribution, string? osReleaseContent)
     {
