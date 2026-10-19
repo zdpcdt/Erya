@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
+             xmlns:edit="https://github.com/avaloniaui/avaloniaedit"
              xmlns:adv="clr-namespace:Erya.ViewModels.Advanced"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="620"
              x:Class="Erya.Views.AdvancedSettingsPage"
@@ -12,86 +12,38 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Toolbar -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
             <ComboBox Grid.Column="0" ItemsSource="{Binding Targets}" SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
-                      MinWidth="210" VerticalAlignment="Center" IsEnabled="{Binding !IsSourceMode}" />
-            <ToggleButton Grid.Column="1" Content="源码模式" IsChecked="{Binding IsSourceMode, Mode=TwoWay}"
-                          ToolTip.Tip="直接编辑 .custom.yaml 源文件" Margin="10,0,0,0" VerticalAlignment="Center" />
-            <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}" Watermark="搜索配置项路径或值"
-                     Margin="14,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding !IsSourceMode}" />
-            <CheckBox Grid.Column="3" Content="仅显示已修改" IsChecked="{Binding OnlyModified}"
-                      Margin="14,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding !IsSourceMode}" />
-            <u:IconButton Grid.Column="4" Command="{Binding LoadCommand}" ToolTip.Tip="重新读取"
+                      MinWidth="210" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding SourceFeedback}" Opacity="0.6" FontSize="12"
+                       Margin="14,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <u:IconButton Grid.Column="2" Command="{Binding LoadCommand}" ToolTip.Tip="重新读取（放弃未保存的修改）"
                           Theme="{DynamicResource SolidIconButton}"
                           Icon="{StaticResource SemiIconRefresh}"
                           Margin="10,0,0,0" VerticalAlignment="Center" />
-            <Button Grid.Column="5" Content="部署" Command="{Binding DeployCommand}"
-                    ToolTip.Tip="重新部署（使修改生效）" VerticalAlignment="Center" />
+            <Button Grid.Column="3" Content="部署" Command="{Binding DeployCommand}"
+                    ToolTip.Tip="重新部署（使修改生效）" Margin="10,0,0,0" VerticalAlignment="Center" />
+            <Button Grid.Column="4" Content="保存" Classes="Primary" MinWidth="96" Command="{Binding SaveCommand}"
+                    ToolTip.Tip="保存补丁文件（Ctrl+S）" IsEnabled="{Binding !IsBusy}"
+                    Margin="10,0,0,0" VerticalAlignment="Center" />
         </Grid>
 
-        <!-- Tree mode -->
-        <Grid Grid.Row="1" Margin="0,12" IsVisible="{Binding !IsSourceMode}">
-            <TreeView ItemsSource="{Binding Roots}" IsVisible="{Binding HasTree}">
-                <TreeView.ItemTemplate>
-                    <TreeDataTemplate x:DataType="adv:ConfigNodeViewModel" ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsVisible}">
-                            <TextBlock Text="{Binding Key}" FontWeight="SemiBold" />
-                            <Border IsVisible="{Binding IsModified}" Background="#4C7BE4D8"
-                                    CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
-                                <TextBlock Text="已修改" FontSize="10" />
-                            </Border>
-                            <!-- Scalar display / inline edit -->
-                            <TextBlock Text="{Binding Preview}" Opacity="0.55" IsVisible="{Binding !IsEditing}"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="360" />
-                            <TextBox Text="{Binding EditText, Mode=TwoWay}" MinWidth="160" MaxWidth="360"
-                                     IsVisible="{Binding IsEditing}" />
-                            <u:IconButton Classes="Primary" Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsEditing}"
-                                          Command="{Binding ApplyEditCommand}" CommandParameter="{Binding}"
-                                          ToolTip.Tip="应用修改">
-                                <u:IconButton.Icon>
-                                    <tdicon:CheckCircle Width="16" Height="16" />
-                                </u:IconButton.Icon>
-                            </u:IconButton>
-                            <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsEditing}"
-                                          Command="{Binding CancelEditCommand}" CommandParameter="{Binding}"
-                                          ToolTip.Tip="取消修改">
-                                <u:IconButton.Icon>
-                                    <tdicon:Close Width="16" Height="16" />
-                                </u:IconButton.Icon>
-                            </u:IconButton>
-                            <Button Content="编辑" FontSize="11" Padding="8,2"
-                                    IsVisible="{Binding IsEditable}"
-                                    Command="{Binding BeginEditCommand}" CommandParameter="{Binding}" />
-                            <Button Content="撤销" FontSize="11" Padding="8,2"
-                                    IsVisible="{Binding IsModified}"
-                                    Command="{Binding UndoPatchCommand}" CommandParameter="{Binding}"
-                                    ToolTip.Tip="删除此键的补丁，恢复默认值" />
-                        </StackPanel>
-                    </TreeDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
-            <TextBlock Text="该配置为空：没有默认配置文件，也没有补丁。" Opacity="0.6"
-                       IsVisible="{Binding !HasTree}" />
-        </Grid>
+        <!-- Source editor -->
+        <Border Grid.Row="1" Margin="0,12" CornerRadius="6"
+                BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1"
+                ClipToBounds="True">
+            <edit:TextEditor Name="Editor" Document="{Binding Document}"
+                             ShowLineNumbers="True" WordWrap="False"
+                             FontFamily="Menlo,Consolas,monospace" FontSize="13" />
+        </Border>
 
-        <!-- Source mode -->
-        <Grid Grid.Row="1" Margin="0,12" RowDefinitions="Auto,*" IsVisible="{Binding IsSourceMode}">
-            <TextBlock Grid.Row="0" Text="{Binding SourceFeedback}" Opacity="0.6" FontSize="12" Margin="0,0,0,8"
-                       TextWrapping="Wrap" />
-            <TextBox Grid.Row="1" Text="{Binding SourceText, Mode=TwoWay}" AcceptsReturn="True"
-                     FontFamily="Menlo,Consolas,monospace" Watermark="# 在此编辑补丁文件（YAML 映射）"
-                     TextWrapping="NoWrap" ScrollViewer.HorizontalScrollBarVisibility="Auto" />
-        </Grid>
-
-        <!-- Footer -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,4,0,0">
-            <u:Banner Grid.Column="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
-                      IsVisible="{Binding HasError}" />
-            <Button Grid.Column="1" Content="重新加载" Command="{Binding LoadSourceCommand}"
-                    IsVisible="{Binding IsSourceMode}" Margin="0,0,10,0" />
-            <Button Grid.Column="2" Content="保存补丁" Classes="Primary" MinWidth="108"
-                    IsVisible="{Binding IsSourceMode}"
-                    Command="{Binding SaveSourceCommand}" IsEnabled="{Binding !IsBusy}" />
+        <!-- Status -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,4,0,0">
+            <TextBlock Grid.Column="0" Text="● 有未保存的修改" FontSize="12"
+                       Foreground="{DynamicResource SemiColorWarning}"
+                       IsVisible="{Binding IsDirty}" VerticalAlignment="Center" />
+            <u:Banner Grid.Column="1" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" Margin="10,0,0,0" />
         </Grid>
     </Grid>
 </UserControl>

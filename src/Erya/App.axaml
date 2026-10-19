@@ -25,6 +25,8 @@
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
+        <!--  AvaloniaEdit（高级设置源码编辑器）的 Semi 主题  -->
+        <semi:AvaloniaEditSemiTheme />
         <!--  ColorPicker（皮肤库取色）的 Semi 主题  -->
         <semi:ColorPickerSemiTheme />
         <StyleInclude Source="avares://Erya.Controls/CellStyles.axaml" />
