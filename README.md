@@ -14,7 +14,7 @@
 - [x] 前端切换器（fcitx5-rime 与 ibus-rime 并存时选择尔雅管理的那个；选择持久化到 `~/.config/Erya/preferences.json`）
 - [x] 部署器缺失引导（Linux 读取 `/etc/os-release`，按发行版给出 librime 工具包安装命令：Debian/Ubuntu `librime-bin`、Arch/Fedora `librime`、openSUSE `rime`）
 - [x] 主界面外壳（Semi.Avalonia + Ursa）
-- [x] 方案管理（勾选启用/停用、启用顺序调整即切换顺序、创建新方案脚手架；写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
+- [x] 方案管理（勾选启用/停用、启用顺序调整即切换顺序；写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
 - [x] 输入设置（schema 驱动：候选词个数、方案选单、中英切换按键矩阵、功能快捷键、数字标点——全部前端通用，写入 `default.custom.yaml`）
 - [x] 外观设置（schema 驱动：候选面板样式/键盘体验/按应用行为，macOS 写 `squirrel.custom.yaml`、Windows 写 `weasel.custom.yaml`；Linux 前端显示指引——面板外观归 fcitx5/ibus 自身设置）
 - [x] 皮肤库（`preset_color_schemes` 编辑器：BGR 颜色 + 候选条实时预览，整库写入补丁）

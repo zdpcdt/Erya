@@ -46,7 +46,4 @@ public abstract class RimeDistributionBase : IRimeDistribution
         new RimeSchemaCatalog(UserDir).WriteSelectedSchemas(schemaIds);
         return Task.CompletedTask;
     }
-
-    public Task CreateSchemaStubAsync(string schemaId, string name, CancellationToken cancellationToken = default)
-        => Task.FromResult(new RimeSchemaCatalog(UserDir).CreateSchemaStub(schemaId, name));
 }

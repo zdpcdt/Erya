@@ -79,13 +79,6 @@ public partial class SchemaManagerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorMessage = "";
 
-    /// <summary>Inputs of the 添加新方案 form.</summary>
-    [ObservableProperty]
-    private string _newSchemaId = "";
-
-    [ObservableProperty]
-    private string _newSchemaName = "";
-
     public bool HasHint => Hint.Length > 0;
 
     public bool HasError => ErrorMessage.Length > 0;
@@ -94,43 +87,6 @@ public partial class SchemaManagerViewModel : ObservableObject
 
     // 顺序调整由 ReorderableItemsControl 拖拽完成（直接 Move 集合）；
     // 保存时按集合顺序取已勾选 id，未勾选行的位置不落盘。
-
-    [RelayCommand]
-    private async Task AddSchemaAsync()
-    {
-        if (_distribution is null || IsLoading || IsBusy) return;
-
-        var id = NewSchemaId.Trim();
-        if (id.Length == 0)
-        {
-            ErrorMessage = "请输入方案 ID（如 my_pinyin）。";
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            ErrorMessage = "";
-            await _distribution.CreateSchemaStubAsync(id, NewSchemaName.Trim());
-            NewSchemaId = "";
-            NewSchemaName = "";
-            await LoadAsync();
-
-            // Offer the fresh schema pre-checked; saving is still explicit.
-            var created = Schemas.FirstOrDefault(s => s.Id == id);
-            if (created is not null) created.IsSelected = true;
-
-            AppNotifications.Toast($"已创建 {id}.schema.yaml（回声脚手架），勾选保存后即可启用。", NotificationType.Success);
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"创建方案失败：{ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
 
     [RelayCommand]
     private async Task LoadAsync()

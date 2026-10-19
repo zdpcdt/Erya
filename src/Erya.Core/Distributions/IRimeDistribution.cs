@@ -67,11 +67,4 @@ public interface IRimeDistribution
     /// shipped by schemas are never modified — that is the RIME upgrade rule.
     /// </summary>
     Task SetSelectedSchemasAsync(IReadOnlyList<string> schemaIds, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Creates a minimal working <c>&lt;id&gt;.schema.yaml</c> stub in the
-    /// user directory. Throws <see cref="InvalidOperationException"/> when the
-    /// id is malformed or a schema with it already exists.
-    /// </summary>
-    Task CreateSchemaStubAsync(string schemaId, string name, CancellationToken cancellationToken = default);
 }
