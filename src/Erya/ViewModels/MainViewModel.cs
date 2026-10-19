@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,9 +13,26 @@ namespace Erya.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly DistributionManager _distributions;
+    private readonly AppPreferences _preferences;
+    private bool _initialized;
 
-    public IRimeDistribution? Distribution { get; private set; }
+    /// <summary>
+    /// Every RIME frontend found on this machine. Linux machines can carry
+    /// fcitx5-rime and ibus-rime side by side; elsewhere this holds one entry.
+    /// </summary>
+    public IReadOnlyList<IRimeDistribution> AvailableDistributions { get; }
+
+    /// <summary>
+    /// The frontend Erya is currently managing. Two-way bound to the overview
+    /// selector; switching rebuilds every page (see ShellViewModel).
+    /// </summary>
+    [ObservableProperty]
+    private IRimeDistribution? _distribution;
+
+    /// <summary>Raised after <see cref="Distribution"/> changed at runtime.</summary>
+    public event Action? DistributionChanged;
+
+    public bool HasMultipleDistributions => AvailableDistributions.Count > 1;
 
     [ObservableProperty]
     private string _detectionTitle = "正在检测 RIME 发行版…";
@@ -37,20 +56,40 @@ public partial class MainViewModel : ObservableObject
 
     public bool HasStatus => !string.IsNullOrEmpty(StatusMessage);
 
-    public MainViewModel(DistributionManager distributions)
+    public MainViewModel(DistributionManager distributions, AppPreferences? preferences = null)
     {
-        _distributions = distributions;
-        Detect();
+        _preferences = preferences ?? AppPreferences.Load();
+        AvailableDistributions = distributions.LocateAll();
+        // Prefer the frontend picked last time; otherwise locator order decides
+        // (fcitx5 ahead of ibus on Linux, per App.axaml.cs composition).
+        Distribution = AvailableDistributions.FirstOrDefault(d => d.Id == _preferences.DistributionId)
+                       ?? AvailableDistributions.FirstOrDefault();
+        _initialized = true;
     }
 
-    private void Detect()
+    partial void OnDistributionChanged(IRimeDistribution? value)
     {
-        Distribution = _distributions.Locate();
+        // Only a real user choice is persisted — auto-detection must not
+        // overwrite a preference just because its frontend is gone this run.
+        if (value is not null && _initialized && HasMultipleDistributions)
+        {
+            _preferences.DistributionId = value.Id;
+            _preferences.Save();
+        }
+        RefreshFromDistribution();
+        DistributionChanged?.Invoke();
+    }
+
+    private void RefreshFromDistribution()
+    {
         if (Distribution is null)
         {
             DetectionTitle = "未检测到 RIME 发行版";
             StatusType = NotificationType.Warning;
             StatusMessage = InstallHints.ForCurrentOs;
+            InstallDirDisplay = "";
+            UserDir = "";
+            CanDeploy = false;
             return;
         }
 
@@ -68,7 +107,7 @@ public partial class MainViewModel : ObservableObject
         else
         {
             StatusType = NotificationType.Warning;
-            StatusMessage = "未找到部署器 WeaselDeployer.exe，无法触发重新部署。";
+            StatusMessage = InstallHints.DeployerMissingHint(Distribution);
         }
     }
 

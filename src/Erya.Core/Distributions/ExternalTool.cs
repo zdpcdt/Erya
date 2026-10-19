@@ -45,7 +45,13 @@ public static class ExternalTool
         var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
         await process.WaitForExitAsync(cancellationToken);
         if (process.ExitCode != 0)
-            throw new InvalidOperationException(
-                $"{Path.GetFileName(path)} 退出码 {process.ExitCode}：{stderr.Result.Trim()}");
+        {
+            // Some tools (rime_deployer among them) fail without writing to
+            // stderr; without this the message would end in a bare "：" .
+            var stderrText = (await stderr).Trim();
+            throw new InvalidOperationException(stderrText.Length > 0
+                ? $"{Path.GetFileName(path)} 退出码 {process.ExitCode}：{stderrText}"
+                : $"{Path.GetFileName(path)} 退出码 {process.ExitCode}（工具未输出错误信息）");
+        }
     }
 }

@@ -221,7 +221,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             if (!_distribution.CanDeploy)
             {
                 AppNotifications.Notify("设置已保存",
-                    $"已写入 {customName}，但未找到部署器，需手动重新部署后生效。",
+                    $"已写入 {customName}。{InstallHints.DeployerMissingHint(_distribution)}",
                     NotificationType.Warning);
             }
             else

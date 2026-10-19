@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=尔雅 Erya
+GenericName=RIME 配置工具
+Comment=中州韵输入法引擎（RIME）的可视化配置工具
+Exec=@INSTALL_DIR@/Erya
+TryExec=@INSTALL_DIR@/Erya
+Icon=erya
+Terminal=false
+Categories=Settings;Utility;TextTools;
+Keywords=rime;ime;input;中州韵;输入法;配置;
+StartupWMClass=Erya
+SingleMainWindow=true
