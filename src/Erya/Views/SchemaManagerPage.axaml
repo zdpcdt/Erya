@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
+             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.SchemaManagerPage"
@@ -14,7 +14,7 @@
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="勾选要启用的方案；已启用方案的顺序即 Ctrl+` 切换顺序，可用箭头调整。" Opacity="0.6" />
+                <TextBlock Text="勾选要启用的方案；拖动调整顺序，已启用方案的顺序即 Ctrl+` 切换顺序。" Opacity="0.6" />
                 <TextBlock Text="保存后写入 default.custom.yaml 补丁并触发重新部署。"
                            Opacity="0.6" FontSize="12" />
             </StackPanel>
@@ -29,10 +29,14 @@
         <Grid Grid.Row="1" Margin="0,14">
             <ScrollViewer IsVisible="{Binding HasSchemas}">
                 <StackPanel>
-                    <ItemsControl ItemsSource="{Binding Schemas}" Margin="0,0,4,0">
-                        <ItemsControl.ItemTemplate>
+                    <c:ReorderableItemsControl ItemsSource="{Binding Schemas}" Margin="0,0,4,0">
+                        <c:ReorderableItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:SchemaItemViewModel">
                                 <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,5">
+                                    <!-- 拖拽把手：按住上下拖动调整顺序（对所有行开放；未启用行的位置不落盘） -->
+                                    <c:DragHandle Data="{DynamicResource SemiIconHandle}"
+                                                  VerticalAlignment="Center"
+                                                  ToolTip.Tip="拖动调整顺序" />
                                     <CheckBox IsChecked="{Binding IsSelected}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
@@ -40,27 +44,10 @@
                                                        VerticalAlignment="Center" />
                                         </StackPanel>
                                     </CheckBox>
-                                    <!-- 顺序调整仅对已启用方案有意义 -->
-                                    <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsSelected}"
-                                                  Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveUpCommand}"
-                                                  CommandParameter="{Binding}"
-                                                  ToolTip.Tip="上移（提升切换顺序）">
-                                        <u:IconButton.Icon>
-                                            <tdicon:ChevronUp Width="16" Height="16" />
-                                        </u:IconButton.Icon>
-                                    </u:IconButton>
-                                    <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsSelected}"
-                                                  Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveDownCommand}"
-                                                  CommandParameter="{Binding}"
-                                                  ToolTip.Tip="下移">
-                                        <u:IconButton.Icon>
-                                            <tdicon:ChevronDown Width="16" Height="16" />
-                                        </u:IconButton.Icon>
-                                    </u:IconButton>
                                 </StackPanel>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </c:ReorderableItemsControl.ItemTemplate>
+                    </c:ReorderableItemsControl>
 
                     <!-- 添加新方案：创建回声脚手架，勾选保存后启用 -->
                     <Expander Margin="0,14,0,0" Header="添加新方案">
