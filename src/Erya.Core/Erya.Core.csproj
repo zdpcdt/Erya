@@ -14,6 +14,7 @@
     <EmbeddedResource Include="Settings\settings.default.json" />
     <EmbeddedResource Include="Settings\settings.squirrel.json" />
     <EmbeddedResource Include="Settings\settings.weasel.json" />
+    <EmbeddedResource Include="Packages\packages.catalog.json" />
   </ItemGroup>
 
 </Project>

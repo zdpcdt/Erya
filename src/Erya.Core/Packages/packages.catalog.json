@@ -1,0 +1,32 @@
+[
+  {
+    "id": "rime-ice",
+    "name": "雾凇拼音",
+    "description": "开箱即用的简体中文配置：全拼/双拼、长期维护的精校词库，完全离线使用。适合大多数用户的默认之选。",
+    "homepage": "https://github.com/iDvel/rime-ice",
+    "owner": "iDvel",
+    "repo": "rime-ice",
+    "branch": "main",
+    "exclude": ["others*", "build*", "preview*"]
+  },
+  {
+    "id": "rime-frost",
+    "name": "白霜拼音",
+    "description": "基于雾凇优化：高质量语料重新统计字词频，整句准确性出色的后起之秀（体积较大，含完整语料）。",
+    "homepage": "https://github.com/gaboolic/rime-frost",
+    "owner": "gaboolic",
+    "repo": "rime-frost",
+    "branch": "master",
+    "exclude": ["others*", "preview*"]
+  },
+  {
+    "id": "oh-my-rime",
+    "name": "薄荷输入法",
+    "description": "面向新手的极简模板：预置 Emoji、拆字反查、五笔反查等特色功能。",
+    "homepage": "https://github.com/Mintimate/oh-my-rime",
+    "owner": "Mintimate",
+    "repo": "oh-my-rime",
+    "branch": "main",
+    "exclude": ["preview*", "tools*", "plum*", "public*", ".ide*", ".vscode*", ".cnb*", "demo*"]
+  }
+]
