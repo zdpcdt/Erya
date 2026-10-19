@@ -11,6 +11,8 @@
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
                 <!--  Cell / CellGroup / ValidationErrorIcon 主题（Semi 风格）  -->
                 <ResourceInclude Source="avares://Erya.Controls/CellTheme.axaml" />
+                <!--  ReorderableItemsControl / DragHandle 主题（Semi 风格）  -->
+                <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
