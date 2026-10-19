@@ -22,6 +22,7 @@
             <CheckBox Grid.Column="3" Content="仅显示已修改" IsChecked="{Binding OnlyModified}"
                       Margin="14,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding !IsSourceMode}" />
             <u:IconButton Grid.Column="4" Command="{Binding LoadCommand}" ToolTip.Tip="重新读取"
+                          Theme="{DynamicResource SolidIconButton}"
                           Icon="{StaticResource SemiIconRefresh}"
                           Margin="10,0,0,0" VerticalAlignment="Center" />
             <Button Grid.Column="5" Content="部署" Command="{Binding DeployCommand}"
@@ -44,14 +45,14 @@
                                        TextTrimming="CharacterEllipsis" MaxWidth="360" />
                             <TextBox Text="{Binding EditText, Mode=TwoWay}" MinWidth="160" MaxWidth="360"
                                      IsVisible="{Binding IsEditing}" />
-                            <u:IconButton Classes="Primary" IsVisible="{Binding IsEditing}"
+                            <u:IconButton Classes="Primary" Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsEditing}"
                                           Command="{Binding ApplyEditCommand}" CommandParameter="{Binding}"
                                           ToolTip.Tip="应用修改">
                                 <u:IconButton.Icon>
                                     <tdicon:CheckCircle Width="16" Height="16" />
                                 </u:IconButton.Icon>
                             </u:IconButton>
-                            <u:IconButton IsVisible="{Binding IsEditing}"
+                            <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsEditing}"
                                           Command="{Binding CancelEditCommand}" CommandParameter="{Binding}"
                                           ToolTip.Tip="取消修改">
                                 <u:IconButton.Icon>

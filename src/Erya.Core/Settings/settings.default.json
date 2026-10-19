@@ -11,6 +11,7 @@
           "label": "候选词个数",
           "description": "每页显示的候选词数量",
           "type": "stepper",
+          "icon": "td:OrderList",
           "keyPath": "menu/page_size",
           "min": 3,
           "max": 10,
@@ -34,6 +35,7 @@
           "label": "快捷键",
           "description": "触发方案选单的全局快捷键，如 Control+grave 或 F4",
           "type": "hotkeyList",
+          "icon": "td:Keyboard",
           "keyPath": "switcher/hotkeys"
         },
         {
@@ -41,13 +43,21 @@
           "label": "记忆选项",
           "description": "在方案选单中切换后需要记住的状态",
           "type": "checkList",
+          "icon": "td:Save",
           "keyPath": "switcher/save_options",
-          "choices": ["ascii_punct", "traditionalization", "emoji", "full_shape", "search_single_char"]
+          "choices": [
+            "ascii_punct",
+            "traditionalization",
+            "emoji",
+            "full_shape",
+            "search_single_char"
+          ]
         },
         {
           "id": "foldOptions",
           "label": "折叠菜单",
           "type": "toggle",
+          "icon": "td:MenuFold",
           "keyPath": "switcher/fold_options"
         },
         {
@@ -73,6 +83,7 @@
           "label": "保持 Caps Lock 原功能",
           "description": "开启后 Caps Lock 用于切换大写锁定；关闭则用于切换中英文输入状态",
           "type": "toggle",
+          "icon": "td:Lock",
           "keyPath": "ascii_composer/good_old_caps_lock"
         },
         {
@@ -80,9 +91,22 @@
           "label": "切换按键行为",
           "description": "按下该键切换到英文时的行为：行内英文会在回车上屏后切回中文",
           "type": "keyMapping",
+          "icon": "td:Swap",
           "keyPath": "ascii_composer/switch_key",
-          "choices": ["commit_code", "commit_text", "inline_ascii", "clear", "noop"],
-          "keys": ["Caps_Lock", "Shift_L", "Shift_R", "Control_L", "Control_R"]
+          "choices": [
+            "commit_code",
+            "commit_text",
+            "inline_ascii",
+            "clear",
+            "noop"
+          ],
+          "keys": [
+            "Caps_Lock",
+            "Shift_L",
+            "Shift_R",
+            "Control_L",
+            "Control_R"
+          ]
         }
       ]
     },
@@ -94,22 +118,34 @@
           "id": "selectPair",
           "label": "以词定字",
           "type": "hotkeyPairList",
+          "icon": "td:CheckRectangle",
           "keyPath": "key_binder/select_pair",
-          "itemLabels": ["首字", "末字"]
+          "itemLabels": [
+            "首字",
+            "末字"
+          ]
         },
         {
           "id": "cursorPair",
           "label": "移动光标",
           "type": "hotkeyPairList",
+          "icon": "td:Cursor",
           "keyPath": "key_binder/cursor_pair",
-          "itemLabels": ["上个拼音", "下个拼音"]
+          "itemLabels": [
+            "上个拼音",
+            "下个拼音"
+          ]
         },
         {
           "id": "pagePair",
           "label": "翻页",
           "type": "hotkeyPairList",
+          "icon": "ip:UpOne",
           "keyPath": "key_binder/page_pair",
-          "itemLabels": ["上页", "下页"]
+          "itemLabels": [
+            "上页",
+            "下页"
+          ]
         }
       ]
     },
@@ -130,7 +166,10 @@
           "description": "commit 为上屏分隔符，noop 为不处理",
           "type": "enum",
           "keyPath": "punctuator/digit_separator_action",
-          "choices": ["commit", "noop"]
+          "choices": [
+            "commit",
+            "noop"
+          ]
         }
       ]
     }

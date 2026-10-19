@@ -19,6 +19,7 @@
                            Opacity="0.6" FontSize="12" />
             </StackPanel>
             <u:IconButton Grid.Column="1" VerticalAlignment="Top"
+                          Theme="{DynamicResource SolidIconButton}"
                           Command="{Binding LoadCommand}"
                           Icon="{StaticResource SemiIconRefresh}"
                           ToolTip.Tip="重新扫描方案列表" />
@@ -40,7 +41,7 @@
                                         </StackPanel>
                                     </CheckBox>
                                     <!-- 顺序调整仅对已启用方案有意义 -->
-                                    <u:IconButton IsVisible="{Binding IsSelected}"
+                                    <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsSelected}"
                                                   Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveUpCommand}"
                                                   CommandParameter="{Binding}"
                                                   ToolTip.Tip="上移（提升切换顺序）">
@@ -48,7 +49,7 @@
                                             <tdicon:ChevronUp Width="16" Height="16" />
                                         </u:IconButton.Icon>
                                     </u:IconButton>
-                                    <u:IconButton IsVisible="{Binding IsSelected}"
+                                    <u:IconButton Theme="{DynamicResource SolidIconButton}" IsVisible="{Binding IsSelected}"
                                                   Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).MoveDownCommand}"
                                                   CommandParameter="{Binding}"
                                                   ToolTip.Tip="下移">

@@ -27,6 +27,9 @@ public abstract partial class SettingsFieldViewModel : ObservableObject
 
     public string KeyPath => Field.KeyPath;
 
+    /// <summary>行首图标声明（td:/ip:/semi: 前缀），经 FieldIconConverter 变成图标。</summary>
+    public string? IconName => Field.Icon;
+
     /// <summary>该键已写入 .custom.yaml 补丁（非发行版默认值）。</summary>
     [ObservableProperty]
     private bool _isModified;

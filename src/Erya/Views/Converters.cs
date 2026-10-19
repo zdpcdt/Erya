@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
@@ -14,6 +15,53 @@ public static class Converters
 {
     public static readonly RimeColorConverter RimeColor = new();
     public static readonly RimeHotkeyConverter RimeHotkey = new();
+    public static readonly FieldIconConverter FieldIcon = new();
+}
+
+/// <summary>
+/// schema 字段的 icon 声明（string）→ 图标实例：
+/// "td:Name" → Irihi.Iconica.TDesign.Icons.Name（20×20，继承前景色）；
+/// "ip:Name" → Irihi.Iconica.IconPark.Icons.Name（Line 单色模式见 App.axaml 样式）；
+/// "semi:SemiIconX" → 应用资源里的 Geometry（Cell 模板会以 PathIcon 呈现）。
+/// 无法解析时返回 null（不显示图标，行内仍占位保持对齐）。
+/// </summary>
+public sealed class FieldIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string spec) return null;
+        var sep = spec.IndexOf(':');
+        if (sep <= 0 || sep == spec.Length - 1) return null;
+        var prefix = spec[..sep];
+        var name = spec[(sep + 1)..];
+        return prefix switch
+        {
+            "td" => CreateIcon("Irihi.Iconica.TDesign", name),
+            "ip" => CreateIcon("Irihi.Iconica.IconPark", name),
+            "semi" => Application.Current is { } app
+                      && app.TryGetResource(name, app.ActualThemeVariant, out var resource)
+                      && resource is Geometry
+                ? resource
+                : null,
+            _ => null,
+        };
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => BindingOperations.DoNothing;
+
+    private static Control? CreateIcon(string namespacePrefix, string name)
+    {
+        var type = Type.GetType($"{namespacePrefix}.Icons.{name}, {namespacePrefix}");
+        if (type is null) return null;
+        var icon = (Control?)Activator.CreateInstance(type);
+        if (icon is not null)
+        {
+            icon.Width = 20;
+            icon.Height = 20;
+        }
+        return icon;
+    }
 }
 
 /// <summary>

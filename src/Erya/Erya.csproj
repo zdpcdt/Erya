@@ -17,6 +17,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Irihi.Iconica.TDesign" Version="1.0.0" />
+    <PackageReference Include="Irihi.Iconica.IconPark" Version="2.1.0" />
     <PackageReference Include="Irihi.Ursa" Version="2.2.0" />
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.2.0" />
     <PackageReference Include="Semi.Avalonia" Version="12.1.0.1" />
