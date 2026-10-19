@@ -114,6 +114,11 @@ public sealed class DistributionLocatorTests : IDisposable
     {
         // On a machine that really has fcitx5-rime this cannot assert null.
         if (File.Exists("/usr/share/fcitx5/addon/rime.conf")) return;
+        // Shield the real user directory too: a dev machine that has actually
+        // configured fcitx5-rime carries ~/.local/share/fcitx5/rime, which
+        // would otherwise count as "installed" (same disease the Squirrel
+        // test above guards against on a real mac).
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", Path.Combine(_root, "empty-xdg"));
         Assert.Null(new Fcitx5RimeLocator().Locate());
     }
 
@@ -137,6 +142,35 @@ public sealed class DistributionLocatorTests : IDisposable
     }
 
     [Fact]
+    public void Fcitx5_deploy_passes_shared_data_dir_to_the_deployer()
+    {
+        // librime defaults the shared data dir to the working directory when
+        // the second --build argument is omitted, so every schema is reported
+        // missing and nothing is built (verified against librime 1.16).
+        var distribution = new Fcitx5RimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root, "/usr/share/rime-data"], distribution.DeployerArguments);
+    }
+
+    [Fact]
+    public void Fcitx5_deploy_arguments_omit_shared_dir_only_when_it_is_unknown()
+    {
+        var distribution = new Fcitx5RimeDistribution(_root, sharedDataDir: null, deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root], distribution.DeployerArguments);
+    }
+
+    [Fact]
+    public void Ibus_deployer_fallback_passes_shared_data_dir()
+    {
+        var distribution = new IbusRimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            ibusPath: null, deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root, "/usr/share/rime-data"], distribution.DeployerArguments);
+    }
+
+    [Fact]
     public void Ibus_locator_locates_user_dir_via_env()
     {
         var userDir = Path.Combine(_root, "ibus-rime-home");
@@ -147,6 +181,38 @@ public sealed class DistributionLocatorTests : IDisposable
 
         Assert.Equal("ibus-rime", distribution.Id);
         Assert.Equal(userDir, distribution.UserDir);
+    }
+
+    // ---------- manager ----------
+
+    [Fact]
+    public void LocateAll_returns_every_env_overridden_frontend_in_locator_order()
+    {
+        Write("fcitx5-rime-home/.keep", "");
+        Write("ibus-rime-home/.keep", "");
+        Environment.SetEnvironmentVariable(Fcitx5RimeLocator.UserDirEnv, Path.Combine(_root, "fcitx5-rime-home"));
+        Environment.SetEnvironmentVariable(IbusRimeLocator.UserDirEnv, Path.Combine(_root, "ibus-rime-home"));
+
+        var manager = new DistributionManager(new Fcitx5RimeLocator(), new IbusRimeLocator());
+
+        // Order is the switcher's fallback priority: fcitx5 first, ibus second.
+        Assert.Equal(["fcitx5-rime", "ibus-rime"], manager.LocateAll().Select(d => d.Id));
+    }
+
+    [Fact]
+    public void LocateAll_skips_locators_that_find_nothing()
+    {
+        Write("ibus-rime-home/.keep", "");
+        Environment.SetEnvironmentVariable(IbusRimeLocator.UserDirEnv, Path.Combine(_root, "ibus-rime-home"));
+        // Shield the real fcitx5 user dir so the test stays hermetic on a
+        // machine that actually uses fcitx5-rime (same trick as the null test).
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", Path.Combine(_root, "empty-xdg"));
+
+        var manager = new DistributionManager(new Fcitx5RimeLocator(), new IbusRimeLocator());
+
+        var all = manager.LocateAll();
+        Assert.Equal(["ibus-rime"], all.Select(d => d.Id));
+        Assert.Equal("ibus-rime", manager.Locate()?.Id);
     }
 
     // ---------- shared ----------
