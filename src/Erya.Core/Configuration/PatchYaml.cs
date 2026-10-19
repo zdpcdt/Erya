@@ -9,7 +9,7 @@ namespace Erya.Core.Configuration;
 /// purpose: values are small and fully typed here, and this keeps block
 /// indentation consistent with the line-level patch writer.
 /// </summary>
-internal static class PatchYaml
+public static class PatchYaml
 {
     /// <summary>
     /// Renders one patch entry against a key line at

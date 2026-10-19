@@ -80,10 +80,10 @@ public sealed class AdvancedSettingsPageRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Same(YamlHighlighting.Dark, editor.SyntaxHighlighting);
 
-        window.CaptureRenderedFrame()?.Save("/tmp/erya-advanced-dark.png");
+        window.CaptureRenderedFrame()?.Save(Path.Combine(Path.GetTempPath(), "erya-advanced-dark.png"));
         Application.Current.RequestedThemeVariant = ThemeVariant.Light;
         Dispatcher.UIThread.RunJobs();
-        window.CaptureRenderedFrame()?.Save("/tmp/erya-advanced-light.png");
+        window.CaptureRenderedFrame()?.Save(Path.Combine(Path.GetTempPath(), "erya-advanced-light.png"));
         window.Close();
         Application.Current.RequestedThemeVariant = ThemeVariant.Default;
         Dispatcher.UIThread.RunJobs();

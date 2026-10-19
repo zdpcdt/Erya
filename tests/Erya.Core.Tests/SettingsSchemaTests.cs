@@ -48,16 +48,42 @@ public sealed class SettingsSchemaTests
     }
 
     [Fact]
-    public void Weasel_schema_uses_the_shared_style_subset_only()
+    public void Weasel_schema_key_paths_are_all_read_by_weasel_017()
     {
         var schema = SettingsSchemas.LoadForUiConfig("weasel.yaml");
 
         Assert.Equal("weasel.yaml", schema.TargetFile);
-        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields), f => f.Id == "showPaging");
-        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields), f => f.Id == "memorizeSize");
-        Assert.Contains(schema.Sections.SelectMany(s => s.Fields), f => f.Id == "inlinePreedit");
-        // Alpha default parses as an integral JSON number (long).
-        Assert.Equal(1L, Field(schema, "style", "alpha").DefaultValue());
+        // Keys RimeWithWeasel.cpp of weasel 0.17.x actually reads (verified
+        // against the 0.17.4 source). A field outside this set renders fine
+        // but can never take effect — a pure placebo in the UI.
+        var weaselReadKeys = new HashSet<string>
+        {
+            "style/color_scheme", "style/color_scheme_dark",
+            "style/layout/type", // read LAST by weasel — beats horizontal/vertical_text/text_orientation
+            "style/inline_preedit", "style/display_tray_icon",
+            "style/paging_on_scroll", "style/font_face", "style/font_point",
+            "style/label_font_face", "style/label_font_point", "style/label_format",
+            "style/mark_text", "style/comment_font_face", "style/comment_font_point",
+            "style/layout/corner_radius", "style/layout/hilited_corner_radius",
+            "style/layout/linespacing", "style/layout/spacing",
+            "style/layout/candidate_spacing", "style/layout/hilite_spacing",
+        };
+        foreach (var field in schema.Sections.SelectMany(s => s.Fields))
+        {
+            if (field.Type == "appOptions") continue; // app_options is read by every frontend
+            Assert.True(
+                weaselReadKeys.Contains(field.KeyPath),
+                $"小狼毫不读取 {field.KeyPath}（字段 {field.Id}）——别把鼠须管的键抄进 weasel schema。");
+        }
+        // Keys we deliberately do NOT expose on weasel: squirrel-only
+        // spellings weasel ignores, plus lower-precedence orientation keys
+        // that style/layout/type (read last) silently overrides.
+        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields),
+            f => f.KeyPath is "style/candidate_list_layout" or "style/translucency"
+                 or "style/mutual_exclusive" or "style/alpha" or "style/inline_candidate"
+                 or "style/horizontal" or "style/text_orientation" or "style/vertical_text");
+        // 排列方式 must map onto the highest-precedence key weasel reads.
+        Assert.Contains(schema.Sections.SelectMany(s => s.Fields), f => f.KeyPath == "style/layout/type");
     }
 
     [Fact]

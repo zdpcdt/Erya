@@ -172,6 +172,68 @@ public sealed class SettingsEditorTests : IDisposable
         public override Task DeployAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
+
+    [AvaloniaFact]
+    public async Task Weasel_layout_field_writes_highest_precedence_key()
+    {
+        // Mirrors a rimetool-managed dir: base carries BOTH horizontal: true
+        // and layout/type: vertical. weasel reads layout/type LAST, so it is
+        // the only key that actually decides the panel orientation — the UI
+        // must show vertical (the merged truth) and write layout/type.
+        Write("weasel.yaml", """
+            style:
+              horizontal: true
+              vertical_text: true
+              layout:
+                type: vertical
+              color_scheme: aqua
+            preset_color_schemes:
+              aqua:
+                back_color: 0xECECEC
+            app_options:
+              cmd.exe:
+                ascii_mode: true
+            """);
+        var vm = new SettingsEditorViewModel(new FakeWeaselDistribution(_dir, _sharedDir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsSupported);
+        var layout = Choice(vm, "style/layout/type");
+        Assert.Equal("vertical", layout.Selected);
+
+        layout.Selected = "horizontal";
+        Assert.True(vm.IsDirty);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var patch = new Erya.Core.Configuration.RimeConfigStore(_dir).ReadPatchValues("weasel.yaml");
+        Assert.Equal("horizontal", patch["style/layout/type"]);
+        Assert.DoesNotContain(patch.Keys, k => k is "style/horizontal" or "style/text_orientation");
+        Assert.Equal("horizontal", Choice(vm, "style/layout/type").Selected); // reloaded
+    }
+
+
+    /// <summary>Weasel-like distribution over temp dirs (the real one owns %APPDATA%\Rime).</summary>
+    private sealed class FakeWeaselDistribution : RimeDistributionBase
+    {
+        public FakeWeaselDistribution(string userDir, string sharedDir)
+        {
+            UserDir = userDir;
+            SchemaSearchDirs = [sharedDir];
+        }
+
+        public override string Id => "weasel";
+
+        public override string DisplayName => "测试小狼毫";
+
+        public override string UserDir { get; }
+
+        public override string? UiConfigFile => "weasel.yaml";
+
+        public override bool CanDeploy => false;
+
+        public override Task DeployAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
     private static SettingsFieldViewModel Field(SettingsEditorViewModel vm, string keyPath)
         => vm.Sections.SelectMany(s => s.Fields).First(f => f.KeyPath == keyPath);
 

@@ -48,8 +48,61 @@ public sealed class RimeConfigStore
         if (customRoot is null) return root;
 
         root ??= new YamlMappingNode();
-        MergedConfig.Apply(root, CustomYamlPatcher.ReadFlatPatch(CustomPath(baseFileName)));
+        MergedConfig.Apply(root, ResolveIncludes(baseFileName, CustomYamlPatcher.ReadFlatPatch(CustomPath(baseFileName))));
         return root;
+    }
+
+    /// <summary>
+    /// The base file's tree without any patch overlay — what the distribution
+    /// shipped and what a removed patch entry falls back to.
+    /// </summary>
+    public YamlMappingNode? LoadBase(string baseFileName)
+        => RimeYaml.LoadRoot(BasePath(baseFileName));
+
+    /// <summary>
+    /// Expands <c>__include: "other:/node"</c> patch entries (the way tools
+    /// like rimetool share one hot_keys.yaml across frontends) into their
+    /// referenced entries, applied before the file's own keys so explicit
+    /// local patches win — mirroring librime. Unresolvable includes are
+    /// dropped from the overlay rather than applied as a literal key.
+    /// </summary>
+    internal IEnumerable<KeyValuePair<string, YamlNode>> ResolveIncludes(
+        string baseFileName, IEnumerable<KeyValuePair<string, YamlNode>> flatPatch)
+    {
+        var included = new List<KeyValuePair<string, YamlNode>>();
+        foreach (var (key, value) in flatPatch)
+        {
+            if (key != "__include"
+                || value is not YamlScalarNode { Value: { } target }
+                || target.Split(':', 2) is not [var resourceName, var nodePath])
+            {
+                continue;
+            }
+
+            var resourceRoot = baseFileName == resourceName + ".yaml"
+                ? null // self-include: nothing outside the file to pull in
+                : RimeYaml.LoadRoot(_searchDirs
+                    .Select(dir => Path.Combine(dir, resourceName + ".yaml"))
+                    .FirstOrDefault(File.Exists)
+                    ?? Path.Combine(UserDir, resourceName + ".yaml"));
+            YamlNode? node = resourceRoot;
+            foreach (var segment in nodePath.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (node is not YamlMappingNode segmentMap || !RimeYaml.TryGetChild(segmentMap, segment, out var child))
+                {
+                    node = null;
+                    break;
+                }
+                node = child;
+            }
+            if (node is not YamlMappingNode includedMap) continue;
+
+            foreach (var (childKey, childValue) in includedMap.Children)
+                if (childKey is YamlScalarNode { Value: { } includedKey })
+                    included.Add(new(includedKey, childValue));
+        }
+
+        return included.Concat(flatPatch.Where(kv => kv.Key != "__include"));
     }
 
     /// <summary>

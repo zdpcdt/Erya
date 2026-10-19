@@ -4,7 +4,7 @@
     {
       "id": "style",
       "title": "候选词面板",
-      "description": "小狼毫候选窗的外观与排版（取小狼毫与鼠须管通用的样式键）。",
+      "description": "小狼毫候选窗的外观与排版。键名已对照小狼毫 0.17 源码逐一校验。",
       "fields": [
         {
           "id": "colorScheme",
@@ -24,26 +24,16 @@
           "choicesRef": "preset_color_schemes"
         },
         {
-          "id": "candidateLayout",
+          "id": "layoutType",
           "label": "排列方式",
-          "description": "stacked 为竖排，linear 为横排",
+          "description": "horizontal 横排 / vertical 竖排 / vertical_text 竖排文本（逐字竖书）。此键优先级最高，覆盖 horizontal 等旧键。",
           "type": "segmented",
           "icon": "td:Layout",
-          "keyPath": "style/candidate_list_layout",
-          "choices": [
-            "stacked",
-            "linear"
-          ]
-        },
-        {
-          "id": "textOrientation",
-          "label": "文字方向",
-          "type": "segmented",
-          "icon": "td:Vertical",
-          "keyPath": "style/text_orientation",
+          "keyPath": "style/layout/type",
           "choices": [
             "horizontal",
-            "vertical"
+            "vertical",
+            "vertical_text"
           ]
         },
         {
@@ -55,23 +45,17 @@
           "keyPath": "style/inline_preedit"
         },
         {
-          "id": "inlineCandidate",
-          "label": "内嵌候选",
-          "description": "首选词直接内嵌在应用光标处（小狼毫 0.15+）",
+          "id": "displayTrayIcon",
+          "label": "显示托盘图标",
           "type": "toggle",
-          "keyPath": "style/inline_candidate"
+          "keyPath": "style/display_tray_icon"
         },
         {
-          "id": "translucency",
-          "label": "磨砂效果",
+          "id": "pagingOnScroll",
+          "label": "滚轮翻页",
+          "description": "在候选窗上滚动鼠标滚轮翻页",
           "type": "toggle",
-          "keyPath": "style/translucency"
-        },
-        {
-          "id": "mutualExclusive",
-          "label": "色彩不叠加",
-          "type": "toggle",
-          "keyPath": "style/mutual_exclusive"
+          "keyPath": "style/paging_on_scroll"
         },
         {
           "id": "fontFace",
@@ -93,11 +77,47 @@
           "default": 22
         },
         {
+          "id": "labelFontPoint",
+          "label": "序号字号",
+          "type": "stepper",
+          "icon": "ip:FontSize",
+          "keyPath": "style/label_font_point",
+          "min": 8,
+          "max": 32,
+          "step": 1
+        },
+        {
+          "id": "commentFontPoint",
+          "label": "注释字号",
+          "type": "stepper",
+          "icon": "ip:FontSize",
+          "keyPath": "style/comment_font_point",
+          "min": 8,
+          "max": 32,
+          "step": 1
+        },
+        {
+          "id": "labelFormat",
+          "label": "序号格式",
+          "description": "如 \"%s.\"；%s 代表数字",
+          "type": "text",
+          "icon": "td:Text",
+          "keyPath": "style/label_format"
+        },
+        {
+          "id": "markText",
+          "label": "标记字符",
+          "description": "高亮候选前的标记，如 \"·\"",
+          "type": "text",
+          "icon": "td:Text",
+          "keyPath": "style/mark_text"
+        },
+        {
           "id": "cornerRadius",
           "label": "圆角",
           "type": "stepper",
           "icon": "td:Round",
-          "keyPath": "style/corner_radius",
+          "keyPath": "style/layout/corner_radius",
           "min": 0,
           "max": 20,
           "step": 1
@@ -106,7 +126,7 @@
           "id": "hilitedCornerRadius",
           "label": "高亮圆角",
           "type": "stepper",
-          "keyPath": "style/hilited_corner_radius",
+          "keyPath": "style/layout/hilited_corner_radius",
           "min": 0,
           "max": 20,
           "step": 1
@@ -116,30 +136,37 @@
           "label": "候选行距",
           "type": "stepper",
           "icon": "td:LineHeight",
-          "keyPath": "style/line_spacing",
+          "keyPath": "style/layout/linespacing",
           "min": 0,
           "max": 12,
           "step": 1
         },
         {
           "id": "spacing",
-          "label": "拼音间距",
+          "label": "编码-候选间距",
           "type": "stepper",
-          "keyPath": "style/spacing",
+          "keyPath": "style/layout/spacing",
           "min": 0,
           "max": 20,
           "step": 1
         },
         {
-          "id": "alpha",
-          "label": "透明度",
-          "type": "slider",
-          "icon": "td:Alpha",
-          "keyPath": "style/alpha",
+          "id": "candidateSpacing",
+          "label": "候选间距",
+          "type": "stepper",
+          "keyPath": "style/layout/candidate_spacing",
           "min": 0,
-          "max": 1,
-          "step": 0.05,
-          "default": 1
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "hiliteSpacing",
+          "label": "高亮内边距",
+          "type": "stepper",
+          "keyPath": "style/layout/hilite_spacing",
+          "min": 0,
+          "max": 40,
+          "step": 1
         }
       ]
     },
