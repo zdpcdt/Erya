@@ -181,9 +181,13 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     [RelayCommand]
     private void Revert()
     {
+        // Capture before the field events re-raise IsDirty mid-revert.
+        var hadPending = IsDirty;
         foreach (var field in Sections.SelectMany(s => s.Fields)) field.Revert();
         SchemeLibrary?.Revert();
         OnPropertyChanged(nameof(IsDirty));
+        AppNotifications.Toast(hadPending ? "已还原未保存的修改。" : "当前没有未保存的修改。",
+            hadPending ? NotificationType.Success : NotificationType.Information);
     }
 
     [RelayCommand]
@@ -209,12 +213,13 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 writes[key] = value;
             removals.AddRange(library.PendingRemovals());
         }
-        if (writes.Count == 0 && removals.Count == 0) return;
-
+        // Nothing pending is not a no-op: the button stays clickable so the
+        // user can always force a redeploy from here.
         IsBusy = true;
         try
         {
             ErrorMessage = "";
+            var saved = writes.Count > 0 || removals.Count > 0;
             if (writes.Count > 0) _store.WritePatch(_schema.TargetFile, writes);
             if (removals.Count > 0) _store.RemovePatchKeys(_schema.TargetFile, removals);
 
@@ -222,7 +227,9 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             if (!_distribution.CanDeploy)
             {
                 AppNotifications.Notify("设置已保存",
-                    $"已写入 {customName}。{InstallHints.DeployerMissingHint(_distribution)}",
+                    saved
+                        ? $"已写入 {customName}。{InstallHints.DeployerMissingHint(_distribution)}"
+                        : $"本次没有修改需要写入。{InstallHints.DeployerMissingHint(_distribution)}",
                     NotificationType.Warning);
             }
             else
@@ -230,7 +237,8 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 try
                 {
                     await _distribution.DeployAsync();
-                    AppNotifications.Toast("设置已保存并触发重新部署。", NotificationType.Success);
+                    AppNotifications.Toast(saved ? "设置已保存并触发重新部署。" : "已触发重新部署。",
+                        NotificationType.Success);
                 }
                 catch (OperationCanceledException)
                 {
@@ -268,6 +276,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
         {
             ErrorMessage = "";
             _store.RemovePatchKeys(_schema.TargetFile, [field.KeyPath]);
+            AppNotifications.Toast($"已撤销 {field.KeyPath} 的补丁，重新部署后生效。", NotificationType.Success);
             await LoadAsync();
         }
         catch (Exception ex)

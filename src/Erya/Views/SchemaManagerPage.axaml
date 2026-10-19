@@ -18,11 +18,16 @@
                 <TextBlock Text="保存后写入 default.custom.yaml 补丁并触发重新部署。"
                            Opacity="0.6" FontSize="12" />
             </StackPanel>
-            <u:IconButton Grid.Column="1" VerticalAlignment="Top"
-                          Theme="{DynamicResource SolidIconButton}"
-                          Command="{Binding LoadCommand}"
-                          Icon="{StaticResource SemiIconRefresh}"
-                          ToolTip.Tip="重新扫描方案列表" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <u:IconButton Command="{Binding LoadCommand}"
+                              Icon="{StaticResource SemiIconRefresh}"
+                              ToolTip.Tip="重新扫描方案列表" />
+                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                              Command="{Binding SaveAndDeployCommand}"
+                              Icon="{StaticResource SemiIconSave}"
+                              ToolTip.Tip="保存并部署（写入 default.custom.yaml 并触发重新部署）"
+                              IsEnabled="{Binding !IsBusy}" />
+            </StackPanel>
         </Grid>
 
         <!-- Schema list -->
@@ -94,12 +99,9 @@
         </StackPanel>
 
         <!-- Footer -->
-        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
-            <u:Banner Grid.Row="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
-                      IsVisible="{Binding HasError}" Margin="0,0,0,10" />
-            <Button Grid.Row="1" Content="保存并部署" Classes="Primary"
-                    HorizontalAlignment="Right" MinWidth="108"
-                    Command="{Binding SaveAndDeployCommand}" IsEnabled="{Binding !IsBusy}" />
+        <Grid Grid.Row="2" Margin="0,4,0,0">
+            <u:Banner Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" />
         </Grid>
     </Grid>
 </UserControl>
