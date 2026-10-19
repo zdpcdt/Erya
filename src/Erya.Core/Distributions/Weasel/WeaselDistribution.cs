@@ -37,16 +37,30 @@ public sealed class WeaselDistribution : RimeDistributionBase
 
     public override bool CanDeploy => DeployerPath is not null && File.Exists(DeployerPath);
 
-    public override Task DeployAsync(CancellationToken cancellationToken = default)
+    public override async Task DeployAsync(CancellationToken cancellationToken = default)
     {
         if (!CanDeploy)
             throw new InvalidOperationException($"未找到部署器：{DeployerPath}（小狼毫是否已安装？）");
 
-        Process.Start(new ProcessStartInfo(DeployerPath!)
+        // /deploy runs silently (a progress dialog only on failure) and exits
+        // when done — including the WeaselServer maintenance cycle that makes
+        // the running input method pick up the new build. Fire-and-forget here
+        // would report success before anything actually happened.
+        // A deployer started while another one holds WeaselDeployerExclusiveMutex
+        // exits with code 1 immediately — retry once for that contention.
+        for (int attempt = 1; ; attempt++)
         {
-            UseShellExecute = true,
-            Arguments = "/deploy",
-        });
-        return Task.CompletedTask;
+            using var process = Process.Start(new ProcessStartInfo(DeployerPath!)
+            {
+                UseShellExecute = false,
+                Arguments = "/deploy",
+            }) ?? throw new InvalidOperationException("部署器启动失败。");
+            await process.WaitForExitAsync(cancellationToken);
+            if (process.ExitCode == 0) return;
+            if (attempt >= 2)
+                throw new InvalidOperationException(
+                    $"重新部署失败（退出码 {process.ExitCode}）。可尝试从托盘菜单手动「重新部署」，或稍后重试。");
+            await Task.Delay(1500, cancellationToken);
+        }
     }
 }
