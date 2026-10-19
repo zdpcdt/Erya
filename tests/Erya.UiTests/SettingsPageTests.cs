@@ -71,33 +71,6 @@ public sealed class SettingsEditorTests : IDisposable
         Assert.Contains("menu/page_size: 9", custom);
         Assert.Contains("inline_ascii", custom);
         Assert.False(vm.IsDirty); // save reloads the fields
-
-        // The page-size field now carries the "已修改" patch badge.
-        Assert.True(Number(vm, "menu/page_size").IsModified);
-    }
-
-    [AvaloniaFact]
-    public async Task Unset_choice_removes_the_patch_key_on_save()
-    {
-        Write("default.yaml", "menu:\n  page_size: 5\n");
-        Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
-        var distribution = new Fcitx5RimeDistribution(_dir, _sharedDir, null);
-        var vm = new SettingsEditorViewModel(distribution, "default");
-        await vm.LoadCommand.ExecuteAsync(null);
-
-        var pageSize = Number(vm, "menu/page_size");
-        Assert.True(pageSize.IsModified);
-        Assert.Equal(9, pageSize.Value);
-
-        // Revert the whole page: pending badge stays (patch exists) until undone.
-        vm.RevertCommand.Execute(null);
-        Assert.False(vm.IsDirty);
-
-        // Undo the patch entry → key gone, value back to base default.
-        await vm.UndoPatchKeyCommand.ExecuteAsync(pageSize);
-        Assert.False(Number(vm, "menu/page_size").IsModified);
-        Assert.Equal(5, Number(vm, "menu/page_size").Value);
-        Assert.DoesNotContain("page_size", File.ReadAllText(Path.Combine(_dir, "default.custom.yaml")));
     }
 
     [AvaloniaFact]

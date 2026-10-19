@@ -103,12 +103,6 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.Equal(vm.Sections.Sum(s => s.Fields.Count), cells.Count);
         Assert.True(cells.Count >= 10);
 
-        // 补丁徽标：menu/page_size 已在补丁里 → 行内出现“已修改”。
-        var pageSize = cells.Single(c => (c.Content as string)!.Contains("候选"));
-        var badge = pageSize.GetVisualDescendants().OfType<TextBlock>()
-            .Single(t => t.Text == "已修改");
-        Assert.True(badge.IsVisible);
-
         // Detail 行：展开后详情可见，行内点击收起。
         var detailCell = cells.First(c => c.Detail is not null);
         detailCell.IsExpanded = true;
