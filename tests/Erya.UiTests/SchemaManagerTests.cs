@@ -65,6 +65,30 @@ public sealed class SchemaManagerTests : IDisposable
         Assert.Equal(["c", "a"], new Erya.Core.Configuration.RimeSchemaCatalog(_dir).ReadSelectedIds());
     }
 
+    [AvaloniaFact]
+    public void Installed_packages_show_already_installed_and_reinstall()
+    {
+        Write("default.yaml", "schema_list:\n  - schema: luna_pinyin\n");
+        // 雾凇已装（marker 文件在用户目录），薄荷未装。
+        Write("rime_ice.schema.yaml", "schema:\n  schema_id: rime_ice\n  name: 雾凇拼音\n");
+        var (vm, dist) = Load();
+
+        var ice = vm.OnlinePackages.Single(p => p.Package.Id == "rime-ice");
+        Assert.True(ice.IsInstalled);
+        Assert.Equal("重新安装", ice.InstallButtonText);
+        Assert.Equal("已安装", ice.StatusText);
+
+        var mint = vm.OnlinePackages.Single(p => p.Package.Id == "oh-my-rime");
+        Assert.False(mint.IsInstalled);
+        Assert.Equal("安装", mint.InstallButtonText);
+        Assert.Null(mint.StatusText);
+
+        // Progress/result messages win over the idle 已安装 badge.
+        ice.Status = "已安装 120 个文件";
+        Assert.Equal("已安装 120 个文件", ice.StatusText);
+        Assert.Equal("重新安装", ice.InstallButtonText);
+    }
+
     private sealed class StubDistribution : RimeDistributionBase
     {
         public StubDistribution(string userDir) => UserDir = userDir;

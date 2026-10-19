@@ -36,7 +36,7 @@ public sealed class SchemaPackageTests : IDisposable
 
     private static SchemaPackage Package(string branch = "main", string[]? exclude = null)
         => new("mint", "薄荷测试包", "desc", "https://example.com",
-            "owner", "repo", branch, exclude ?? ["others*"]);
+            "owner", "repo", branch, exclude ?? ["others*"], ["rime_mint.schema.yaml"]);
 
     // ---------- catalog ----------
 
@@ -53,7 +53,27 @@ public sealed class SchemaPackageTests : IDisposable
             Assert.False(string.IsNullOrWhiteSpace(p.Name));
             Assert.StartsWith("https://codeload.github.com/", p.ArchiveUrl);
             Assert.NotEmpty(p.Exclude);
+            Assert.All(p.MarkerSchemas, m => Assert.EndsWith(".schema.yaml", m));
         });
+
+        // Markers must be package-distinctive: a shared one (白霜 is a fork of
+        // 雾凇) would flag both packages installed after installing either.
+        var markers = packages.SelectMany(p => p.MarkerSchemas).ToList();
+        Assert.Equal(markers, markers.Distinct());
+    }
+
+    // ---------- installed probe ----------
+
+    [Fact]
+    public void Marker_schemas_probe_the_user_directory()
+    {
+        var userDir = UserDir();
+        var package = Package();
+
+        Assert.False(package.IsInstalledIn(userDir));
+
+        File.WriteAllText(Path.Combine(userDir, "rime_mint.schema.yaml"), "schema:\n  schema_id: rime_mint\n");
+        Assert.True(package.IsInstalledIn(userDir));
     }
 
     // ---------- wildcard ----------
@@ -236,5 +256,58 @@ public sealed class SchemaPackageTests : IDisposable
 
         Assert.Contains(phases, p => p.Percent is >= 100);
         Assert.Contains(phases, p => p.Phase.Contains("写入"));
+    }
+
+    // ---------- uninstall ----------
+
+    [Fact]
+    public async Task Uninstall_removes_only_the_package_files()
+    {
+        var userDir = UserDir();
+        // 用户自己的文件 + 另一个包的标志方案：都不属于薄荷包，必须留下。
+        File.WriteAllText(Path.Combine(userDir, "my-notes.txt"), "用户自己的文件\n");
+        File.WriteAllText(Path.Combine(userDir, "rime_ice.schema.yaml"), "schema:\n  schema_id: rime_ice\n");
+        var installer = new SchemaInstaller(new FixedHandler(MintPackage()));
+        await installer.InstallAsync(Package(), userDir);
+
+        var report = await installer.UninstallAsync(Package(), userDir);
+
+        Assert.Equal(3, report.DeletedFiles); // schema + nested dict + custom_phrase — matches InstalledFiles
+        Assert.False(File.Exists(Path.Combine(userDir, "rime_mint.schema.yaml")));
+        Assert.False(File.Exists(Path.Combine(userDir, "custom_phrase.txt")));
+        Assert.False(Directory.Exists(Path.Combine(userDir, "cn_dicts"))); // pruned after emptying
+        Assert.True(File.Exists(Path.Combine(userDir, "my-notes.txt")));
+        Assert.True(File.Exists(Path.Combine(userDir, "rime_ice.schema.yaml")));
+
+        // The directory had content → a rollback snapshot must exist.
+        Assert.NotNull(report.BackupPath);
+        Assert.True(File.Exists(report.BackupPath));
+    }
+
+    [Fact]
+    public async Task Uninstall_without_the_package_installed_deletes_nothing()
+    {
+        var userDir = UserDir();
+        File.WriteAllText(Path.Combine(userDir, "unrelated.txt"), "keep\n");
+        var installer = new SchemaInstaller(new FixedHandler(MintPackage()));
+
+        var report = await installer.UninstallAsync(Package(), userDir);
+
+        Assert.Equal(0, report.DeletedFiles);
+        Assert.True(File.Exists(Path.Combine(userDir, "unrelated.txt")));
+    }
+
+    [Fact]
+    public async Task Uninstall_download_failure_deletes_nothing()
+    {
+        var userDir = UserDir();
+        File.WriteAllText(Path.Combine(userDir, "rime_mint.schema.yaml"), "schema:\n  schema_id: rime_mint\n");
+        var installer = new SchemaInstaller(new FailingHandler(HttpStatusCode.NotFound));
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => installer.UninstallAsync(Package(), userDir));
+
+        Assert.Contains("HTTP 404", error.Message);
+        Assert.True(File.Exists(Path.Combine(userDir, "rime_mint.schema.yaml")));
     }
 }

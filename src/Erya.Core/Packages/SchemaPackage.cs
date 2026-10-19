@@ -7,6 +7,12 @@ namespace Erya.Core.Packages;
 /// a recipe DSL, each entry carries a plain exclude list tuned per repository
 /// (docs/, CI configs, build artifacts and other non-RIME content stay out).
 /// </summary>
+/// <param name="MarkerSchemas">
+/// Schema files unique to this package — the "already installed" probe. A
+/// package counts as installed when any marker file exists in the user
+/// directory. Names must be package-distinctive (forks rename their schemas:
+/// 白霜 is a fork of 雾凇 but ships <c>rime_frost.schema.yaml</c>).
+/// </param>
 public sealed record SchemaPackage(
     string Id,
     string Name,
@@ -15,10 +21,15 @@ public sealed record SchemaPackage(
     string Owner,
     string Repo,
     string Branch,
-    string[] Exclude)
+    string[] Exclude,
+    string[] MarkerSchemas)
 {
     /// <summary>Codeload URL — no git required, one plain HTTPS GET.</summary>
     public string ArchiveUrl => $"https://codeload.github.com/{Owner}/{Repo}/tar.gz/refs/heads/{Branch}";
+
+    /// <summary>True when any marker schema is present in the user directory.</summary>
+    public bool IsInstalledIn(string userDir)
+        => MarkerSchemas.Any(marker => File.Exists(Path.Combine(userDir, marker)));
 
     /// <summary>
     /// Excluded from every package: VCS/CI metadata, docs and license blobs
