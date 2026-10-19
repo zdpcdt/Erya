@@ -8,7 +8,7 @@ namespace Erya.Core.Configuration;
 /// semantics for the common cases: plain keys replace, <c>key/+</c> appends
 /// to a sequence, and intermediate missing mappings are created.
 /// </summary>
-internal static class MergedConfig
+public static class MergedConfig
 {
     /// <summary>Applies <paramref name="flatPatch"/> onto <paramref name="root"/> in place.</summary>
     public static void Apply(YamlMappingNode root, IEnumerable<KeyValuePair<string, YamlNode>> flatPatch)
