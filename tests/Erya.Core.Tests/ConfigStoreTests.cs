@@ -281,6 +281,42 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Fact]
+    public void Merged_view_resolves_include_directives_from_referenced_file()
+    {
+        // The rimetool convention: the frontend patch pulls shared entries in
+        // via __include instead of listing them inline.
+        File.WriteAllText(Path.Combine(_dir, "hot_keys.yaml"), """
+            patch:
+              app_options/cmd.exe:
+                ascii_mode: true
+              style/horizontal: true
+              style/font_point: 14
+            """);
+        File.WriteAllText(Path.Combine(_dir, "weasel.custom.yaml"), """
+            patch:
+              __include: "hot_keys:/patch"
+              "style/font_point": 30
+            """);
+
+        // Included entries show up in the merged view…
+        Assert.Equal(true, Store().ReadMergedValue("weasel.yaml", "app_options/cmd.exe/ascii_mode"));
+        Assert.Equal(true, Store().ReadMergedValue("weasel.yaml", "style/horizontal"));
+        // …explicit local keys still win over the include…
+        Assert.Equal(30L, Store().ReadMergedValue("weasel.yaml", "style/font_point"));
+        // …and the directive itself is not applied as a literal key.
+        Assert.Null(Store().ReadMergedValue("weasel.yaml", "__include"));
+    }
+
+    [Fact]
+    public void Unresolvable_include_directive_is_ignored()
+    {
+        File.WriteAllText(Path.Combine(_dir, "default.custom.yaml"), "patch:\n  __include: \"nowhere:/patch\"\n  menu/page_size: 9\n");
+
+        Assert.Equal(9L, Store().ReadMergedValue("default.yaml", "menu/page_size"));
+        Assert.Null(Store().ReadMergedValue("default.yaml", "__include"));
+    }
+
+    [Fact]
     public void Missing_paths_read_as_null()
     {
         Assert.Null(Store().ReadMergedValue("default.yaml", "menu/page_size"));
