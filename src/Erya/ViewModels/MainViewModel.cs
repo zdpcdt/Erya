@@ -68,7 +68,7 @@ public partial class MainViewModel : ObservableObject
         else
         {
             StatusType = NotificationType.Warning;
-            StatusMessage = "未找到部署器 WeaselDeployer.exe，无法触发重新部署。";
+            StatusMessage = InstallHints.DeployerMissingHint;
         }
     }
 
