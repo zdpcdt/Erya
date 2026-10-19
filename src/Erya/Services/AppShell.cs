@@ -13,6 +13,13 @@ internal static class InstallHints
         : OperatingSystem.IsMacOS()
             ? "请先安装鼠鬚管 Squirrel（https://rime.im/download），安装完成后重新打开尔雅。"
             : "请先安装 fcitx5-rime 或 ibus-rime（发行版软件仓库），安装完成后重新打开尔雅。";
+
+    /// <summary>Per-OS hint shown when a distribution was found but its deployer was not.</summary>
+    public static string DeployerMissingHint => OperatingSystem.IsWindows()
+        ? "未找到部署器 WeaselDeployer.exe，无法触发重新部署。"
+        : OperatingSystem.IsMacOS()
+            ? "未找到鼠鬚管部署器，无法触发重新部署。"
+            : "未找到 rime_deployer（librime-bin 包）或 ibus，无法触发重新部署。";
 }
 
 /// <summary>Cross-platform file-manager entry with a graceful failure path.</summary>

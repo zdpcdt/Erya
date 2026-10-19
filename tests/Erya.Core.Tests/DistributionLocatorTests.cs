@@ -114,6 +114,11 @@ public sealed class DistributionLocatorTests : IDisposable
     {
         // On a machine that really has fcitx5-rime this cannot assert null.
         if (File.Exists("/usr/share/fcitx5/addon/rime.conf")) return;
+        // Shield the real user directory too: a dev machine that has actually
+        // configured fcitx5-rime carries ~/.local/share/fcitx5/rime, which
+        // would otherwise count as "installed" (same disease the Squirrel
+        // test above guards against on a real mac).
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", Path.Combine(_root, "empty-xdg"));
         Assert.Null(new Fcitx5RimeLocator().Locate());
     }
 
@@ -134,6 +139,35 @@ public sealed class DistributionLocatorTests : IDisposable
 
         Assert.False(distribution.CanDeploy);
         await Assert.ThrowsAsync<InvalidOperationException>(() => distribution.DeployAsync());
+    }
+
+    [Fact]
+    public void Fcitx5_deploy_passes_shared_data_dir_to_the_deployer()
+    {
+        // librime defaults the shared data dir to the working directory when
+        // the second --build argument is omitted, so every schema is reported
+        // missing and nothing is built (verified against librime 1.16).
+        var distribution = new Fcitx5RimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root, "/usr/share/rime-data"], distribution.DeployerArguments);
+    }
+
+    [Fact]
+    public void Fcitx5_deploy_arguments_omit_shared_dir_only_when_it_is_unknown()
+    {
+        var distribution = new Fcitx5RimeDistribution(_root, sharedDataDir: null, deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root], distribution.DeployerArguments);
+    }
+
+    [Fact]
+    public void Ibus_deployer_fallback_passes_shared_data_dir()
+    {
+        var distribution = new IbusRimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            ibusPath: null, deployerPath: "/bin/rime_deployer");
+
+        Assert.Equal(["--build", _root, "/usr/share/rime-data"], distribution.DeployerArguments);
     }
 
     [Fact]
