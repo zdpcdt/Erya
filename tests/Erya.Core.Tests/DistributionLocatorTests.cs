@@ -215,6 +215,41 @@ public sealed class DistributionLocatorTests : IDisposable
         Assert.Equal("ibus-rime", manager.Locate()?.Id);
     }
 
+    // ---------- version probe ----------
+
+    [Fact]
+    public void Version_parsing_handles_all_three_package_manager_formats()
+    {
+        Assert.Equal(new Version(0, 9, 0), LinuxPackageProbe.TryParseVersion("1:0.9.0-1build2")); // dpkg（去 epoch/修订号）
+        Assert.Equal(new Version(1, 8, 5), LinuxPackageProbe.TryParseVersion("1.8.5"));            // rpm
+        Assert.Equal(new Version(5, 1, 5), LinuxPackageProbe.TryParseVersion("fcitx5-rime 5.1.5-1")); // pacman（带包名）
+        Assert.Equal(new Version(0, 9, 0), LinuxPackageProbe.TryParseVersion("0.9.0~ds1-2"));      // 预发布号
+        Assert.Null(LinuxPackageProbe.TryParseVersion("no digits here"));
+        Assert.Null(LinuxPackageProbe.TryParseVersion(""));
+    }
+
+    [Fact]
+    public void Linux_distributions_expose_package_version_and_shared_dir()
+    {
+        var fcitx5 = new Fcitx5RimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            deployerPath: null, packageVersion: new Version(5, 1, 5));
+        Assert.Equal(new Version(5, 1, 5), fcitx5.Version);
+        Assert.Equal("/usr/share/rime-data", fcitx5.InstallDir);
+
+        var ibus = new IbusRimeDistribution(_root, sharedDataDir: "/usr/share/rime-data",
+            ibusPath: null, deployerPath: null, packageVersion: new Version(1, 8, 5));
+        Assert.Equal(new Version(1, 8, 5), ibus.Version);
+        Assert.Equal("/usr/share/rime-data", ibus.InstallDir);
+    }
+
+    [Fact]
+    public void Package_probe_returns_null_for_unknown_packages()
+    {
+        // Exercises the manager chain (dpkg-query → rpm → pacman) with whatever
+        // exists on this machine; an unknown package must fall through to null.
+        Assert.Null(LinuxPackageProbe.Query("erya-definitely-not-a-package"));
+    }
+
     // ---------- shared ----------
 
     [Fact]

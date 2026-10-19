@@ -28,7 +28,8 @@ public sealed class IbusRimeLocator : IRimeDistributionLocator
             userDir,
             SharedDataDirs.FirstOrDefault(Directory.Exists),
             ExternalTool.FindOnPath("ibus"),
-            ExternalTool.FindOnPath("rime_deployer"));
+            ExternalTool.FindOnPath("rime_deployer"),
+            LinuxPackageProbe.Query("ibus-rime"));
     }
 
     private static string DefaultUserDir()

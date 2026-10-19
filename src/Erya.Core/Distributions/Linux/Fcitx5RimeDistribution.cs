@@ -7,17 +7,25 @@ public sealed class Fcitx5RimeDistribution : RimeDistributionBase
     private readonly string? _deployerPath;
     private readonly string? _sharedDataDir;
 
-    public Fcitx5RimeDistribution(string userDir, string? sharedDataDir, string? deployerPath)
+    public Fcitx5RimeDistribution(string userDir, string? sharedDataDir, string? deployerPath,
+        Version? packageVersion = null)
     {
         UserDir = userDir;
         _deployerPath = deployerPath;
         _sharedDataDir = sharedDataDir;
+        Version = packageVersion;
         SchemaSearchDirs = sharedDataDir is null ? [] : [sharedDataDir];
     }
 
     public override string Id => "fcitx5-rime";
 
     public override string DisplayName => "fcitx5 中州韵";
+
+    public override Version? Version { get; }
+
+    /// <summary>The shared data dir doubles as the install location display —
+    /// that is where the distribution's schemas and base config live.</summary>
+    public override string? InstallDir => _sharedDataDir;
 
     public override string UserDir { get; }
 

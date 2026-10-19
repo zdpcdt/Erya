@@ -27,7 +27,8 @@ public sealed class Fcitx5RimeLocator : IRimeDistributionLocator
         return new Fcitx5RimeDistribution(
             userDir,
             SharedDataDirs.FirstOrDefault(Directory.Exists),
-            ExternalTool.FindOnPath("rime_deployer"));
+            ExternalTool.FindOnPath("rime_deployer"),
+            LinuxPackageProbe.Query("fcitx5-rime"));
     }
 
     private static string DefaultUserDir()
