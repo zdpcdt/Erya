@@ -22,6 +22,11 @@ public sealed record SchemaInstallReport(
     public bool HasSkippedFiles => Skipped.Count > 0;
 }
 
+/// <summary>Outcome of one package uninstall.</summary>
+/// <param name="DeletedFiles">Files removed from the user directory.</param>
+/// <param name="BackupPath">Snapshot of the pre-uninstall user directory, when it had content.</param>
+public sealed record SchemaUninstallReport(int DeletedFiles, string? BackupPath);
+
 /// <summary>
 /// Installs a community package: fetch the repository tarball over plain
 /// HTTPS (no git dependency), unpack the RIME-relevant files to a staging
@@ -84,6 +89,74 @@ public sealed class SchemaInstaller
             progress?.Report(new("正在写入用户目录…", null));
             var (files, bytes) = CopyAll(staging, userDir);
             return new SchemaInstallReport(files, bytes, backupPath, skipped);
+        }
+        finally
+        {
+            try { Directory.Delete(tempRoot, recursive: true); }
+            catch (IOException) { /* best effort */ }
+        }
+    }
+
+    /// <summary>
+    /// Removes a package from the user directory. The repo's current file
+    /// list is the delete manifest — install and uninstall read the same
+    /// source, so files the package never shipped (the user's own) stay put.
+    /// Whole-directory backup first; a rollback is one restore away.
+    /// </summary>
+    public async Task<SchemaUninstallReport> UninstallAsync(
+        SchemaPackage package,
+        string userDir,
+        IProgress<SchemaInstallProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(userDir);
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "erya-uninstall-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempRoot);
+        try
+        {
+            progress?.Report(new("正在获取文件清单…", null));
+            var archivePath = await DownloadAsync(
+                package, Path.Combine(tempRoot, "package.tgz"), progress, cancellationToken);
+            var staging = Path.Combine(tempRoot, "staging");
+            await ExtractAsync(package, archivePath, staging, cancellationToken);
+
+            if (!HasSchemaFile(staging))
+                throw new InvalidOperationException($"包内没有 *.schema.yaml，{package.Name} 不是有效的 RIME 方案配置。");
+
+            var userRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(userDir));
+            var targets = Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
+                .Select(file => SafeCombine(userRoot, Path.GetRelativePath(staging, file)))
+                .OfType<string>()
+                .ToList();
+
+            string? backupPath = null;
+            if (HasFiles(userDir))
+            {
+                progress?.Report(new("正在备份当前配置…", null));
+                backupPath = PreUninstallBackupPath(package.Id);
+                try
+                {
+                    RimeBackup.Create(userDir, backupPath, cancellationToken);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // No backup, no delete — the backup is the rollback path.
+                    throw new InvalidOperationException($"无法生成删除前备份（{backupPath}），已中止删除。", ex);
+                }
+            }
+
+            progress?.Report(new("正在删除文件…", null));
+            var deleted = 0;
+            foreach (var target in targets)
+            {
+                if (!File.Exists(target)) continue;
+                File.Delete(target);
+                deleted++;
+            }
+            PruneEmptyDirectories(userRoot, targets);
+
+            return new SchemaUninstallReport(deleted, backupPath);
         }
         finally
         {
@@ -216,6 +289,37 @@ public sealed class SchemaInstaller
         => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Erya", "backups", $"pre-install-{packageId}-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+
+    private static string PreUninstallBackupPath(string packageId)
+        => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Erya", "backups", $"pre-uninstall-{packageId}-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+
+    /// <summary>
+    /// Removes directories the deletions left empty — deepest first, the user
+    /// directory itself always stays. Ancestors already holding other files
+    /// are skipped by the emptiness check.
+    /// </summary>
+    private static void PruneEmptyDirectories(string userRoot, IEnumerable<string> deletedPaths)
+    {
+        var candidates = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var path in deletedPaths)
+        {
+            var current = Path.GetDirectoryName(path);
+            while (current is not null && current.Length > userRoot.Length)
+            {
+                candidates.Add(current);
+                current = Path.GetDirectoryName(current);
+            }
+        }
+
+        foreach (var dir in candidates.OrderByDescending(path => path.Length))
+        {
+            if (!Directory.Exists(dir) || Directory.EnumerateFileSystemEntries(dir).Any()) continue;
+            try { Directory.Delete(dir); }
+            catch (IOException) { /* raced to non-empty — fine */ }
+        }
+    }
 
     private static (int Files, long Bytes) CopyAll(string staging, string userDir)
     {

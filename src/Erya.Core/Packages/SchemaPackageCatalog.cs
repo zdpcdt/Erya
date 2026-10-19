@@ -48,6 +48,8 @@ public static class SchemaPackageCatalog
                 throw new InvalidOperationException($"{resourceName}：条目 {package.Id} 的下载地址异常：{package.ArchiveUrl}");
             if (!ids.Add(package.Id))
                 throw new InvalidOperationException($"{resourceName}：条目 id 重复：{package.Id}。");
+            if (package.MarkerSchemas.Length == 0 || package.MarkerSchemas.Any(m => !m.EndsWith(".schema.yaml", StringComparison.Ordinal)))
+                throw new InvalidOperationException($"{resourceName}：条目 {package.Id} 缺少有效的 markerSchemas（须为 .schema.yaml 文件名）。");
         }
     }
 }

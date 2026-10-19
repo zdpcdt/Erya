@@ -7,7 +7,8 @@
     "owner": "iDvel",
     "repo": "rime-ice",
     "branch": "main",
-    "exclude": ["others*", "build*", "preview*"]
+    "exclude": ["others*", "build*", "preview*"],
+    "markerSchemas": ["rime_ice.schema.yaml"]
   },
   {
     "id": "rime-frost",
@@ -17,7 +18,8 @@
     "owner": "gaboolic",
     "repo": "rime-frost",
     "branch": "master",
-    "exclude": ["others*", "preview*"]
+    "exclude": ["others*", "preview*"],
+    "markerSchemas": ["rime_frost.schema.yaml"]
   },
   {
     "id": "oh-my-rime",
@@ -27,6 +29,7 @@
     "owner": "Mintimate",
     "repo": "oh-my-rime",
     "branch": "main",
-    "exclude": ["preview*", "tools*", "plum*", "public*", ".ide*", ".vscode*", ".cnb*", "demo*"]
+    "exclude": ["preview*", "tools*", "plum*", "public*", ".ide*", ".vscode*", ".cnb*", "demo*"],
+    "markerSchemas": ["rime_mint.schema.yaml"]
   }
 ]

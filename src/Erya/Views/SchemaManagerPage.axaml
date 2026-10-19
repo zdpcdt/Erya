@@ -71,15 +71,31 @@
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Description}" Opacity="0.7"
                                                            FontSize="12" TextWrapping="Wrap" />
-                                                <TextBlock Text="{Binding Status}" FontSize="11"
-                                                           IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11"
+                                                           IsVisible="{Binding StatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                             </StackPanel>
-                                            <Button Grid.Column="1" Content="安装" VerticalAlignment="Center"
-                                                    MinWidth="72"
-                                                    Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).InstallCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    IsEnabled="{Binding !IsInstalling}"
-                                                    ToolTip.Tip="下载并安装到 RIME 用户目录，完成后自动重新部署" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <!-- 安装/重新安装：未装=下载图标，已装=同步图标（覆盖写入即升级），文字语义在 tooltip -->
+                                                <u:IconButton Icon="{StaticResource SemiIconDownload}"
+                                                              IsVisible="{Binding !IsInstalled}"
+                                                              Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).InstallCommand}"
+                                                              CommandParameter="{Binding}"
+                                                              IsEnabled="{Binding !IsBusy}"
+                                                              ToolTip.Tip="{Binding InstallToolTip}" />
+                                                <u:IconButton Icon="{StaticResource SemiIconSync}"
+                                                              IsVisible="{Binding IsInstalled}"
+                                                              Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).InstallCommand}"
+                                                              CommandParameter="{Binding}"
+                                                              IsEnabled="{Binding !IsBusy}"
+                                                              ToolTip.Tip="{Binding InstallToolTip}" />
+                                                <!-- 删除：仅已安装的包显示；删前弹确认 + 整目录备份 -->
+                                                <u:IconButton Icon="{StaticResource SemiIconDelete}"
+                                                              IsVisible="{Binding IsInstalled}"
+                                                              Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).UninstallCommand}"
+                                                              CommandParameter="{Binding}"
+                                                              IsEnabled="{Binding !IsBusy}"
+                                                              ToolTip.Tip="删除该包安装到用户目录的全部文件（按包内文件清单精确删除，删除前自动完整备份并确认）" />
+                                            </StackPanel>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
