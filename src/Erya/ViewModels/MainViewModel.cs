@@ -68,7 +68,7 @@ public partial class MainViewModel : ObservableObject
         else
         {
             StatusType = NotificationType.Warning;
-            StatusMessage = InstallHints.DeployerMissingHint;
+            StatusMessage = InstallHints.DeployerMissingHint(null);
         }
     }
 
