@@ -1,0 +1,84 @@
+<!--
+    ReorderableItemsControl / ReorderableItem / DragHandle 的 Semi 风格默认样式。
+    拖拽中的行卡片化浮起（背景 + 投影），把手弱化、悬停加深、SizeAll 光标。
+    颜色取自 Semi 主题 token（SemiColor*），跟随浅色/深色变体自动切换。
+    使用方需要在 Application 资源中合并本字典（同 CellTheme.axaml）。
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Erya.Controls">
+    <Design.PreviewWith>
+        <c:ReorderableItemsControl>
+            <c:ReorderableItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4">
+                        <c:DragHandle Data="{DynamicResource SemiIconHandle}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </c:ReorderableItemsControl.ItemTemplate>
+            <x:String>明 — 拖我试试</x:String>
+            <x:String>月</x:String>
+            <x:String>拼</x:String>
+            <x:String>音</x:String>
+        </c:ReorderableItemsControl>
+    </Design.PreviewWith>
+
+    <!--  列表本体：StackPanel 面板 + ItemsPresenter，交互全部在代码里  -->
+    <ControlTheme x:Key="{x:Type c:ReorderableItemsControl}" TargetType="c:ReorderableItemsControl">
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel />
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ItemsPresenter />
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <!--  行容器：悬停/按压有背景反馈（与 Cell 交互行同语言），拖拽中卡片化 + 投影浮起  -->
+    <ControlTheme x:Key="{x:Type c:ReorderableItem}" TargetType="c:ReorderableItem">
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:ReorderableItem">
+                <Border Name="PART_Root"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="CornerRadius" Value="6" />
+        <Style Selector="^:pointerover /template/ Border#PART_Root">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill0}" />
+        </Style>
+        <Style Selector="^:pressed /template/ Border#PART_Root">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+        </Style>
+        <Style Selector="^:dragging /template/ Border#PART_Root">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
+            <Setter Property="BoxShadow" Value="{DynamicResource SemiShadowElevated}" />
+        </Style>
+    </ControlTheme>
+
+    <!--  拖拽把手：24×24 命中区，弱化图标，悬停加深 + 底色片、按压再深；↑↓ 光标  -->
+    <ControlTheme x:Key="{x:Type c:DragHandle}" TargetType="c:DragHandle">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Cursor" Value="DragMove" />
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:DragHandle">
+                <Border Name="PART_Root" Background="Transparent" CornerRadius="4">
+                    <PathIcon Name="PART_Icon"
+                              Theme="{DynamicResource InnerPathIcon}"
+                              Data="{TemplateBinding Data}"
+                              Width="16" Height="16"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Foreground="{DynamicResource SemiColorText3}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>
