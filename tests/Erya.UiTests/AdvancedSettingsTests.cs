@@ -7,9 +7,9 @@ using Xunit;
 namespace Erya.UiTests;
 
 /// <summary>
-/// 高级设置 ground rules: the tree shows merged values with patch badges,
-/// inline scalar edits write patch keys, per-node undo removes them, filters
-/// narrow the tree, and source mode round-trips the raw file with validation.
+/// 高级设置 ground rules: the page is a plain source editor over the patch
+/// file — load shows its raw text, save round-trips with YAML validation,
+/// dirty tracking follows edits, and targets appear per distribution.
 /// </summary>
 public sealed class AdvancedSettingsTests : IDisposable
 {
@@ -32,117 +32,68 @@ public sealed class AdvancedSettingsTests : IDisposable
 
     private AdvancedSettingsViewModel Load(string? uiConfigFile = null)
     {
-        var distribution = new StubDistribution(_dir, uiConfigFile);
-        var vm = new AdvancedSettingsViewModel(distribution);
+        var vm = new AdvancedSettingsViewModel(new StubDistribution(_dir, uiConfigFile));
         vm.LoadCommand.Execute(null);
         return vm;
     }
 
-    private static ConfigNodeViewModel? Find(AdvancedSettingsViewModel vm, string path)
-        => vm.Roots.SelectMany(Walk).FirstOrDefault(n => n.Path == path);
-
-    private static System.Collections.Generic.IEnumerable<ConfigNodeViewModel> Walk(ConfigNodeViewModel node)
-    {
-        yield return node;
-        foreach (var child in node.Children.SelectMany(Walk)) yield return child;
-    }
-
     [AvaloniaFact]
-    public void Tree_shows_merged_values_and_patch_badges()
-    {
-        Write("default.yaml", """
-            menu:
-              page_size: 5
-            switcher:
-              caption: 方案選單
-            """);
-        Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
-
-        var vm = Load();
-        Assert.True(vm.HasTree);
-        Assert.Equal(2, vm.Roots.Count); // menu + switcher
-
-        var pageSize = Find(vm, "menu/page_size");
-        Assert.NotNull(pageSize);
-        Assert.Equal("9", pageSize.Preview);        // merged value
-        Assert.True(pageSize.IsModified);           // badge: patched
-
-        var caption = Find(vm, "switcher/caption");
-        Assert.Equal("方案選單", caption!.Preview);
-        Assert.False(caption.IsModified);
-    }
-
-    [AvaloniaFact]
-    public async Task Inline_edit_writes_patch_and_undo_removes_it()
-    {
-        Write("default.yaml", "menu:\n  page_size: 5\n");
-        var vm = Load();
-
-        var pageSize = Find(vm, "menu/page_size")!;
-        Assert.True(pageSize.IsEditable);
-
-        vm.BeginEditCommand.Execute(pageSize);
-        pageSize.EditText = "7";
-        await vm.ApplyEditCommand.ExecuteAsync(pageSize);
-
-        Assert.Contains("menu/page_size: 7", File.ReadAllText(Path.Combine(_dir, "default.custom.yaml")));
-        Assert.True(Find(vm, "menu/page_size")!.IsModified);
-        Assert.Equal("7", Find(vm, "menu/page_size")!.Preview);
-
-        await vm.UndoNodePatchCommand.ExecuteAsync(pageSize);
-        Assert.False(Find(vm, "menu/page_size")!.IsModified);
-        Assert.Equal("5", Find(vm, "menu/page_size")!.Preview);
-        // The patch file survives (other keys may remain); only the key is gone.
-        Assert.DoesNotContain("page_size", File.ReadAllText(Path.Combine(_dir, "default.custom.yaml")));
-    }
-
-    [AvaloniaFact]
-    public void Search_and_only_modified_filters_narrow_the_tree()
-    {
-        Write("default.yaml", """
-            menu:
-              page_size: 5
-            switcher:
-              caption: abc
-            """);
-        Write("default.custom.yaml", "patch:\n  switcher/caption: xyz\n");
-        var vm = Load();
-
-        // Only modified: the switcher branch survives, menu does not.
-        vm.OnlyModified = true;
-        Assert.True(Find(vm, "switcher/caption")!.IsVisible);
-        Assert.False(Find(vm, "menu/page_size")!.IsVisible);
-        Assert.True(Find(vm, "switcher")!.IsVisible); // ancestor of a match stays
-
-        // Search by value: "xyz" matches the patched caption.
-        vm.OnlyModified = false;
-        vm.SearchText = "xyz";
-        Assert.True(Find(vm, "switcher/caption")!.IsVisible);
-        Assert.False(Find(vm, "menu/page_size")!.IsVisible);
-
-        vm.SearchText = "";
-        Assert.True(Find(vm, "menu/page_size")!.IsVisible);
-    }
-
-    [AvaloniaFact]
-    public async Task Source_mode_round_trips_and_rejects_invalid_yaml()
+    public void Load_shows_patch_source_text()
     {
         Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
         var vm = Load();
 
-        vm.IsSourceMode = true;
-        Assert.Contains("menu/page_size: 9", vm.SourceText);
+        Assert.Contains("menu/page_size: 9", vm.Document.Text);
+        Assert.Contains("default.custom.yaml", vm.SourceFeedback);
+        Assert.False(vm.IsDirty);
+    }
 
-        vm.SourceText = "patch:\n  menu/page_size: 6\n  switcher/caption: hello\n";
-        await vm.SaveSourceCommand.ExecuteAsync(null);
+    [AvaloniaFact]
+    public async Task Save_round_trips_and_rejects_invalid_yaml()
+    {
+        Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
+        var vm = Load();
+
+        vm.Document.Text = "patch:\n  menu/page_size: 6\n  switcher/caption: hello\n";
+        await vm.SaveCommand.ExecuteAsync(null);
+        Assert.False(vm.HasError);
         Assert.Equal(6L, ReadValue("menu/page_size"));
 
         // Invalid YAML is refused and the file stays untouched.
         var before = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
-        vm.SourceText = "patch: [unclosed\n";
-        await vm.SaveSourceCommand.ExecuteAsync(null);
+        vm.Document.Text = "patch: [unclosed\n";
+        await vm.SaveCommand.ExecuteAsync(null);
         Assert.True(vm.HasError);
         Assert.Equal(before, File.ReadAllText(Path.Combine(_dir, "default.custom.yaml")));
+    }
+
+    [AvaloniaFact]
+    public async Task Save_creates_missing_custom_file_and_clears_dirty()
+    {
+        var vm = Load(); // no default.custom.yaml on disk
+        Assert.Contains("尚不存在", vm.SourceFeedback);
+
+        vm.Document.Text = "patch:\n  menu/page_size: 3\n";
+        Assert.True(vm.IsDirty);
+
+        await vm.SaveCommand.ExecuteAsync(null);
+        Assert.False(vm.IsDirty);
+        Assert.True(File.Exists(Path.Combine(_dir, "default.custom.yaml")));
+        Assert.Equal(3L, ReadValue("menu/page_size"));
+    }
+
+    [AvaloniaFact]
+    public void Reloading_after_edits_discards_them()
+    {
+        Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
+        var vm = Load();
+
+        vm.Document.Text = "patch:\n  menu/page_size: 1\n";
+        Assert.True(vm.IsDirty);
+
+        vm.LoadCommand.Execute(null);
+        Assert.False(vm.IsDirty);
+        Assert.Contains("menu/page_size: 9", vm.Document.Text);
     }
 
     [AvaloniaFact]
