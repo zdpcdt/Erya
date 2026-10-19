@@ -54,4 +54,29 @@ public static class ExternalTool
                 : $"{Path.GetFileName(path)} 退出码 {process.ExitCode}（工具未输出错误信息）");
         }
     }
+
+    /// <summary>
+    /// Runs the tool to completion and captures stdout without throwing —
+    /// for best-effort probes (package-manager queries) where a non-zero
+    /// exit simply means "no answer". Synchronous on purpose: callers are
+    /// construction-time locators, and sync Process IO avoids sync-over-async.
+    /// </summary>
+    public static (int ExitCode, string Output) RunCapture(string path, IReadOnlyList<string> arguments)
+    {
+        var startInfo = new ProcessStartInfo(path)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        foreach (var argument in arguments)
+            startInfo.ArgumentList.Add(argument);
+
+        using var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException($"无法启动进程：{path}");
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return (process.ExitCode, output.Trim());
+    }
 }
