@@ -288,7 +288,7 @@
                             </StackPanel>
                         </c:CellGroup.Header>
                         <c:CellGroup.Description>
-                            预设皮肤集合（preset_color_schemes）。颜色为 0xBBGGRR 格式；保存会整体覆盖补丁中的皮肤集合。
+                            预设皮肤集合（preset_color_schemes）。颜色为 0xBBGGRR 格式；仅新增/修改的皮肤会写入补丁，内置皮肤不受影响。
                         </c:CellGroup.Description>
                         <c:CellGroup.ItemTemplate>
                             <DataTemplate x:DataType="sf:ColorSchemeViewModel">
@@ -313,8 +313,10 @@
                                             <u:IconButton Classes="Danger" Theme="{DynamicResource SolidIconButton}"
                                                           Icon="{StaticResource SemiIconDelete}"
                                                           VerticalAlignment="Center"
+                                                          IsVisible="{Binding CanRemove}"
                                                           Command="{Binding RemoveCommand}"
-                                                          ToolTip.Tip="删除此皮肤" />
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="删除此皮肤（内置皮肤不可删除）" />
                                         </StackPanel>
                                     </c:Cell.RightContent>
                                     <c:Cell.Detail>

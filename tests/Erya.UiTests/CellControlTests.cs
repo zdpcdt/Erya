@@ -442,8 +442,8 @@ public class CellControlTests
         Dispatcher.UIThread.RunJobs();
         Assert.True(DataValidationErrors.GetHasErrors(nu));
 
-        CaptureFrame(window, "/tmp/erya-cell-demo-light.png", ThemeVariant.Light);
-        CaptureFrame(window, "/tmp/erya-cell-demo-dark.png", ThemeVariant.Dark);
+        CaptureFrame(window, Path.Combine(Path.GetTempPath(), "erya-cell-demo-light.png"), ThemeVariant.Light);
+        CaptureFrame(window, Path.Combine(Path.GetTempPath(), "erya-cell-demo-dark.png"), ThemeVariant.Dark);
         window.Close();
     }
 
