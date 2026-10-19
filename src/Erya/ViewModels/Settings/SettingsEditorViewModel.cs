@@ -200,13 +200,14 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             if (value is not null) writes[field.KeyPath] = value;
             else if (field.PendingRemoval()) removals.Add(field.KeyPath);
         }
-        if (SchemeLibrary?.PendingValue() is { } schemes)
+        if (SchemeLibrary is { } library)
         {
-            writes["preset_color_schemes"] = schemes;
-        }
-        else if (SchemeLibrary is { HasPendingEdits: true })
-        {
-            removals.Add("preset_color_schemes"); // all schemes removed
+            // Per-scheme flat keys (preset_color_schemes/<id>), never the
+            // whole collection — a collection patch key REPLACES the shipped
+            // schemes instead of merging into them.
+            foreach (var (key, value) in library.PendingWrites())
+                writes[key] = value;
+            removals.AddRange(library.PendingRemovals());
         }
         if (writes.Count == 0 && removals.Count == 0) return;
 
@@ -226,8 +227,23 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             }
             else
             {
-                await _distribution.DeployAsync();
-                AppNotifications.Toast("设置已保存并触发重新部署。", NotificationType.Success);
+                try
+                {
+                    await _distribution.DeployAsync();
+                    AppNotifications.Toast("设置已保存并触发重新部署。", NotificationType.Success);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // The patch is already on disk — report the deploy problem
+                    // on its own instead of failing the whole save.
+                    AppNotifications.Notify("设置已保存，但重新部署失败",
+                        $"已写入 {customName}。{ex.Message} 稍后可按 Ctrl+R 重试。",
+                        NotificationType.Warning);
+                }
             }
             await LoadAsync();
         }

@@ -123,8 +123,8 @@ public sealed class SettingsPageRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Contains(hotkeyCell.GetVisualDescendants(), d => d is Ursa.Controls.KeyGestureInput);
 
-        Capture(window, "/tmp/erya-settings-input-light.png", ThemeVariant.Light);
-        Capture(window, "/tmp/erya-settings-input-dark.png", ThemeVariant.Dark);
+        Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);
+        Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-dark.png"), ThemeVariant.Dark);
         window.Close();
     }
 
@@ -164,7 +164,45 @@ public sealed class SettingsPageRenderTests : IDisposable
         // 颜色编辑用 ColorPicker（背景/候选文字/高亮背景/高亮文字/注释 ≥ 5 个）。
         Assert.True(schemeRow.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
 
-        Capture(window, "/tmp/erya-settings-appearance-light.png", ThemeVariant.Light);
+        Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-appearance-light.png"), ThemeVariant.Light);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Scheme_delete_button_is_wired_to_its_row()
+    {
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              shipped_light:
+                back_color: 0xECECEC
+            """);
+        Write("squirrel.custom.yaml", """
+            patch:
+              "preset_color_schemes/user_dark":
+                back_color: 0x1C1C1E
+            """);
+        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+        var (_, page, window) = Show(vm);
+
+        Cell Row(string name) => page.GetVisualDescendants().OfType<Cell>()
+            .Single(c => (c.Content as string) == name);
+
+        // The user scheme row's delete button must carry the row as its
+        // CommandParameter — without it the command gets null and silently
+        // does nothing (the「删除皮肤没有反应」regression).
+        var delete = Row("user_dark").GetVisualDescendants()
+            .OfType<Ursa.Controls.IconButton>().Single(b => b.Classes.Contains("Danger"));
+        var rowVm = Assert.IsType<ColorSchemeViewModel>(delete.CommandParameter);
+        delete.Command!.Execute(delete.CommandParameter);
+        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain(vm.SchemeLibrary!.Schemes, s => s.Name == rowVm.Name);
+
+        // Shipped schemes have no delete button visible at all.
+        var shippedDelete = Row("shipped_light").GetVisualDescendants()
+            .OfType<Ursa.Controls.IconButton>().Single(b => b.Classes.Contains("Danger"));
+        Assert.False(shippedDelete.IsVisible);
+
         window.Close();
     }
 }
