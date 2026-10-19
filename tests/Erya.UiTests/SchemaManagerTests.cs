@@ -8,8 +8,7 @@ namespace Erya.UiTests;
 
 /// <summary>
 /// 方案管理：顺序调整由拖拽（ReorderableItemsControl 直接 Move 集合）完成，
-/// 保存时按集合顺序取已勾选 id —— 未勾选行的位置不落盘；添加新方案创建
-/// 脚手架并预勾选（保存仍需显式点击）。
+/// 保存时按集合顺序取已勾选 id —— 未勾选行的位置不落盘。
 /// </summary>
 public sealed class SchemaManagerTests : IDisposable
 {
@@ -64,29 +63,6 @@ public sealed class SchemaManagerTests : IDisposable
         var saved = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
         Assert.DoesNotContain("- schema: b", saved);
         Assert.Equal(["c", "a"], new Erya.Core.Configuration.RimeSchemaCatalog(_dir).ReadSelectedIds());
-    }
-
-    [AvaloniaFact]
-    public async Task Adding_a_schema_creates_the_stub_and_preselects_it()
-    {
-        Write("default.yaml", "schema_list:\n  - schema: luna_pinyin\n");
-        var (vm, dist) = Load();
-
-        vm.NewSchemaId = "my_pinyin";
-        vm.NewSchemaName = "我的拼音";
-        await vm.AddSchemaCommand.ExecuteAsync(null);
-
-        Assert.True(File.Exists(Path.Combine(_dir, "my_pinyin.schema.yaml")));
-        var created = vm.Schemas.Single(s => s.Id == "my_pinyin");
-        Assert.Equal("我的拼音", created.Name);
-        Assert.True(created.IsSelected); // offered pre-checked, saving is explicit
-        Assert.Equal("", vm.NewSchemaId); // form cleared
-
-        // Duplicate creation surfaces a readable error and writes nothing new.
-        vm.NewSchemaId = "my_pinyin";
-        await vm.AddSchemaCommand.ExecuteAsync(null);
-        Assert.True(vm.HasError);
-        Assert.Contains("已存在", vm.ErrorMessage);
     }
 
     private sealed class StubDistribution : RimeDistributionBase

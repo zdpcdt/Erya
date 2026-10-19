@@ -259,41 +259,4 @@ public sealed class SchemaCatalogTests : IDisposable
         Assert.DoesNotContain("luna_pinyin", text);
         Assert.Equal(["rime_ice"], Catalog().ReadSelectedIds());
     }
-
-    // ---------- schema stubs ----------
-
-    [Fact]
-    public void Creating_a_stub_writes_a_deployable_scaffold()
-    {
-        var path = Catalog().CreateSchemaStub("my_pinyin", "我的拼音");
-
-        Assert.True(File.Exists(path));
-        var text = File.ReadAllText(path);
-        Assert.Contains("schema_id: my_pinyin", text);
-        Assert.Contains("name: 我的拼音", text);
-        Assert.Contains("echo_translator", text);
-
-        // Immediately visible to the catalog under its declared name.
-        var snapshot = Catalog().LoadSnapshot();
-        var schema = Assert.Single(snapshot.Schemas, s => s.Id == "my_pinyin");
-        Assert.Equal("我的拼音", schema.Name);
-    }
-
-    [Fact]
-    public void Creating_a_stub_defaults_the_name_to_the_id()
-    {
-        Catalog().CreateSchemaStub("echo_test", "");
-
-        Assert.Equal("echo_test", Catalog().LoadSnapshot().Schemas.Single(s => s.Id == "echo_test").Name);
-    }
-
-    [Fact]
-    public void Creating_a_stub_rejects_bad_ids_and_duplicates()
-    {
-        Assert.Throws<InvalidOperationException>(() => Catalog().CreateSchemaStub("带空格的 id", "x"));
-        Assert.Throws<InvalidOperationException>(() => Catalog().CreateSchemaStub("", "x"));
-
-        Write("luna_pinyin.schema.yaml", "schema:\n  schema_id: luna_pinyin\n  name: 朙月拼音\n");
-        Assert.Throws<InvalidOperationException>(() => Catalog().CreateSchemaStub("luna_pinyin", "重复"));
-    }
 }
