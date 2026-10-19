@@ -7,8 +7,9 @@ using Xunit;
 namespace Erya.UiTests;
 
 /// <summary>
-/// 方案管理：启用顺序的调整只作用于已启用方案（跳过中间未勾选的行），
-/// 添加新方案创建脚手架并预勾选（保存仍需显式点击）。
+/// 方案管理：顺序调整由拖拽（ReorderableItemsControl 直接 Move 集合）完成，
+/// 保存时按集合顺序取已勾选 id —— 未勾选行的位置不落盘；添加新方案创建
+/// 脚手架并预勾选（保存仍需显式点击）。
 /// </summary>
 public sealed class SchemaManagerTests : IDisposable
 {
@@ -38,7 +39,7 @@ public sealed class SchemaManagerTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Moving_swaps_only_among_selected_schemas()
+    public async Task Reordered_collection_saves_selected_order_and_ignores_unchecked_rows()
     {
         Write("default.yaml", """
             schema_list:
@@ -51,36 +52,18 @@ public sealed class SchemaManagerTests : IDisposable
         Write("default.custom.yaml", "patch:\n  schema_list:\n    - schema: a\n    - schema: c\n");
         var (vm, dist) = Load();
 
-        var a = vm.Schemas.Single(s => s.Id == "a");
-        var c = vm.Schemas.Single(s => s.Id == "c");
-        Assert.False(vm.Schemas.Single(s => s.Id == "b").IsSelected);
+        var b = vm.Schemas.Single(s => s.Id == "b");
+        Assert.False(b.IsSelected);
 
-        // Move c up: it lands before a, skipping past the unchecked b.
-        vm.MoveDownCommand.Execute(a); // no-op at the top of the selected set
-        vm.MoveUpCommand.Execute(c);
+        // 拖拽即对集合自由 Move：把 c 拖到最前；未勾选的 b 拖到末尾不影响落盘顺序。
+        var c = vm.Schemas.Single(s => s.Id == "c");
+        vm.Schemas.Move(vm.Schemas.IndexOf(c), 0);
+        vm.Schemas.Move(vm.Schemas.IndexOf(b), vm.Schemas.Count - 1);
 
         await vm.SaveAndDeployCommand.ExecuteAsync(null);
         var saved = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
-        Assert.Contains("- schema: c", saved);
+        Assert.DoesNotContain("- schema: b", saved);
         Assert.Equal(["c", "a"], new Erya.Core.Configuration.RimeSchemaCatalog(_dir).ReadSelectedIds());
-    }
-
-    [AvaloniaFact]
-    public async Task Move_at_the_edges_of_the_selected_set_is_a_no_op()
-    {
-        Write("default.custom.yaml", "patch:\n  schema_list:\n    - schema: a\n    - schema: c\n");
-        Write("a.schema.yaml", "schema:\n  schema_id: a\n  name: A\n");
-        Write("c.schema.yaml", "schema:\n  schema_id: c\n  name: C\n");
-        var (vm, _) = Load();
-
-        var first = vm.Schemas.First(s => s.IsSelected);
-        var last = vm.Schemas.Last(s => s.IsSelected);
-        vm.MoveUpCommand.Execute(first);
-        vm.MoveDownCommand.Execute(last);
-
-        // Unselected rows never receive the move (command guards), and the
-        // selected order is unchanged.
-        Assert.Equal(["a", "c"], vm.Schemas.Where(s => s.IsSelected).Select(s => s.Id));
     }
 
     [AvaloniaFact]

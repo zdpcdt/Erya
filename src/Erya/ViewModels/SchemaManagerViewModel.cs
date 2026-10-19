@@ -63,36 +63,8 @@ public partial class SchemaManagerViewModel : ObservableObject
 
     public bool HasSchemas => Schemas.Count > 0;
 
-    /// <summary>已启用方案间的顺序即 Ctrl+` 切换顺序。</summary>
-    [RelayCommand]
-    private void MoveUp(SchemaItemViewModel? item)
-    {
-        SwapWithNeighbor(item, direction: -1);
-        OnPropertyChanged(nameof(HasSchemas));
-    }
-
-    [RelayCommand]
-    private void MoveDown(SchemaItemViewModel? item) => SwapWithNeighbor(item, direction: 1);
-
-    /// <summary>
-    /// Swaps <paramref name="item"/> with the previous/next <b>selected</b>
-    /// row, skipping unchecked rows in between — only the relative order of
-    /// enabled schemas reaches the saved schema_list.
-    /// </summary>
-    private void SwapWithNeighbor(SchemaItemViewModel? item, int direction)
-    {
-        if (item is null || !item.IsSelected || IsLoading) return;
-
-        int index = Schemas.IndexOf(item);
-        if (index < 0) return;
-
-        int neighbor = index + direction;
-        while (neighbor >= 0 && neighbor < Schemas.Count && !Schemas[neighbor].IsSelected)
-            neighbor += direction;
-        if (neighbor < 0 || neighbor >= Schemas.Count) return;
-
-        Schemas.Move(index, neighbor);
-    }
+    // 顺序调整由 ReorderableItemsControl 拖拽完成（直接 Move 集合）；
+    // 保存时按集合顺序取已勾选 id，未勾选行的位置不落盘。
 
     [RelayCommand]
     private async Task AddSchemaAsync()
