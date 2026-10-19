@@ -40,9 +40,9 @@ public partial class AdvancedSettingsPage : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.S && e.KeyModifiers.HasFlag(KeyModifiers.Control)
-            && ViewModel?.SaveCommand.CanExecute(null) == true)
+            && ViewModel?.SaveAndDeployCommand.CanExecute(null) == true)
         {
-            ViewModel.SaveCommand.Execute(null);
+            ViewModel.SaveAndDeployCommand.Execute(null);
             e.Handled = true;
         }
         base.OnKeyDown(e);

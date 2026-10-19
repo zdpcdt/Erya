@@ -16,10 +16,15 @@
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
-            <u:IconButton Grid.Column="1" VerticalAlignment="Top"
-                          Theme="{DynamicResource SolidIconButton}"
-                          Icon="{StaticResource SemiIconRefresh}"
-                          Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <u:IconButton Icon="{StaticResource SemiIconRefresh}"
+                              Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
+                <u:IconButton Icon="{StaticResource SemiIconUndo}"
+                              Command="{Binding RevertCommand}" ToolTip.Tip="还原更改（放弃未保存的修改）" />
+                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                              Icon="{StaticResource SemiIconSave}"
+                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="保存并部署" />
+            </StackPanel>
         </Grid>
 
         <!-- Body -->
@@ -373,15 +378,9 @@
         <TextBlock Grid.Row="1" Text="正在读取设置…" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
 
         <!-- Footer -->
-        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" Margin="0,4,0,0">
-            <u:Banner Grid.Row="0" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
-                      IsVisible="{Binding HasError}" Margin="0,0,0,10" />
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                <Button Content="还原更改" Command="{Binding RevertCommand}" IsEnabled="{Binding IsDirty}" />
-                <Button Content="保存并部署" Classes="Primary" MinWidth="108"
-                        Command="{Binding SaveAndDeployCommand}"
-                        IsEnabled="{Binding IsDirty}" />
-            </StackPanel>
+        <Grid Grid.Row="2" Margin="0,4,0,0">
+            <u:Banner Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" />
         </Grid>
     </Grid>
 </UserControl>

@@ -55,14 +55,14 @@ public sealed class AdvancedSettingsTests : IDisposable
         var vm = Load();
 
         vm.Document.Text = "patch:\n  menu/page_size: 6\n  switcher/caption: hello\n";
-        await vm.SaveCommand.ExecuteAsync(null);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
         Assert.False(vm.HasError);
         Assert.Equal(6L, ReadValue("menu/page_size"));
 
         // Invalid YAML is refused and the file stays untouched.
         var before = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
         vm.Document.Text = "patch: [unclosed\n";
-        await vm.SaveCommand.ExecuteAsync(null);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
         Assert.True(vm.HasError);
         Assert.Equal(before, File.ReadAllText(Path.Combine(_dir, "default.custom.yaml")));
     }
@@ -76,7 +76,7 @@ public sealed class AdvancedSettingsTests : IDisposable
         vm.Document.Text = "patch:\n  menu/page_size: 3\n";
         Assert.True(vm.IsDirty);
 
-        await vm.SaveCommand.ExecuteAsync(null);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
         Assert.False(vm.IsDirty);
         Assert.True(File.Exists(Path.Combine(_dir, "default.custom.yaml")));
         Assert.Equal(3L, ReadValue("menu/page_size"));

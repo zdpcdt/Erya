@@ -95,41 +95,60 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SaveAsync()
+    private async Task SaveAndDeployAsync()
     {
-        if (_store is null || SelectedTarget is null) return;
+        if (_distribution is null || _store is null || SelectedTarget is null || IsBusy) return;
 
         IsBusy = true;
         try
         {
             ErrorMessage = "";
-            _store.WriteCustomText(SelectedTarget.BaseFile, Document.Text);
-            _loadedText = Document.Text;
-            IsDirty = false;
-            SourceFeedback = $"已保存 {Path.GetFileName(_store.CustomPath(SelectedTarget.BaseFile))}（{DateTime.Now:HH:mm:ss}）";
+            // Write only when edited — a clean click still redeploys (the
+            // button is always clickable, mirroring the settings page).
+            var saved = IsDirty;
+            var fileName = Path.GetFileName(_store.CustomPath(SelectedTarget.BaseFile));
+            if (saved)
+            {
+                _store.WriteCustomText(SelectedTarget.BaseFile, Document.Text);
+                _loadedText = Document.Text;
+                IsDirty = false;
+                SourceFeedback = $"已保存 {fileName}（{DateTime.Now:HH:mm:ss}）";
+            }
+
+            if (!_distribution.CanDeploy)
+            {
+                AppNotifications.Notify("设置已保存",
+                    saved
+                        ? $"已写入 {fileName}。{InstallHints.DeployerMissingHint(_distribution)}"
+                        : $"本次没有修改需要写入。{InstallHints.DeployerMissingHint(_distribution)}",
+                    NotificationType.Warning);
+                return;
+            }
+
+            try
+            {
+                await _distribution.DeployAsync();
+                AppNotifications.Toast(saved ? "已保存并触发重新部署。" : "已触发重新部署。",
+                    NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                // The patch is already on disk — report the deploy problem
+                // on its own instead of failing the whole save.
+                AppNotifications.Notify("已保存，但重新部署失败",
+                    $"{fileName} 已写入。{ex.Message} 稍后可重试。", NotificationType.Warning);
+            }
         }
         catch (Exception ex)
         {
             ErrorMessage = $"保存失败：{ex.Message}";
+            // The error banner sits below the editor; the save button is in
+            // the top toolbar, so also surface the failure as a toast.
+            AppNotifications.Toast($"保存失败：{ex.Message}", NotificationType.Error);
         }
         finally
         {
             IsBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task DeployAsync()
-    {
-        if (_distribution is null) return;
-        try
-        {
-            await _distribution.DeployAsync();
-            AppNotifications.Toast("已触发重新部署。", NotificationType.Success);
-        }
-        catch (Exception ex)
-        {
-            AppNotifications.Toast($"部署失败：{ex.Message}", NotificationType.Error);
         }
     }
 }
