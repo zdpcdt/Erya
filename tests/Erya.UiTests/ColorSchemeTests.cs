@@ -9,9 +9,11 @@ using Xunit;
 namespace Erya.UiTests;
 
 /// <summary>
-/// 皮肤库：schemes load from the merged preset_color_schemes, edits rewrite
-/// the whole collection as one patch key, and previews swap RIME's BGR
-/// byte order into RGB brushes.
+/// 皮肤库：schemes load as shipped (base file) + patched (per-scheme flat
+/// patch keys), saves write only created/edited schemes as
+/// preset_color_schemes/&lt;id&gt; keys — never the whole collection, which
+/// would REPLACE the shipped schemes — and previews swap RIME's BGR byte
+/// order into RGB brushes.
 /// </summary>
 public sealed class ColorSchemeTests : IDisposable
 {
@@ -40,7 +42,7 @@ public sealed class ColorSchemeTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Schemes_load_edit_and_save_as_one_patch_key()
+    public async Task Saving_writes_per_scheme_keys_and_keeps_shipped_schemes()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -50,6 +52,8 @@ public sealed class ColorSchemeTests : IDisposable
                 candidate_text_color: 0x000000
                 hilited_candidate_back_color: 0xD3E3F6
                 hilited_candidate_text_color: 0x000000
+              macos_dark:
+                back_color: 0x1C1C1E
             style:
               color_scheme: macos_light
             """);
@@ -58,8 +62,10 @@ public sealed class ColorSchemeTests : IDisposable
         Assert.True(vm.HasSchemeLibrary);
         var library = vm.SchemeLibrary!;
         var light = Assert.Single(library.Schemes, s => s.Name == "macos_light");
-        Assert.Equal("ECECEC", light.BackColor);
-        Assert.Equal("ssnhd", light.Author);
+        var dark = Assert.Single(library.Schemes, s => s.Name == "macos_dark");
+        Assert.True(light.IsShipped);
+        Assert.False(light.CanRemove); // shipped schemes live in the base file
+        Assert.False(library.IsModified);
         Assert.False(vm.IsDirty);
 
         // Edit a color and add a scheme derived from the first one.
@@ -70,15 +76,92 @@ public sealed class ColorSchemeTests : IDisposable
         await vm.SaveAndDeployCommand.ExecuteAsync(null);
 
         var patch = new RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml");
-        var schemes = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(
-            patch["preset_color_schemes"]);
-        Assert.Equal(2, schemes.Count);
-        Assert.Contains("macos_light", schemes.Keys);
-        Assert.Contains("macos_light1", schemes.Keys); // seeded from the first scheme's name
+        // Only the edited + added scheme — as flat per-scheme keys; the
+        // untouched shipped scheme never lands in the patch.
+        Assert.DoesNotContain("preset_color_schemes", patch.Keys);
+        var edited = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(
+            patch["preset_color_schemes/macos_light"]);
+        Assert.Equal("0x1C1C1E", edited["back_color"]);
+        Assert.Contains("preset_color_schemes/macos_light1", patch.Keys); // seeded from the first scheme
+        Assert.DoesNotContain("preset_color_schemes/macos_dark", patch.Keys);
         Assert.False(vm.IsDirty);
+
+        // The merged view still carries every scheme: per-scheme patch keys
+        // merge INTO the shipped collection instead of replacing it.
+        Assert.Equal(
+            ["macos_dark", "macos_light", "macos_light1"],
+            new RimeConfigStore(_dir).ListMappingKeys("squirrel.yaml", "preset_color_schemes").Order().ToList());
 
         var patched = File.ReadAllText(Path.Combine(_dir, "squirrel.custom.yaml"));
         Assert.Contains("back_color: 0x1C1C1E", patched);
+    }
+
+    [AvaloniaFact]
+    public async Task Legacy_whole_collection_patch_migrates_to_per_scheme_keys()
+    {
+        // The shape older builds wrote: one collection key that REPLACED all
+        // shipped schemes in the deployed config.
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              shipped_light:
+                back_color: 0xECECEC
+            """);
+        Write("squirrel.custom.yaml", """
+            patch:
+              preset_color_schemes:
+                user_dark:
+                  back_color: 0x1C1C1E
+            """);
+        var vm = LoadUi();
+
+        var library = vm.SchemeLibrary!;
+        // Shipped and patched schemes both show up.
+        Assert.Contains(library.Schemes, s => s.Name == "shipped_light" && s.IsShipped);
+        var userDark = Assert.Single(library.Schemes, s => s.Name == "user_dark");
+        Assert.False(userDark.IsShipped);
+        Assert.True(userDark.CanRemove);
+        Assert.True(library.IsModified);
+
+        userDark.BackColor = "0F0F10";
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var patch = new RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml");
+        Assert.DoesNotContain("preset_color_schemes", patch.Keys); // legacy key migrated away
+        var migrated = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(
+            patch["preset_color_schemes/user_dark"]);
+        Assert.Equal("0x0F0F10", migrated["back_color"]);
+
+        // …and the shipped scheme is back in the effective config.
+        Assert.Contains(
+            "shipped_light",
+            new RimeConfigStore(_dir).ListMappingKeys("squirrel.yaml", "preset_color_schemes"));
+    }
+
+    [AvaloniaFact]
+    public async Task Removing_a_user_scheme_removes_its_flat_key()
+    {
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              shipped_light:
+                back_color: 0xECECEC
+            """);
+        Write("squirrel.custom.yaml", """
+            patch:
+              "preset_color_schemes/user_dark":
+                back_color: 0x1C1C1E
+            """);
+        var vm = LoadUi();
+
+        var library = vm.SchemeLibrary!;
+        var userDark = Assert.Single(library.Schemes, s => s.Name == "user_dark");
+        library.RemoveSchemeCommand.Execute(userDark);
+        Assert.True(vm.IsDirty);
+
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var store = new RimeConfigStore(_dir);
+        Assert.DoesNotContain("preset_color_schemes/user_dark", store.ReadPatchValues("squirrel.yaml").Keys);
+        Assert.Contains("shipped_light", store.ListMappingKeys("squirrel.yaml", "preset_color_schemes"));
     }
 
     [AvaloniaFact]
@@ -97,25 +180,6 @@ public sealed class ColorSchemeTests : IDisposable
         Assert.Equal(byte.MinValue, brush.Color.R);
         Assert.Equal(byte.MinValue, brush.Color.G);
         Assert.Equal(byte.MaxValue, brush.Color.B);
-    }
-
-    [AvaloniaFact]
-    public void Removing_all_schemes_removes_the_patch_key_on_save()
-    {
-        Write("squirrel.custom.yaml", "patch:\n  preset_color_schemes:\n    old: {}\n");
-        var vm = LoadUi();
-
-        var library = vm.SchemeLibrary!;
-        Assert.True(library.IsModified); // collection carries a patch entry
-        foreach (var scheme in library.Schemes.ToList())
-            library.RemoveSchemeCommand.Execute(scheme);
-        Assert.True(vm.IsDirty);
-
-        vm.SaveAndDeployCommand.Execute(null);
-
-        Assert.DoesNotContain(
-            new RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml"),
-            kv => kv.Key == "preset_color_schemes");
     }
 
     private sealed class StubDistribution : RimeDistributionBase
