@@ -19,8 +19,6 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <u:IconButton Icon="{StaticResource SemiIconRefresh}"
                               Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
-                <u:IconButton Icon="{StaticResource SemiIconUndo}"
-                              Command="{Binding RevertCommand}" ToolTip.Tip="还原更改（放弃未保存的修改）" />
                 <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
                               Icon="{StaticResource SemiIconSave}"
                               Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="保存并部署" />
@@ -50,12 +48,8 @@
                                                 <DataTemplate x:DataType="sf:ToggleFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldUndoButton />
                                                                 <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
                                                                               IsChecked="{Binding IsChecked}" />
                                                             </StackPanel>
@@ -67,12 +61,8 @@
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Note}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldUndoButton />
                                                                 <StackPanel Orientation="Horizontal" Spacing="8"
                                                                             IsVisible="{Binding IsStepper}">
                                                                     <u:NumericDoubleUpDown x:Name="Nu" Classes="silent-errors"
@@ -96,12 +86,8 @@
                                                 <DataTemplate x:DataType="sf:TextFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldUndoButton />
                                                                 <TextBox Text="{Binding Text}" PlaceholderText="{Binding Placeholder}"
                                                                          Width="240" />
                                                             </StackPanel>
@@ -112,12 +98,8 @@
                                                 <DataTemplate x:DataType="sf:ChoiceFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
                                                         <c:Cell.RightContent>
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                <views:FieldUndoButton />
                                                                 <ComboBox ItemsSource="{Binding Options}"
                                                                           SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
                                                                           MinWidth="170" />
@@ -131,12 +113,6 @@
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Items.Count, StringFormat=已设 {0} 项}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
-                                                        <c:Cell.RightContent>
-                                                            <views:FieldUndoButton />
-                                                        </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
                                                                 <ItemsControl ItemsSource="{Binding Items}">
@@ -176,12 +152,6 @@
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Summary}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
-                                                        <c:Cell.RightContent>
-                                                            <views:FieldUndoButton />
-                                                        </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
                                                                 <ItemsControl ItemsSource="{Binding Rows}">
@@ -207,12 +177,6 @@
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding EnabledSummary}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
-                                                        <c:Cell.RightContent>
-                                                            <views:FieldUndoButton />
-                                                        </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="10" MaxWidth="480">
                                                                 <ItemsControl ItemsSource="{Binding Options}">
@@ -233,12 +197,6 @@
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Rows.Count, StringFormat={}{0} 个应用}">
-                                                        <c:Cell.Trailing>
-                                                            <views:FieldPatchBadge />
-                                                        </c:Cell.Trailing>
-                                                        <c:Cell.RightContent>
-                                                            <views:FieldUndoButton />
-                                                        </c:Cell.RightContent>
                                                         <c:Cell.Detail>
                                                             <StackPanel Spacing="12" MaxWidth="560">
                                                                 <ItemsControl ItemsSource="{Binding Rows}">

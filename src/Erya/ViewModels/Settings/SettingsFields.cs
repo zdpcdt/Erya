@@ -11,9 +11,8 @@ namespace Erya.ViewModels.Settings;
 
 /// <summary>
 /// One schema field bound to the UI. Subclasses own the control value; this
-/// base owns the patch semantics: <see cref="IsModified"/> means the key
-/// exists in the .custom.yaml patch (a badge), <see cref="HasPendingEdits"/>
-/// means the user changed the control and a save would write (or remove) it.
+/// base owns the patch semantics: <see cref="HasPendingEdits"/> means the
+/// user changed the control and a save would write (or remove) it.
 /// </summary>
 public abstract partial class SettingsFieldViewModel : ObservableObject
 {
@@ -30,22 +29,12 @@ public abstract partial class SettingsFieldViewModel : ObservableObject
     /// <summary>行首图标声明（td:/ip:/semi: 前缀），经 FieldIconConverter 变成图标。</summary>
     public string? IconName => Field.Icon;
 
-    /// <summary>该键已写入 .custom.yaml 补丁（非发行版默认值）。</summary>
-    [ObservableProperty]
-    private bool _isModified;
-
     /// <summary>用户改动尚未保存。</summary>
     [ObservableProperty]
     private bool _hasPendingEdits;
 
-    /// <summary>Assigned by the editor page: removes this field's patch entry.</summary>
-    public System.Windows.Input.ICommand? UndoPatchCommand { get; set; }
-
     /// <summary>Fill the control from the merged value and patch presence.</summary>
-    public abstract void Load(object? mergedValue, bool inPatch);
-
-    /// <summary>Drop user edits and return to the loaded state.</summary>
-    public abstract void Revert();
+    public abstract void Load(object? mergedValue);
 
     /// <summary>The value a save should write; null = nothing pending.</summary>
     public abstract object? PendingValue();
@@ -80,16 +69,9 @@ public sealed partial class ToggleFieldViewModel : SettingsFieldViewModel
     [ObservableProperty]
     private bool _isChecked;
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = AsBool(mergedValue) || (mergedValue is null && Field.DefaultValue() is true);
-        IsChecked = _loaded;
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         IsChecked = _loaded;
         HasPendingEdits = false;
     }
@@ -119,16 +101,9 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
     /// <summary>滑块行的右侧数值摘要（步进器自带数字框，不需要）。</summary>
     public string? Note => IsSlider ? Value.ToString("0.#") : null;
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = AsNumber(mergedValue) ?? AsNumber(Field.DefaultValue()) ?? Min;
-        Value = _loaded;
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         Value = _loaded;
         HasPendingEdits = false;
     }
@@ -155,16 +130,9 @@ public sealed partial class TextFieldViewModel : SettingsFieldViewModel
 
     public string? Placeholder => Field.DefaultValue()?.ToString();
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = AsString(mergedValue);
-        Text = _loaded ?? "";
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         Text = _loaded ?? "";
         HasPendingEdits = false;
     }
@@ -207,16 +175,9 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
         set => Selected = value == UnsetLabel ? null : value;
     }
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = AsString(mergedValue);
-        Selected = _loaded;
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         Selected = _loaded;
         HasPendingEdits = false;
     }
@@ -251,7 +212,7 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
     [ObservableProperty]
     private string _newItem = "";
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = ToStringList(mergedValue);
         Items.Clear();
@@ -265,14 +226,6 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
         {
             foreach (var item in _loaded) AddRow(item);
         }
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
-        Items.Clear();
-        foreach (var item in _loaded) AddRow(item);
         HasPendingEdits = false;
     }
 
@@ -344,18 +297,11 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
         }
     }
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         var map = mergedValue as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>();
         foreach (var row in Rows)
             row.LoadValue(map.TryGetValue(row.Key, out var value) ? value?.ToString() : null);
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
-        foreach (var row in Rows) row.LoadValue(row.Selection);
         HasPendingEdits = false;
     }
 
@@ -434,16 +380,9 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
         }
     }
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loaded = ToStringList(mergedValue);
-        foreach (var option in Options) option.IsChecked = _loaded.Contains(option.Value);
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         foreach (var option in Options) option.IsChecked = _loaded.Contains(option.Value);
         HasPendingEdits = false;
     }
@@ -478,16 +417,9 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
 
     private IReadOnlyDictionary<string, object?> _loadedMap = new Dictionary<string, object?>();
 
-    public override void Load(object? mergedValue, bool inPatch)
+    public override void Load(object? mergedValue)
     {
         _loadedMap = mergedValue as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>();
-        BuildRows(_loadedMap);
-        IsModified = inPatch;
-        HasPendingEdits = false;
-    }
-
-    public override void Revert()
-    {
         BuildRows(_loadedMap);
         HasPendingEdits = false;
     }

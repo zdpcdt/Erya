@@ -124,7 +124,6 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 ? SettingsSchemas.LoadForUiConfig(_distribution.UiConfigFile!)
                 : SettingsSchemas.LoadDefault();
             var targetFile = _schema.TargetFile;
-            var patchKeys = _store.ReadPatchValues(targetFile);
 
             IReadOnlyList<string> ResolveChoices(SettingsField field)
             {
@@ -141,8 +140,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 foreach (var fieldVm in sectionVm.Fields)
                 {
                     fieldVm.PropertyChanged += OnFieldChanged;
-                    fieldVm.UndoPatchCommand = UndoPatchKeyCommand;
-                    fieldVm.Load(_store.ReadMergedValue(targetFile, fieldVm.KeyPath), patchKeys.ContainsKey(fieldVm.KeyPath));
+                    fieldVm.Load(_store.ReadMergedValue(targetFile, fieldVm.KeyPath));
                 }
                 Sections.Add(sectionVm);
             }
@@ -176,18 +174,6 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 ? $"当前前端（{_distribution.DisplayName}）的候选面板外观由输入法框架自身设置（fcitx5 在「配置 → 附加组件 → 经典用户界面」中调整），RIME YAML 中没有对应配置。中英切换、标点等输入行为请在「输入设置」页调整。"
                 : $"当前前端（{_distribution.DisplayName}）没有可配置的外观 YAML。";
         return "";
-    }
-
-    [RelayCommand]
-    private void Revert()
-    {
-        // Capture before the field events re-raise IsDirty mid-revert.
-        var hadPending = IsDirty;
-        foreach (var field in Sections.SelectMany(s => s.Fields)) field.Revert();
-        SchemeLibrary?.Revert();
-        OnPropertyChanged(nameof(IsDirty));
-        AppNotifications.Toast(hadPending ? "已还原未保存的修改。" : "当前没有未保存的修改。",
-            hadPending ? NotificationType.Success : NotificationType.Information);
     }
 
     [RelayCommand]
@@ -258,30 +244,6 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
         catch (Exception ex)
         {
             ErrorMessage = $"保存失败：{ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    /// <summary>Remove one field's patch entry (back to the shipped default), then reload.</summary>
-    [RelayCommand]
-    private async Task UndoPatchKeyAsync(SettingsFieldViewModel? field)
-    {
-        if (field is null || _store is null || _schema is null || IsBusy) return;
-
-        IsBusy = true;
-        try
-        {
-            ErrorMessage = "";
-            _store.RemovePatchKeys(_schema.TargetFile, [field.KeyPath]);
-            AppNotifications.Toast($"已撤销 {field.KeyPath} 的补丁，重新部署后生效。", NotificationType.Success);
-            await LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"撤销失败：{ex.Message}";
         }
         finally
         {

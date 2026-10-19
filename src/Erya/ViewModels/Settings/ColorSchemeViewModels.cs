@@ -116,8 +116,6 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
         return result;
     }
 
-    public void Revert() => Load();
-
     /// <summary>Flat patch keys to write on save (per scheme), keyed by patch path.</summary>
     public IReadOnlyDictionary<string, object?> PendingWrites()
     {
