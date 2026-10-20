@@ -6,6 +6,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Settings;
+using Erya.Services;
 
 namespace Erya.ViewModels.Settings;
 
@@ -119,7 +120,7 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
     }
 }
 
-public sealed partial class TextFieldViewModel : SettingsFieldViewModel
+public partial class TextFieldViewModel : SettingsFieldViewModel
 {
     private string? _loaded;
 
@@ -142,6 +143,62 @@ public sealed partial class TextFieldViewModel : SettingsFieldViewModel
         : Text;
 
     partial void OnTextChanged(string value) => HasPendingEdits = value != (_loaded ?? "");
+}
+
+/// <summary>
+/// font: same patch semantics as text, but the editor is a ComboBox fed by
+/// this machine's installed font families plus an explicit 未设置 entry; the
+/// loaded value stays selectable even when this host can't enumerate it (e.g.
+/// weasel's comma fallback lists). Fixed width in the UI keeps a long merged
+/// default from stretching the row.
+/// </summary>
+public sealed partial class FontFieldViewModel : TextFieldViewModel
+{
+    private IReadOnlyList<string>? _options;
+
+    public FontFieldViewModel(SettingsField field) : base(field)
+    {
+        // Text is the store; the ComboBox binds the SelectedOption wrapper.
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Text))
+                OnPropertyChanged(nameof(SelectedOption));
+        };
+    }
+
+    public string UnsetLabel => "未设置";
+
+    /// <summary>
+    /// Built once per Load (which runs before the field is bound) and kept
+    /// stable afterwards: rebuilding on selection would hand the ComboBox a
+    /// NEW ItemsSource instance, it clears its selection and writes null back
+    /// through the SelectedItem binding — the「选中字体报空引用」regression.
+    /// </summary>
+    public IReadOnlyList<string> Options => _options ??= BuildOptions();
+
+    /// <summary>Bind target for ComboBox — maps the unset entry to/from empty text.</summary>
+    public string SelectedOption
+    {
+        get => Text.Length == 0 ? UnsetLabel : Text;
+        // null-tolerant on purpose: a ComboBox whose items reset writes null.
+        set => Text = string.IsNullOrEmpty(value) || value == UnsetLabel ? "" : value;
+    }
+
+    public override void Load(object? mergedValue)
+    {
+        base.Load(mergedValue);
+        _options = BuildOptions();
+        OnPropertyChanged(nameof(Options));
+    }
+
+    private IReadOnlyList<string> BuildOptions()
+    {
+        var fonts = SystemFontCatalog.Names;
+        var loaded = Text.Trim();
+        return loaded.Length > 0 && !fonts.Contains(loaded)
+            ? [UnsetLabel, loaded, .. fonts]
+            : [UnsetLabel, .. fonts];
+    }
 }
 
 /// <summary>enum / segmented: a choice list where null means “跟随默认（未设置）”。</summary>

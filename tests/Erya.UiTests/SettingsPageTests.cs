@@ -207,6 +207,51 @@ public sealed class SettingsEditorTests : IDisposable
         public override Task DeployAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
+    [AvaloniaFact]
+    public async Task Weasel_font_field_loads_from_config_and_writes_patch()
+    {
+        // A comma fallback list is a legal weasel font_face (~200 chars on
+        // some machines): it stays selectable in the combo, and 未设置 = the
+        // patch key is removed.
+        Write("weasel.yaml", """
+            style:
+              font_face: "Segoe UI Emoji:23:23, Segoe UI, Microsoft YaHei"
+            """);
+        var vm = new SettingsEditorViewModel(new FakeWeaselDistribution(_dir, _sharedDir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        var font = Assert.IsType<FontFieldViewModel>(Field(vm, "style/font_face"));
+        Assert.Equal("未设置", font.Options[0]);
+        Assert.Contains("Segoe UI Emoji:23:23, Segoe UI, Microsoft YaHei", font.Options);
+        Assert.Equal("Segoe UI Emoji:23:23, Segoe UI, Microsoft YaHei", font.SelectedOption);
+
+        // A ComboBox whose ItemsSource resets writes null through the
+        // SelectedItem binding — the wrapper must read that as 未设置, not
+        // crash with a NullReferenceException (选中字体报错 regression).
+        font.SelectedOption = null!;
+        Assert.Equal("未设置", font.SelectedOption);
+
+        // Selecting keeps the Options instance stable: a new list would swap
+        // the ComboBox's ItemsSource, clearing the selection mid-edit.
+        var options = font.Options;
+        font.SelectedOption = "SimSun";
+        Assert.Same(options, font.Options);
+
+        Assert.True(vm.IsDirty);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var patch = new Erya.Core.Configuration.RimeConfigStore(_dir).ReadPatchValues("weasel.yaml");
+        Assert.Equal("SimSun", patch["style/font_face"]);
+
+        // 未设置 goes back to the frontend default: the patch key is removed.
+        // (Save reloads the fields, so re-fetch — the old VM instance is detached.)
+        Assert.IsType<FontFieldViewModel>(Field(vm, "style/font_face")).SelectedOption = "未设置";
+        Assert.True(vm.IsDirty);
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+        Assert.DoesNotContain("style/font_face",
+            new Erya.Core.Configuration.RimeConfigStore(_dir).ReadPatchValues("weasel.yaml").Keys);
+    }
+
     private static SettingsFieldViewModel Field(SettingsEditorViewModel vm, string keyPath)
         => vm.Sections.SelectMany(s => s.Fields).First(f => f.KeyPath == keyPath);
 

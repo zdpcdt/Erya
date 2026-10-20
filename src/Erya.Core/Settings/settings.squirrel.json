@@ -90,8 +90,8 @@
         {
           "id": "fontFace",
           "label": "字体",
-          "description": "如 PingFang SC 或 系统字体名",
-          "type": "text",
+          "description": "从系统已安装字体中选择，如 PingFang SC",
+          "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/font_face"
         },

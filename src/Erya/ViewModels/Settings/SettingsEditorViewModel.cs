@@ -40,6 +40,8 @@ public sealed partial class SettingsSectionViewModel : ObservableObject
                 return new NumberFieldViewModel(field);
             case "text":
                 return new TextFieldViewModel(field);
+            case "font":
+                return new FontFieldViewModel(field);
             case "enum" or "segmented":
                 var choices = field.Choices
                     ?? (field.ChoicesRef is { } refPath && dynamicChoices is not null ? dynamicChoices(field) : []);

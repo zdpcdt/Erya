@@ -70,6 +70,11 @@ public sealed class ColorSchemeTests : IDisposable
 
         // Edit a color and add a scheme derived from the first one.
         light.BackColor = "1C1C1E";
+        // Font combo: a null write-back (ComboBox items reset) means 未设置,
+        // then a normal selection writes font_face like any scheme key.
+        light.SelectedFontFace = null!;
+        Assert.Equal("未设置", light.SelectedFontFace);
+        light.SelectedFontFace = "PingFang SC";
         library.AddSchemeCommand.Execute(null);
         Assert.True(vm.IsDirty);
 
@@ -82,6 +87,7 @@ public sealed class ColorSchemeTests : IDisposable
         var edited = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(
             patch["preset_color_schemes/macos_light"]);
         Assert.Equal("0x1C1C1E", edited["back_color"]);
+        Assert.Equal("PingFang SC", edited["font_face"]);
         Assert.Contains("preset_color_schemes/macos_light1", patch.Keys); // seeded from the first scheme
         Assert.DoesNotContain("preset_color_schemes/macos_dark", patch.Keys);
         Assert.False(vm.IsDirty);
