@@ -9,6 +9,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Configuration;
+using Erya.Services;
 using YamlDotNet.RepresentationModel;
 
 namespace Erya.ViewModels.Settings;
@@ -255,6 +256,39 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     public System.Windows.Input.ICommand? RemoveCommand => Owner?.RemoveSchemeCommand;
 
     public bool HasValidName => Name.Trim().Length > 0;
+
+    /// <summary>Dropdown source for the font_face editor — this machine's font families.</summary>
+    public IReadOnlyList<string> Fonts => SystemFontCatalog.Names;
+
+    public string FontUnsetLabel => "未设置";
+
+    private IReadOnlyList<string>? _fontOptions;
+
+    /// <summary>
+    /// Built lazily (first binding read) and kept stable afterwards: swapping
+    /// the ComboBox's ItemsSource on selection would clear its selection and
+    /// write null back — the same regression FontFieldViewModel guards against.
+    /// </summary>
+    public IReadOnlyList<string> FontOptions => _fontOptions ??= BuildFontOptions();
+
+    /// <summary>Bind target for the font combo — maps 未设置 to/from an empty font_face.</summary>
+    public string SelectedFontFace
+    {
+        get => FontFace.Trim().Length == 0 ? FontUnsetLabel : FontFace.Trim();
+        // null-tolerant on purpose: a ComboBox whose items reset writes null.
+        set => FontFace = string.IsNullOrEmpty(value) || value == FontUnsetLabel ? "" : value;
+    }
+
+    partial void OnFontFaceChanged(string value) => OnPropertyChanged(nameof(SelectedFontFace));
+
+    private IReadOnlyList<string> BuildFontOptions()
+    {
+        var fonts = Fonts;
+        var current = FontFace.Trim();
+        return current.Length > 0 && !fonts.Contains(current)
+            ? [FontUnsetLabel, current, .. fonts]
+            : [FontUnsetLabel, .. fonts];
+    }
 
     public SchemeState CloneableState => new(
         Name.Trim(), Author,

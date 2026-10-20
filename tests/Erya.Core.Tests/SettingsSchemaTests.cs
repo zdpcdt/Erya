@@ -87,6 +87,20 @@ public sealed class SettingsSchemaTests
     }
 
     [Fact]
+    public void Font_face_fields_use_the_font_picker_type()
+    {
+        // The picker reads the machine's installed fonts; a plain text field
+        // here would silently lose that behavior.
+        foreach (var schema in (SettingsSchema[])[
+                     SettingsSchemas.LoadForUiConfig("squirrel.yaml"),
+                     SettingsSchemas.LoadForUiConfig("weasel.yaml")])
+        {
+            var fontFace = schema.Sections.SelectMany(s => s.Fields).Single(f => f.KeyPath == "style/font_face");
+            Assert.Equal("font", fontFace.Type);
+        }
+    }
+
+    [Fact]
     public void Every_field_has_label_type_and_key_path()
     {
         foreach (var schema in (SettingsSchema[])[

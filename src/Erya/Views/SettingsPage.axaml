@@ -83,6 +83,24 @@
                                                     </c:Cell>
                                                 </DataTemplate>
 
+                                                <!--  font：本机已安装字体下拉（首项「未设置」）。固定宽度：
+                                                      合并默认值可能是 ~200 字符的 Emoji 回退长串，框内截断显示，
+                                                      不能撑开挤掉同行控件。
+                                                      必须排在 TextFieldViewModel 模板之前：模板按顺序取
+                                                      第一个可匹配项，而 FontFieldViewModel 兼容其基类。  -->
+                                                <DataTemplate x:DataType="sf:FontFieldViewModel">
+                                                    <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                            Content="{Binding Label}" Description="{Binding Description}">
+                                                        <c:Cell.RightContent>
+                                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                <ComboBox ItemsSource="{Binding Options}"
+                                                                          SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                                          Width="240" />
+                                                            </StackPanel>
+                                                        </c:Cell.RightContent>
+                                                    </c:Cell>
+                                                </DataTemplate>
+
                                                 <DataTemplate x:DataType="sf:TextFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}">
@@ -124,13 +142,10 @@
                                                                                                    ToolTip.Tip="{Binding Value}" />
                                                                                 <u:IconButton Classes="Danger"
                                                                                               Theme="{DynamicResource SolidIconButton}"
+                                                                                              Icon="{StaticResource SemiIconDelete}"
                                                                                               Command="{Binding $parent[ContentControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
                                                                                               CommandParameter="{Binding}"
-                                                                                              ToolTip.Tip="删除此快捷键">
-                                                                                    <u:IconButton.Icon>
-                                                                                        <tdicon:Close />
-                                                                                    </u:IconButton.Icon>
-                                                                                </u:IconButton>
+                                                                                              ToolTip.Tip="删除此快捷键" />
                                                                             </StackPanel>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
@@ -139,8 +154,10 @@
                                                                     <u:KeyGestureInput Width="230"
                                                                                        Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
                                                                                        ToolTip.Tip="聚焦后按下新的组合键" />
-                                                                    <Button Content="添加"
-                                                                            Command="{Binding AddItemCommand}" />
+                                                                    <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                                                  Icon="{StaticResource SemiIconPlus}"
+                                                                                  Command="{Binding AddItemCommand}"
+                                                                                  ToolTip.Tip="添加快捷键" />
                                                                 </StackPanel>
                                                             </StackPanel>
                                                         </c:Cell.Detail>
@@ -311,8 +328,9 @@
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="字体 / 字号 / 圆角 / 行距" VerticalAlignment="Center" Width="130" />
-                                                <TextBox Text="{Binding FontFace, Mode=TwoWay}" Width="150"
-                                                         PlaceholderText="字体名（可空）" />
+                                                <ComboBox ItemsSource="{Binding FontOptions}"
+                                                          SelectedItem="{Binding SelectedFontFace, Mode=TwoWay}"
+                                                          Width="150" />
                                                 <TextBox Text="{Binding FontPointText, Mode=TwoWay}" Width="60" PlaceholderText="字号" />
                                                 <TextBox Text="{Binding CornerRadiusText, Mode=TwoWay}" Width="60" PlaceholderText="圆角" />
                                                 <TextBox Text="{Binding LineSpacingText, Mode=TwoWay}" Width="60" PlaceholderText="行距" />

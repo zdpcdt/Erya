@@ -157,6 +157,17 @@ public sealed class SettingsPageRenderTests : IDisposable
 
         // 颜色编辑用 ColorPicker（背景/候选文字/高亮背景/高亮文字/注释 ≥ 5 个）。
         Assert.True(schemeRow.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
+        // 字体编辑是固定宽度的系统字体下拉（不可编辑）——合并默认值可能是
+        // ~200 字符的 Emoji 回退长串，不能撑开挤掉同行控件。
+        var fontCell = Assert.Single(
+            page.GetVisualDescendants().OfType<Cell>().Where(c => (c.Content as string) == "字体"));
+        var fontCombo = Assert.Single(fontCell.GetVisualDescendants().OfType<ComboBox>());
+        Assert.False(fontCombo.IsEditable);
+        Assert.Equal(240, fontCombo.Width);
+        // 皮肤库里的字体同样固定宽度，空值显示「未设置」。
+        var schemeFontCombo = schemeRow.GetVisualDescendants().OfType<ComboBox>().Single();
+        Assert.Equal(150, schemeFontCombo.Width);
+        Assert.Equal("未设置", schemeFontCombo.SelectedItem);
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-appearance-light.png"), ThemeVariant.Light);
         window.Close();

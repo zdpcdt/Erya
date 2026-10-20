@@ -60,8 +60,8 @@
         {
           "id": "fontFace",
           "label": "字体",
-          "description": "如 微软雅黑 (Microsoft YaHei)",
-          "type": "text",
+          "description": "从系统已安装字体中选择，如 微软雅黑 (Microsoft YaHei)",
+          "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/font_face"
         },

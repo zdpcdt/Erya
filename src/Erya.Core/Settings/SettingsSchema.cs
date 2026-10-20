@@ -18,7 +18,7 @@ public sealed class SettingsSchema
     /// <summary>Field types the schema loader and UI know how to render.</summary>
     public static readonly IReadOnlySet<string> KnownFieldTypes = new HashSet<string>
     {
-        "toggle", "stepper", "slider", "segmented", "enum", "text",
+        "toggle", "stepper", "slider", "segmented", "enum", "text", "font",
         "hotkeyList", "hotkeyPairList", "keyMapping", "checkList", "appOptions",
     };
 }
