@@ -2,9 +2,10 @@
   "targetFile": "squirrel.yaml",
   "sections": [
     {
-      "id": "style",
-      "title": "候选词面板",
-      "description": "鼠须管候选窗的外观与排版。",
+      "id": "skinChoice",
+      "group": "skin",
+      "title": "当前皮肤",
+      "description": "候选窗配色方案。亮色用于系统浅色模式，暗色用于深色模式。",
       "fields": [
         {
           "id": "colorScheme",
@@ -22,7 +23,15 @@
           "icon": "td:Moon",
           "keyPath": "style/color_scheme_dark",
           "choicesRef": "preset_color_schemes"
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutBehavior",
+      "group": "layout",
+      "title": "排列与显示",
+      "description": "鼠须管候选窗的排列与显示效果。",
+      "fields": [
         {
           "id": "candidateLayout",
           "label": "排列方式",
@@ -47,6 +56,13 @@
           ]
         },
         {
+          "id": "candidateFormat",
+          "label": "候选格式",
+          "type": "text",
+          "icon": "ip:Format",
+          "keyPath": "style/candidate_format"
+        },
+        {
           "id": "inlinePreedit",
           "label": "内嵌编码",
           "description": "在应用光标处显示输入中的编码",
@@ -60,6 +76,13 @@
           "description": "首选词直接内嵌在应用光标处",
           "type": "toggle",
           "keyPath": "style/inline_candidate"
+        },
+        {
+          "id": "showPaging",
+          "label": "显示翻页箭头",
+          "type": "toggle",
+          "icon": "td:ChevronDown",
+          "keyPath": "style/show_paging"
         },
         {
           "id": "memorizeSize",
@@ -79,17 +102,17 @@
           "label": "磨砂效果",
           "type": "toggle",
           "keyPath": "style/translucency"
-        },
-        {
-          "id": "showPaging",
-          "label": "显示翻页箭头",
-          "type": "toggle",
-          "icon": "td:ChevronDown",
-          "keyPath": "style/show_paging"
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutFonts",
+      "group": "layout",
+      "title": "字体",
+      "fields": [
         {
           "id": "fontFace",
-          "label": "字体",
+          "label": "候选字体",
           "description": "从系统已安装字体中选择，如 PingFang SC",
           "type": "font",
           "icon": "semi:SemiIconFont",
@@ -97,7 +120,7 @@
         },
         {
           "id": "fontPoint",
-          "label": "字号",
+          "label": "候选字号",
           "type": "stepper",
           "icon": "ip:FontSize",
           "keyPath": "style/font_point",
@@ -119,7 +142,68 @@
           "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/comment_font_face"
+        }
+      ]
+    },
+    {
+      "id": "layoutSpacing",
+      "group": "layout",
+      "title": "间距",
+      "fields": [
+        {
+          "id": "spacing",
+          "label": "拼音间距",
+          "type": "stepper",
+          "keyPath": "style/spacing",
+          "min": 0,
+          "max": 20,
+          "step": 1
         },
+        {
+          "id": "candidateSpacing",
+          "label": "候选间距",
+          "type": "stepper",
+          "keyPath": "style/candidate_spacing",
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "hiliteSpacing",
+          "label": "序号-候选间距",
+          "type": "stepper",
+          "keyPath": "style/hilite_spacing",
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "hilitePadding",
+          "label": "高亮扩张",
+          "description": "高亮候选背景向四周扩张的像素",
+          "type": "stepper",
+          "keyPath": "style/hilite_padding",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "lineSpacing",
+          "label": "候选行距",
+          "type": "stepper",
+          "icon": "td:LineHeight",
+          "keyPath": "style/line_spacing",
+          "min": 0,
+          "max": 12,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "layoutCorners",
+      "group": "layout",
+      "title": "圆角与边距",
+      "fields": [
         {
           "id": "cornerRadius",
           "label": "圆角",
@@ -159,53 +243,6 @@
           "step": 1
         },
         {
-          "id": "lineSpacing",
-          "label": "候选行距",
-          "type": "stepper",
-          "icon": "td:LineHeight",
-          "keyPath": "style/line_spacing",
-          "min": 0,
-          "max": 12,
-          "step": 1
-        },
-        {
-          "id": "spacing",
-          "label": "拼音间距",
-          "type": "stepper",
-          "keyPath": "style/spacing",
-          "min": 0,
-          "max": 20,
-          "step": 1
-        },
-        {
-          "id": "candidateSpacing",
-          "label": "候选间距",
-          "type": "stepper",
-          "keyPath": "style/candidate_spacing",
-          "min": 0,
-          "max": 40,
-          "step": 1
-        },
-        {
-          "id": "hiliteSpacing",
-          "label": "序号-候选间距",
-          "type": "stepper",
-          "keyPath": "style/hilite_spacing",
-          "min": 0,
-          "max": 40,
-          "step": 1
-        },
-        {
-          "id": "hilitePadding",
-          "label": "高亮扩张",
-          "description": "高亮候选背景向四周扩张的像素",
-          "type": "stepper",
-          "keyPath": "style/hilite_padding",
-          "min": 0,
-          "max": 20,
-          "step": 1
-        },
-        {
           "id": "marginX",
           "label": "横向边距",
           "description": "候选窗内容与窗口边缘的左右留白",
@@ -226,7 +263,14 @@
           "min": 0,
           "max": 30,
           "step": 1
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutEffects",
+      "group": "layout",
+      "title": "透明与阴影",
+      "fields": [
         {
           "id": "alpha",
           "label": "透明度",
@@ -246,18 +290,12 @@
           "min": 0,
           "max": 10,
           "step": 1
-        },
-        {
-          "id": "candidateFormat",
-          "label": "候选格式",
-          "type": "text",
-          "icon": "ip:Format",
-          "keyPath": "style/candidate_format"
         }
       ]
     },
     {
       "id": "keyboard",
+      "group": "layout",
       "title": "键盘体验",
       "fields": [
         {
@@ -297,8 +335,9 @@
     },
     {
       "id": "appOptions",
+      "group": "apps",
       "title": "应用程序",
-      "description": "为特定应用设置输入行为（按应用 Bundle ID，如在终端中默认使用英文）。",
+      "description": "为特定应用设置输入行为（按应用 Bundle ID，如在终端中默认使用英文）。这是 RIME 引擎层功能，重新部署后生效。",
       "fields": [
         {
           "id": "appsTable",

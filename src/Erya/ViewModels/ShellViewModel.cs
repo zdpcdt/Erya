@@ -12,8 +12,10 @@ using Erya.ViewModels.Settings;
 
 namespace Erya.ViewModels;
 
-/// <summary>Sidebar entry; selection is driven by NavMenu's TwoWay SelectedItem binding.</summary>
-public sealed record NavItem(string Key, string Header, Geometry? Icon)
+/// <summary>Sidebar entry; selection is driven by NavMenu's TwoWay SelectedItem binding.
+/// Entries with <see cref="Children"/> are groups: clicking only expands the submenu,
+/// the page lives on the leaves.</summary>
+public sealed record NavItem(string Key, string Header, Geometry? Icon, IReadOnlyList<NavItem>? Children = null)
 {
     // Fallback display (container renders ToString) should never leak internals.
     public override string ToString() => Header;
@@ -25,6 +27,9 @@ public partial class ShellViewModel : ObservableObject
     private SchemaManagerViewModel _schemas = null!;
     private SettingsEditorViewModel _inputSettings = null!;
     private SettingsEditorViewModel _appearance = null!;
+    private SkinPageViewModel _skin = null!;
+    private LayoutPageViewModel _layout = null!;
+    private AppsPageViewModel _apps = null!;
     private AdvancedSettingsViewModel _advanced = null!;
     private BackupRestoreViewModel _backup = null!;
     private Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
@@ -58,7 +63,12 @@ public partial class ShellViewModel : ObservableObject
             new NavItem("overview", "概览", Icon("SemiIconHome")),
             new NavItem("schemas", "方案管理", Icon("SemiIconCheckList")),
             new NavItem("inputSettings", "输入设置", Icon("SemiIconSetting")),
-            new NavItem("appearance", "外观设置", Icon("SemiIconColorPalette")),
+            new NavItem("appearance", "外观设置", Icon("SemiIconColorPalette"),
+            [
+                new NavItem("skin", "皮肤库", Icon("SemiIconColorPalette")),
+                new NavItem("layout", "候选窗排版", Icon("SemiIconSetting")),
+                new NavItem("apps", "应用行为", Icon("SemiIconDesktop")),
+            ]),
             new NavItem("advanced", "高级设置", Icon("SemiIconCode")),
             new NavItem("backup", "备份恢复", Icon("SemiIconRestore")),
         ];
@@ -75,7 +85,11 @@ public partial class ShellViewModel : ObservableObject
         _distribution = _overview.Distribution;
         _schemas = new SchemaManagerViewModel(_distribution);
         _inputSettings = new SettingsEditorViewModel(_distribution, "default");
+        // 外观三个子页共享同一个编辑器：一份字段/皮肤库/预览/保存动作。
         _appearance = new SettingsEditorViewModel(_distribution, "ui");
+        _skin = new SkinPageViewModel(_appearance);
+        _layout = new LayoutPageViewModel(_appearance);
+        _apps = new AppsPageViewModel(_appearance);
         _advanced = new AdvancedSettingsViewModel(_distribution);
         _backup = new BackupRestoreViewModel(_distribution);
     }
@@ -85,7 +99,9 @@ public partial class ShellViewModel : ObservableObject
         _lazyPages = [];
         _lazyPages["schemas"] = (false, _schemas);
         _lazyPages["inputSettings"] = (false, _inputSettings);
-        _lazyPages["appearance"] = (false, _appearance);
+        _lazyPages["skin"] = (false, _skin);
+        _lazyPages["layout"] = (false, _layout);
+        _lazyPages["apps"] = (false, _apps);
         _lazyPages["advanced"] = (false, _advanced);
         _lazyPages["backup"] = (false, _backup);
     }
@@ -93,6 +109,9 @@ public partial class ShellViewModel : ObservableObject
     partial void OnSelectedNavChanged(NavItem? value)
     {
         if (value is null) return;
+
+        // 分组项（外观设置）只负责展开子菜单，不换页。
+        if (value.Children is { Count: > 0 }) return;
 
         PageTitle = value.Header;
         if (value.Key == "overview")
@@ -138,6 +157,10 @@ public partial class ShellViewModel : ObservableObject
                 break;
             case SettingsEditorViewModel settings:
                 settings.LoadCommand.Execute(null);
+                break;
+            // 三个外观子页共享编辑器：经壳转发一次加载即可。
+            case AppearancePageViewModel appearance:
+                appearance.Editor.LoadCommand.Execute(null);
                 break;
             case AdvancedSettingsViewModel advanced:
                 advanced.LoadCommand.Execute(null);

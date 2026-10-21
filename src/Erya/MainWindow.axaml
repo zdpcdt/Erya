@@ -27,7 +27,8 @@
             <!-- Sidebar：直接坐在窗口底色上（底色随主题翻转：浅 #E6E8EA / 暗 #2E3238，含标题栏） -->
             <u:NavMenu Grid.Column="0" Width="216"
                        ItemsSource="{Binding NavItems}"
-                       SelectedItem="{Binding SelectedNav, Mode=TwoWay}">
+                       SelectedItem="{Binding SelectedNav, Mode=TwoWay}"
+                       SubMenuBinding="{Binding Children}">
 
                 <u:NavMenu.HeaderTemplate>
                     <!-- 显式模板而非 HeaderBinding：数据驱动下 Header 的显示由模板保证，
@@ -72,6 +73,15 @@
                             </DataTemplate>
                             <DataTemplate DataType="settings:SettingsEditorViewModel">
                                 <views:SettingsPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="settings:SkinPageViewModel">
+                                <views:SkinPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="settings:LayoutPageViewModel">
+                                <views:LayoutPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="settings:AppsPageViewModel">
+                                <views:AppsPage />
                             </DataTemplate>
                             <DataTemplate DataType="adv:AdvancedSettingsViewModel">
                                 <views:AdvancedSettingsPage />

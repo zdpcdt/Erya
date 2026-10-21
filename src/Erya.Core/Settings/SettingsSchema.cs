@@ -31,6 +31,12 @@ public sealed class SettingsSection
 
     public string? Description { get; set; }
 
+    /// <summary>
+    /// 页面归属（外观目标专用）：skin=皮肤库页 / layout=候选窗排版页 / apps=应用行为页。
+    /// null = 无分组（单页全显，default 目标的输入设置）。
+    /// </summary>
+    public string? Group { get; set; }
+
     public List<SettingsField> Fields { get; set; } = [];
 }
 

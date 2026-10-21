@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Erya;
 using Erya.Core.Distributions;
@@ -47,7 +48,7 @@ public class ShellNavTests
     private static readonly string[] AllIconKeys =
     [
         "SemiIconHome", "SemiIconCheckList", "SemiIconSetting",
-        "SemiIconColorPalette", "SemiIconCode", "SemiIconRestore",
+        "SemiIconColorPalette", "SemiIconCode", "SemiIconRestore", "SemiIconDesktop",
     ];
 
     [AvaloniaFact]
@@ -89,16 +90,33 @@ public class ShellNavTests
         Assert.Equal("输入设置", vm.PageTitle);
         Assert.False(input.IsSupported); // no RIME frontend in the test harness
 
-        vm.SelectedNav = vm.NavItems[3]; // 外观设置
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        Assert.IsType<SettingsEditorViewModel>(vm.CurrentPage);
-        Assert.Equal("外观设置", vm.PageTitle);
+        vm.SelectedNav = vm.NavItems[3]; // 外观设置是分组：点它不换页（页面在子项上）
+        Dispatcher.UIThread.RunJobs();
+        Assert.Same(input, vm.CurrentPage);
+        Assert.Equal("输入设置", vm.PageTitle);
+
+        // 子项逐个导航：皮肤库 / 候选窗排版 / 应用行为共享同一外观编辑器。
+        NavItem Child(string key) => vm.NavItems.Single(n => n.Key == "appearance").Children!.Single(c => c.Key == key);
+        var appearanceParent = vm.NavItems[3];
+        Assert.Equal(["skin", "layout", "apps"], appearanceParent.Children!.Select(c => c.Key).ToList());
+
+        vm.SelectedNav = Child("skin");
+        Dispatcher.UIThread.RunJobs();
+        var skin = Assert.IsType<SkinPageViewModel>(vm.CurrentPage);
+        Assert.Equal("皮肤库", vm.PageTitle);
+        vm.SelectedNav = Child("layout");
+        Dispatcher.UIThread.RunJobs();
+        var layout = Assert.IsType<LayoutPageViewModel>(vm.CurrentPage);
+        Assert.Same(skin.Editor, layout.Editor); // 三页共享一份编辑器
+        vm.SelectedNav = Child("apps");
+        Dispatcher.UIThread.RunJobs();
+        Assert.IsType<AppsPageViewModel>(vm.CurrentPage);
 
         // Pages are reused on revisit, no reload loop.
         vm.SelectedNav = vm.NavItems[0];
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
         vm.SelectedNav = vm.NavItems[2];
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
         Assert.Same(input, vm.CurrentPage);
     }
 

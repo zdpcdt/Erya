@@ -2,9 +2,10 @@
   "targetFile": "weasel.yaml",
   "sections": [
     {
-      "id": "style",
-      "title": "候选词面板",
-      "description": "小狼毫候选窗的外观与排版。键名已对照小狼毫 0.17 源码逐一校验。",
+      "id": "skinChoice",
+      "group": "skin",
+      "title": "当前皮肤",
+      "description": "候选窗配色方案。亮色用于系统浅色模式，暗色用于深色模式。",
       "fields": [
         {
           "id": "colorScheme",
@@ -22,7 +23,15 @@
           "icon": "td:Moon",
           "keyPath": "style/color_scheme_dark",
           "choicesRef": "preset_color_schemes"
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutBehavior",
+      "group": "layout",
+      "title": "排列与行为",
+      "description": "候选窗的横竖排与交互行为。键名已对照小狼毫 0.17 源码逐一校验。",
+      "fields": [
         {
           "id": "layoutType",
           "label": "排列方式",
@@ -45,10 +54,20 @@
           "keyPath": "style/inline_preedit"
         },
         {
-          "id": "displayTrayIcon",
-          "label": "显示托盘图标",
-          "type": "toggle",
-          "keyPath": "style/display_tray_icon"
+          "id": "labelFormat",
+          "label": "序号格式",
+          "description": "如 \"%s.\"；%s 代表数字",
+          "type": "text",
+          "icon": "td:Text",
+          "keyPath": "style/label_format"
+        },
+        {
+          "id": "markText",
+          "label": "标记字符",
+          "description": "高亮候选前的标记，如 \"·\"",
+          "type": "text",
+          "icon": "td:Text",
+          "keyPath": "style/mark_text"
         },
         {
           "id": "pagingOnScroll",
@@ -82,8 +101,21 @@
           "step": 1
         },
         {
+          "id": "displayTrayIcon",
+          "label": "显示托盘图标",
+          "type": "toggle",
+          "keyPath": "style/display_tray_icon"
+        }
+      ]
+    },
+    {
+      "id": "layoutFonts",
+      "group": "layout",
+      "title": "字体",
+      "fields": [
+        {
           "id": "fontFace",
-          "label": "字体",
+          "label": "候选字体",
           "description": "从系统已安装字体中选择，如 微软雅黑 (Microsoft YaHei)",
           "type": "font",
           "icon": "semi:SemiIconFont",
@@ -91,7 +123,7 @@
         },
         {
           "id": "fontPoint",
-          "label": "字号",
+          "label": "候选字号",
           "type": "stepper",
           "icon": "ip:FontSize",
           "keyPath": "style/font_point",
@@ -133,52 +165,14 @@
           "min": 8,
           "max": 32,
           "step": 1
-        },
-        {
-          "id": "labelFormat",
-          "label": "序号格式",
-          "description": "如 \"%s.\"；%s 代表数字",
-          "type": "text",
-          "icon": "td:Text",
-          "keyPath": "style/label_format"
-        },
-        {
-          "id": "markText",
-          "label": "标记字符",
-          "description": "高亮候选前的标记，如 \"·\"",
-          "type": "text",
-          "icon": "td:Text",
-          "keyPath": "style/mark_text"
-        },
-        {
-          "id": "cornerRadius",
-          "label": "圆角",
-          "type": "stepper",
-          "icon": "td:Round",
-          "keyPath": "style/layout/corner_radius",
-          "min": 0,
-          "max": 20,
-          "step": 1
-        },
-        {
-          "id": "hilitedCornerRadius",
-          "label": "高亮圆角",
-          "type": "stepper",
-          "keyPath": "style/layout/hilited_corner_radius",
-          "min": 0,
-          "max": 20,
-          "step": 1
-        },
-        {
-          "id": "lineSpacing",
-          "label": "候选行距",
-          "type": "stepper",
-          "icon": "td:LineHeight",
-          "keyPath": "style/layout/linespacing",
-          "min": 0,
-          "max": 12,
-          "step": 1
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutSpacing",
+      "group": "layout",
+      "title": "间距",
+      "fields": [
         {
           "id": "spacing",
           "label": "编码-候选间距",
@@ -217,6 +211,53 @@
           "step": 1
         },
         {
+          "id": "lineSpacing",
+          "label": "候选行距",
+          "type": "stepper",
+          "icon": "td:LineHeight",
+          "keyPath": "style/layout/linespacing",
+          "min": 0,
+          "max": 12,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "layoutCorners",
+      "group": "layout",
+      "title": "圆角与边距",
+      "fields": [
+        {
+          "id": "cornerRadius",
+          "label": "圆角",
+          "type": "stepper",
+          "icon": "td:Round",
+          "keyPath": "style/layout/corner_radius",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "hilitedCornerRadius",
+          "label": "高亮圆角",
+          "type": "stepper",
+          "keyPath": "style/layout/hilited_corner_radius",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "borderWidth",
+          "label": "边框宽度",
+          "description": "候选窗描边像素；颜色取自配色方案的 border_color",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/layout/border_width",
+          "min": 0,
+          "max": 10,
+          "step": 1
+        },
+        {
           "id": "marginX",
           "label": "横向边距",
           "description": "候选窗内容与窗口边缘的左右留白",
@@ -237,22 +278,19 @@
           "min": 0,
           "max": 30,
           "step": 1
-        },
-        {
-          "id": "borderWidth",
-          "label": "边框宽度",
-          "description": "候选窗描边像素；颜色取自配色方案的 border_color",
-          "type": "stepper",
-          "icon": "td:Frame",
-          "keyPath": "style/layout/border_width",
-          "min": 0,
-          "max": 10,
-          "step": 1
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutShadow",
+      "group": "layout",
+      "title": "阴影",
+      "description": "需配色方案提供非透明的 shadow_color 才可见。",
+      "fields": [
         {
           "id": "shadowRadius",
           "label": "阴影圆角",
-          "description": "候选窗阴影模糊半径；需配色方案提供非透明的 shadow_color 才可见",
+          "description": "候选窗阴影模糊半径",
           "type": "stepper",
           "keyPath": "style/layout/shadow_radius",
           "min": 0,
@@ -276,11 +314,18 @@
           "min": -30,
           "max": 30,
           "step": 1
-        },
+        }
+      ]
+    },
+    {
+      "id": "layoutSize",
+      "group": "layout",
+      "title": "宽高限制",
+      "description": "0 表示不限制。",
+      "fields": [
         {
           "id": "minWidth",
           "label": "最小宽度",
-          "description": "候选窗最小宽度，0 表示不限制",
           "type": "stepper",
           "keyPath": "style/layout/min_width",
           "min": 0,
@@ -290,7 +335,6 @@
         {
           "id": "minHeight",
           "label": "最小高度",
-          "description": "候选窗最小高度，0 表示不限制",
           "type": "stepper",
           "keyPath": "style/layout/min_height",
           "min": 0,
@@ -300,7 +344,6 @@
         {
           "id": "maxWidth",
           "label": "最大宽度",
-          "description": "候选窗最大宽度，0 表示不限制",
           "type": "stepper",
           "keyPath": "style/layout/max_width",
           "min": 0,
@@ -310,7 +353,6 @@
         {
           "id": "maxHeight",
           "label": "最大高度",
-          "description": "候选窗最大高度，0 表示不限制",
           "type": "stepper",
           "keyPath": "style/layout/max_height",
           "min": 0,
@@ -321,8 +363,9 @@
     },
     {
       "id": "appOptions",
+      "group": "apps",
       "title": "应用程序",
-      "description": "为特定应用设置输入行为（按程序 exe 名，如在 gvim.exe 中默认使用英文）。",
+      "description": "为特定应用设置输入行为（按程序 exe 名，如在 gvim.exe 中默认使用英文）。这是 RIME 引擎层功能，重新部署后生效。",
       "fields": [
         {
           "id": "appsTable",

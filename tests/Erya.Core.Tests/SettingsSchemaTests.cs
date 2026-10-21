@@ -39,12 +39,16 @@ public sealed class SettingsSchemaTests
         var schema = SettingsSchemas.LoadForUiConfig("squirrel.yaml");
 
         Assert.Equal("squirrel.yaml", schema.TargetFile);
-        var light = Field(schema, "style", "colorScheme");
+        var light = Field(schema, "skinChoice", "colorScheme");
         Assert.Equal("preset_color_schemes", light.ChoicesRef);
         Assert.Null(light.Choices);
 
         // Per-app behavior is part of the looks schema (bundle IDs).
         Assert.Contains(schema.Sections, s => s.Id == "appOptions");
+        // 外观目标按页面分组：皮肤库 / 候选窗排版 / 应用行为，一个不多一个不少。
+        Assert.Equal(["apps", "layout", "skin"],
+            schema.Sections.Select(s => s.Group).Distinct().Order().ToList());
+        Assert.All(schema.Sections, s => Assert.False(string.IsNullOrWhiteSpace(s.Group)));
     }
 
     [Fact]

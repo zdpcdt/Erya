@@ -142,7 +142,7 @@ public sealed class SettingsPageRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Appearance_page_renders_both_previews_in_a_fixed_band()
+    public async Task Layout_page_renders_both_previews_and_grouped_sections()
     {
         Write("squirrel.yaml", """
             style:
@@ -159,42 +159,47 @@ public sealed class SettingsPageRenderTests : IDisposable
                 comment_text_color: 0x888888
             """);
 
-        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
-        await vm.LoadCommand.ExecuteAsync(null);
-        var (_, page, window) = Show(vm);
+        var editor = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
+        await editor.LoadCommand.ExecuteAsync(null);
+        var page = new LayoutPage { DataContext = new LayoutPageViewModel(editor), Width = 780, Height = 780 };
+        var window = new Window { Width = 820, Height = 820, Content = page };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
 
-        // 亮/暗两个预览窗并排（定位到两个预览宿主，而非按文本数——皮肤行的
+        // 亮/暗两个预览窗并排（定位到两个预览宿主，而非按文本数——皮肤列表的
         // 迷你预览也带 "ni hao"）。
         var previewHosts = page.GetVisualDescendants().OfType<ContentControl>()
             .Where(cc => cc.Content is CandidatePreviewViewModel).ToList();
         Assert.Equal(2, previewHosts.Count);
         foreach (var h in previewHosts)
         {
-            // 每个预览窗内：编码行 + 三条候选。
             var hostTexts = h.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
             Assert.Contains("ni hao", hostTexts);
             Assert.Equal(["你好", "拟好", "尼奥"],
                 hostTexts.Where(t => t is "你好" or "拟好" or "尼奥"));
         }
-        var texts = page.GetVisualDescendants().OfType<TextBlock>()
-            .Select(t => t.Text).ToList();
+        var texts = page.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         Assert.Contains("亮色皮肤", texts);
         Assert.Contains("暗色皮肤", texts);
 
-        // 预览带固定在设置区之外：预览宿主不在任何 ScrollViewer 里，
-        // 滚动设置不会把预览带走。
+        // 预览带固定在设置区之外：预览宿主不在任何 ScrollViewer 里。
         Assert.All(previewHosts, h =>
             Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
 
-        // 没有暗色皮肤选择时，暗色实例回落亮色（Caption 如实显示皮肤名）。
-        Assert.Contains("皮肤：macos_light", texts);
+        // 分组渲染：排版字段都在；皮肤选择/应用行为不在本页
+        // （「亮色皮肤」文字同时是预览带标签，字段按 Cell 判别）。
+        Assert.Contains(texts, t => t == "排列方式");
+        Assert.Contains(texts, t => t == "间距");
+        var cells = page.GetVisualDescendants().OfType<Cell>().Select(c => c.Content as string).ToList();
+        Assert.Contains("候选字体", cells);
+        Assert.DoesNotContain(cells, t => t == "亮色皮肤" || t == "应用列表");
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Appearance_scheme_rows_are_readonly_and_user_schemes_edit_via_dialog()
+    public async Task Skin_page_lists_schemes_and_edits_the_selected_one()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -212,46 +217,50 @@ public sealed class SettingsPageRenderTests : IDisposable
               "preset_color_schemes/user_dark":
                 back_color: 0x1C1C1E
             """);
-        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
-        await vm.LoadCommand.ExecuteAsync(null);
-        var (_, page, window) = Show(vm);
-
-        Cell Row(string name) => page.GetVisualDescendants().OfType<Cell>()
-            .Single(c => (c.Content as string) == name);
-
-        // 行展开（Windows 设置式）：内置皮肤可看不可改，自定义皮肤可改。
-        var shippedRow = Row("macos_light");
-        Assert.NotNull(shippedRow.Detail);
-        shippedRow.IsExpanded = true;
+        var editor = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
+        await editor.LoadCommand.ExecuteAsync(null);
+        var vm = new SkinPageViewModel(editor);
+        var page = new SkinPage { DataContext = vm, Width = 900, Height = 780 };
+        var window = new Window { Width = 940, Height = 820, Content = page };
+        window.Show();
         Dispatcher.UIThread.RunJobs();
-        Assert.True(shippedRow.GetVisualDescendants()
-            .OfType<Border>().Single(b => b.Name == "PART_DetailHost" && b.IsVisible).IsVisible);
-        // 内置皮肤：表单控件只读/禁用；颜色行显示 0x 十六进制旁注。
-        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
-        Assert.Contains(shippedRow.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
-        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "0xECECEC");
-        // 展开区带固定渲染本皮肤的候选窗预览。
-        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
 
-        // 自定义皮肤展开后可编辑。
-        var userRow = Row("user_dark");
-        userRow.IsExpanded = true;
+        // 左列表两行；默认选中第一套（内置）——右侧表单只读 + 引导横幅。
+        var list = page.GetVisualDescendants().OfType<ListBox>().Single();
+        Assert.Equal(2, list.ItemCount);
+        Assert.Equal("macos_light", vm.SelectedScheme!.Name);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
+        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "0xECECEC");
+        // 内置选中也有候选窗预览与「以此新增」。
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+
+        // 切到自定义皮肤：表单可编辑、删除可见且绑到选中项。
+        var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
+        vm.SelectedScheme = userDark;
         Dispatcher.UIThread.RunJobs();
-        Assert.Contains(userRow.GetVisualDescendants().OfType<TextBox>(), t => !t.IsReadOnly);
-        Assert.Contains(userRow.GetVisualDescendants().OfType<ColorPicker>(), p => p.IsEnabled);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => !t.IsReadOnly);
+        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => p.IsEnabled);
+        var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Single(b => (ToolTip.GetTip(b) as string)?.Contains("删除") == true && b.IsVisible);
+        Assert.Same(userDark, delete.CommandParameter);
+        delete.Command!.Execute(delete.CommandParameter);
+        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == "user_dark");
+        // 删除后选中项回落到第一套，右栏不空。
+        Assert.Equal("macos_light", vm.SelectedScheme!.Name);
 
-        // 以此新增：内置皮肤派生成自定义皮肤（唯一名、可编辑、库变脏）。
-        vm.SchemeLibrary.DuplicateSchemeCommand.Execute(vm.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
+        // 以此新增：内置派生成自定义皮肤（唯一名、可编辑、库变脏）。
+        editor.SchemeLibrary.DuplicateSchemeCommand.Execute(editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
         Assert.True(vm.IsDirty);
-        var copy = vm.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light1");
-        Assert.False(copy.IsShipped);
+        Assert.Contains(editor.SchemeLibrary.Schemes, s => s.Name == "macos_light1");
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Scheme_delete_button_is_wired_to_its_row()
+    public async Task Scheme_delete_button_is_wired_to_the_selected_scheme()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -263,27 +272,31 @@ public sealed class SettingsPageRenderTests : IDisposable
               "preset_color_schemes/user_dark":
                 back_color: 0x1C1C1E
             """);
-        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
-        await vm.LoadCommand.ExecuteAsync(null);
-        var (_, page, window) = Show(vm);
+        var editor = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
+        await editor.LoadCommand.ExecuteAsync(null);
+        var vm = new SkinPageViewModel(editor);
+        var page = new SkinPage { DataContext = vm, Width = 900, Height = 780 };
+        var window = new Window { Width = 940, Height = 820, Content = page };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
 
-        Cell Row(string name) => page.GetVisualDescendants().OfType<Cell>()
-            .Single(c => (c.Content as string) == name);
-
-        // The user scheme row's delete button must carry the row as its
-        // CommandParameter — without it the command gets null and silently
-        // does nothing (the「删除皮肤没有反应」regression).
-        var delete = Row("user_dark").GetVisualDescendants()
-            .OfType<Ursa.Controls.IconButton>().Single(b => b.Classes.Contains("Danger"));
-        var rowVm = Assert.IsType<ColorSchemeViewModel>(delete.CommandParameter);
+        // 选中自定义皮肤：删除按钮必须携带选中项作 CommandParameter——
+        // 否则命令收到 null 静默不动（「删除皮肤没有反应」回归）。
+        var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
+        vm.SelectedScheme = userDark;
+        Dispatcher.UIThread.RunJobs();
+        var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Single(b => b.Classes.Contains("Danger"));
+        Assert.Same(userDark, delete.CommandParameter);
         delete.Command!.Execute(delete.CommandParameter);
         Dispatcher.UIThread.RunJobs();
-        Assert.DoesNotContain(vm.SchemeLibrary!.Schemes, s => s.Name == rowVm.Name);
+        Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == userDark.Name);
 
-        // Shipped schemes have no delete button visible at all.
-        var shippedDelete = Row("shipped_light").GetVisualDescendants()
-            .OfType<Ursa.Controls.IconButton>().Single(b => b.Classes.Contains("Danger"));
-        Assert.False(shippedDelete.IsVisible);
+        // 内置皮肤选中时：删除按钮隐藏。
+        vm.SelectedScheme = editor.SchemeLibrary.Schemes.Single(s => s.Name == "shipped_light");
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Single(b => b.Classes.Contains("Danger")).IsVisible);
 
         window.Close();
     }
