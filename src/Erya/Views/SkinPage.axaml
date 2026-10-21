@@ -1,0 +1,244 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
+             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
+             xmlns:views="clr-namespace:Erya.Views"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
+             x:Class="Erya.Views.SkinPage"
+             x:DataType="sf:SkinPageViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <u:IconButton Icon="{StaticResource SemiIconRefresh}"
+                              Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
+                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                              Icon="{StaticResource SemiIconSave}"
+                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="保存并部署" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsSupported}" RowDefinitions="Auto,*">
+            <!--  亮/暗候选窗预览固定在顶部  -->
+            <StackPanel Grid.Row="0" IsVisible="{Binding HasCandidatePreview}"
+                        Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40"
+                        Margin="0,4,0,4">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="亮色皮肤" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                    <ContentControl Content="{Binding CandidatePreview}"
+                                    ContentTemplate="{StaticResource CandidateWindowTemplate}" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="暗色皮肤" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                    <ContentControl Content="{Binding CandidatePreviewDark}"
+                                    ContentTemplate="{StaticResource CandidateWindowTemplate}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!--  master-detail：左（配色选择 + 皮肤列表），右（选中皮肤的预览与表单）  -->
+            <ScrollViewer Grid.Row="1" Margin="0,12">
+                <Grid ColumnDefinitions="320,24,*" IsVisible="{Binding HasSchemeLibrary}">
+                    <StackPanel Grid.Column="0" Spacing="16">
+                        <views:SettingsSectionsView Sections="{Binding Sections}" />
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="皮肤库" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <Border Grid.Column="1" IsVisible="{Binding SchemeLibrary.IsModified}"
+                                        Background="#4C7BE4D8" CornerRadius="3" Padding="5,1"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="已修改" FontSize="10" />
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="preset_color_schemes 全集。内置皮肤只读，可「以此新增」派生；自定义皮肤可编辑。" Opacity="0.55" TextWrapping="Wrap" />
+                            <ListBox ItemsSource="{Binding SchemeLibrary.Schemes}"
+                                     SelectedItem="{Binding SelectedScheme, Mode=TwoWay}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="sf:ColorSchemeViewModel">
+                                        <StackPanel Spacing="6" Margin="2,4">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding KindText}" Opacity="0.5" FontSize="11"
+                                                           VerticalAlignment="Center" />
+                                                <Border IsVisible="{Binding IsPatched}"
+                                                        Background="#4C7BE4D8" CornerRadius="3" Padding="4,0"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="已修改" FontSize="10" />
+                                                </Border>
+                                            </StackPanel>
+                                            <Border Background="{Binding BackPreview}" CornerRadius="4"
+                                                    Padding="8,3" Width="240" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="ni hao" Foreground="{Binding CandidateTextPreview}" FontSize="11" />
+                                                    <Border Background="{Binding HilitedBackPreview}" CornerRadius="3" Padding="3,0">
+                                                        <TextBlock Text="1. 你好" Foreground="{Binding HilitedTextPreview}" FontSize="11" />
+                                                    </Border>
+                                                    <TextBlock Text="2. 拟好" Foreground="{Binding CandidateTextPreview}" FontSize="11" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!--  右：选中皮肤详情  -->
+                    <ContentControl Grid.Column="2" Content="{Binding SelectedScheme}">
+                        <ContentControl.DataTemplates>
+                            <DataTemplate x:DataType="sf:ColorSchemeViewModel">
+                                <StackPanel Spacing="16">
+                                    <u:Banner Type="Information" ShowIcon="True" IsVisible="{Binding IsShipped}">
+                                        内置皮肤只读——点右侧「以此新增」可派生一份可编辑的自定义皮肤。
+                                    </u:Banner>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <u:IconButton Icon="{StaticResource SemiIconPlus}"
+                                                      Command="{Binding DuplicateCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      ToolTip.Tip="以此皮肤为底新增自定义皮肤" />
+                                        <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                      Icon="{StaticResource SemiIconCode}"
+                                                      Command="{Binding CopyYamlCommand}"
+                                                      ToolTip.Tip="复制此皮肤的 YAML 定义" />
+                                        <u:IconButton Classes="Danger" Theme="{DynamicResource SolidIconButton}"
+                                                      Icon="{StaticResource SemiIconDelete}"
+                                                      IsVisible="{Binding CanRemove}"
+                                                      Command="{Binding RemoveCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      ToolTip.Tip="删除此皮肤（内置皮肤不可删除）" />
+                                    </StackPanel>
+                                    <ContentControl Content="{Binding DetailPreview}"
+                                                    ContentTemplate="{StaticResource CandidateWindowTemplate}" />
+                                    <c:CellGroup Header="信息">
+                                        <c:Cell Content="名称">
+                                            <c:Cell.RightContent>
+                                                <TextBox Text="{Binding Name, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                         Width="260" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="作者">
+                                            <c:Cell.RightContent>
+                                                <TextBox Text="{Binding Author, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                         Width="260" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </c:CellGroup>
+                                    <c:CellGroup Header="颜色（0xBBGGRR）">
+                                        <c:Cell Content="背景 / 候选文字">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding BackColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=FFFFFF, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding BackColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding CandidateTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding CandidateTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="高亮背景 / 高亮文字">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding HilitedBackColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=D3E3F6, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding HilitedBackColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding HilitedTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding HilitedTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="注释文字">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding CommentTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=333333, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding CommentTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="高亮注释文字">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding HilitedCommentTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=333333, Mode=TwoWay}" />
+                                                    <TextBlock Text="{Binding HilitedCommentTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="编码文字 / 高亮编码">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding TextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                    <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                 IsEnabled="{Binding !IsShipped}"
+                                                                 Color="{Binding HilitedPreeditColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </c:CellGroup>
+                                    <c:CellGroup Header="字体与排版">
+                                        <c:Cell Content="字体">
+                                            <c:Cell.RightContent>
+                                                <!--  固定宽：回退长串不能挤爆面板  -->
+                                                <ComboBox ItemsSource="{Binding FontOptions}"
+                                                          SelectedItem="{Binding SelectedFontFace, Mode=TwoWay}"
+                                                          IsEnabled="{Binding !IsShipped}"
+                                                          Width="240" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="字号（像素，0 = 跟随全局）">
+                                            <c:Cell.RightContent>
+                                                <TextBox Text="{Binding FontPointText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                         Width="120" PlaceholderText="未设置" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="圆角（像素，空 = 跟随全局）">
+                                            <c:Cell.RightContent>
+                                                <TextBox Text="{Binding CornerRadiusText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                         Width="120" PlaceholderText="未设置" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                        <c:Cell Content="行距（像素，空 = 跟随全局）">
+                                            <c:Cell.RightContent>
+                                                <TextBox Text="{Binding LineSpacingText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                         Width="120" PlaceholderText="未设置" />
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </c:CellGroup>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ContentControl.DataTemplates>
+                    </ContentControl>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- States -->
+        <StackPanel Grid.Row="1" Margin="0,14" Spacing="10" IsVisible="{Binding !IsSupported}">
+            <u:Banner Type="Information" Content="{Binding UnsupportedReason}" ShowIcon="True" />
+        </StackPanel>
+        <TextBlock Grid.Row="1" Text="正在读取设置…" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" Margin="0,4,0,0">
+            <u:Banner Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
+                      IsVisible="{Binding HasError}" />
+        </Grid>
+    </Grid>
+</UserControl>

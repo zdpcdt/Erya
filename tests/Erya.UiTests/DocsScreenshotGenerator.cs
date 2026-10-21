@@ -55,27 +55,21 @@ public sealed class DocsScreenshotGenerator
         ExpandDetailRows(window);
         Capture(vm, window, "input.png", ThemeVariant.Light);
 
-        vm.SelectedNav = vm.NavItems[3]; // 外观设置
+        // 外观设置分组 → 三个子页。
+        NavItem Child(string key) => vm.NavItems.Single(n => n.Key == "appearance").Children!.Single(c => c.Key == key);
+
+        vm.SelectedNav = Child("skin"); // 皮肤库（master-detail）
         Dispatcher.UIThread.RunJobs();
-        Capture(vm, window, "appearance.png", ThemeVariant.Light);
-        Capture(vm, window, "appearance-dark.png", ThemeVariant.Dark);
-        // 皮肤库在页面底部：展开一套自定义皮肤（没有则内置）拍新表单，滚到底。
-        var appearance = Assert.IsType<SettingsEditorViewModel>(vm.CurrentPage);
-        var expandable = appearance.SchemeLibrary!.Schemes.FirstOrDefault(s => !s.IsShipped)
-                         ?? appearance.SchemeLibrary.Schemes.FirstOrDefault();
-        if (expandable is not null)
-        {
-            var row = window.GetVisualDescendants().OfType<Erya.Controls.Cell>()
-                .FirstOrDefault(c => (c.Content as string) == expandable.Name);
-            if (row is not null)
-            {
-                row.IsExpanded = true;
-                Dispatcher.UIThread.RunJobs();
-            }
-        }
-        window.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
+        Capture(vm, window, "skin.png", ThemeVariant.Light);
+        Capture(vm, window, "skin-dark.png", ThemeVariant.Dark);
+
+        vm.SelectedNav = Child("layout"); // 候选窗排版
         Dispatcher.UIThread.RunJobs();
-        Capture(vm, window, "appearance-schemes.png", ThemeVariant.Light);
+        Capture(vm, window, "layout.png", ThemeVariant.Light);
+
+        vm.SelectedNav = Child("apps"); // 应用行为
+        Dispatcher.UIThread.RunJobs();
+        Capture(vm, window, "apps.png", ThemeVariant.Light);
 
         vm.SelectedNav = vm.NavItems[4]; // 高级设置
         Dispatcher.UIThread.RunJobs();

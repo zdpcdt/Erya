@@ -1,0 +1,254 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
+             xmlns:views="clr-namespace:Erya.Views"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d"
+             x:Class="Erya.Views.SettingsSectionsView"
+             x:Name="Root">
+
+    <!--  schema 分节 → CellGroup；字段 → Cell（按类型分发编辑器）。
+          输入设置页与外观三个子页共用这套渲染。  -->
+    <ItemsControl ItemsSource="{Binding #Root.Sections}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel Spacing="20" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="sf:SettingsSectionViewModel">
+                <c:CellGroup Header="{Binding Title}" Description="{Binding Description}"
+                             ItemsSource="{Binding Fields}">
+                    <c:CellGroup.ItemTemplate>
+                        <DataTemplate x:DataType="sf:SettingsFieldViewModel">
+                            <ContentControl Content="{Binding}">
+                                <ContentControl.DataTemplates>
+
+                                    <DataTemplate x:DataType="sf:ToggleFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
+                                                                  IsChecked="{Binding IsChecked}" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <DataTemplate x:DataType="sf:NumberFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}"
+                                                Note="{Binding Note}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8"
+                                                                IsVisible="{Binding IsStepper}">
+                                                        <u:NumericDoubleUpDown x:Name="Nu" Classes="silent-errors"
+                                                                               Width="130"
+                                                                               Value="{Binding Value}"
+                                                                               Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                               Step="{Binding Step}"
+                                                                               FormatString="{Binding Format}" />
+                                                        <c:ValidationErrorIcon Target="{Binding #Nu}"
+                                                                                VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <Slider Width="180" IsVisible="{Binding IsSlider}"
+                                                            Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                            SmallChange="{Binding Step}" LargeChange="10"
+                                                            Value="{Binding Value}" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <!--  font：本机已安装字体下拉（首项「未设置」）。固定宽度：
+                                          合并默认值可能是 ~200 字符的 Emoji 回退长串，框内截断显示，
+                                          不能撑开挤掉同行控件。
+                                          必须排在 TextFieldViewModel 模板之前：模板按顺序取
+                                          第一个可匹配项，而 FontFieldViewModel 兼容其基类。  -->
+                                    <DataTemplate x:DataType="sf:FontFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <ComboBox ItemsSource="{Binding Options}"
+                                                              SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                              Width="240" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <DataTemplate x:DataType="sf:TextFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBox Text="{Binding Text}" PlaceholderText="{Binding Placeholder}"
+                                                             Width="240" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <DataTemplate x:DataType="sf:ChoiceFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <ComboBox ItemsSource="{Binding Options}"
+                                                              SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                              MinWidth="170" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <!--  hotkeyList / hotkeyPairList：行内摘要 + 点开录入按键组合。
+                                          录入框固定宽度靠左，删除/添加按钮紧随其后  -->
+                                    <DataTemplate x:DataType="sf:ListFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}"
+                                                Note="{Binding Items.Count, StringFormat=已设 {0} 项}">
+                                            <c:Cell.Detail>
+                                                <StackPanel Spacing="10">
+                                                    <ItemsControl ItemsSource="{Binding Items}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="sf:HotkeyRowViewModel">
+                                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
+                                                                    <u:KeyGestureInput Width="280"
+                                                                                       Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                                       ToolTip.Tip="{Binding Value}" />
+                                                                    <u:IconButton Classes="Danger"
+                                                                                  Theme="{DynamicResource SolidIconButton}"
+                                                                                  Icon="{StaticResource SemiIconDelete}"
+                                                                                  VerticalAlignment="Center"
+                                                                                  Command="{Binding $parent[ContentControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
+                                                                                  CommandParameter="{Binding}"
+                                                                                  ToolTip.Tip="删除此快捷键" />
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <u:KeyGestureInput Width="280"
+                                                                           Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                           ToolTip.Tip="聚焦后按下新的组合键" />
+                                                        <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                                      Icon="{StaticResource SemiIconPlus}"
+                                                                      VerticalAlignment="Center"
+                                                                      Command="{Binding AddItemCommand}"
+                                                                      ToolTip.Tip="添加快捷键" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </c:Cell.Detail>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <!--  keyMapping：每键一行下拉。左列按键名经 RimeHotkey
+                                          转成与快捷键输入框一致的显示（Caps_Lock → CapsLock）  -->
+                                    <DataTemplate x:DataType="sf:KeyMappingFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}"
+                                                Note="{Binding Summary}">
+                                            <c:Cell.Detail>
+                                                <StackPanel Spacing="10">
+                                                    <ItemsControl ItemsSource="{Binding Rows}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="sf:KeyMappingRowViewModel">
+                                                                <Grid ColumnDefinitions="Auto,Auto" Margin="0,2">
+                                                                    <TextBlock Text="{Binding Key, Converter={x:Static views:Converters.RimeHotkey}}"
+                                                                               Width="110"
+                                                                               VerticalAlignment="Center" Opacity="0.7" />
+                                                                    <ComboBox Grid.Column="1"
+                                                                              ItemsSource="{Binding $parent[ContentControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
+                                                                              SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                                              Width="200" />
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </c:Cell.Detail>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <!--  checkList：每项一排  -->
+                                    <DataTemplate x:DataType="sf:CheckListFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}"
+                                                Note="{Binding EnabledSummary}">
+                                            <c:Cell.Detail>
+                                                <StackPanel Spacing="10">
+                                                    <ItemsControl ItemsSource="{Binding Options}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <!--  Semi 复选框行高小，拉开行距避免拥挤  -->
+                                                                <StackPanel Spacing="14" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="sf:CheckOptionViewModel">
+                                                                <CheckBox Content="{Binding Value}"
+                                                                          IsChecked="{Binding IsChecked}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </c:Cell.Detail>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                    <!--  appOptions：每应用一行  -->
+                                    <DataTemplate x:DataType="sf:AppOptionsFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}"
+                                                Note="{Binding Rows.Count, StringFormat={}{0} 个应用}">
+                                            <c:Cell.Detail>
+                                                <StackPanel Spacing="12">
+                                                    <ItemsControl ItemsSource="{Binding Rows}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
+                                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,4">
+                                                                    <TextBox Grid.Column="0" Text="{Binding AppId, Mode=TwoWay}"
+                                                                             PlaceholderText="应用标识（macOS Bundle ID / Windows exe 名）" />
+                                                                    <CheckBox Grid.Column="1" Content="默认英文"
+                                                                              IsChecked="{Binding AsciiMode}"
+                                                                              Margin="14,0,0,0" VerticalAlignment="Center" />
+                                                                    <CheckBox Grid.Column="2" Content="Vim 模式"
+                                                                              IsChecked="{Binding VimMode}"
+                                                                              Margin="14,0,0,0" VerticalAlignment="Center" />
+                                                                    <u:IconButton Grid.Column="3" Classes="Danger"
+                                                                                  Theme="{DynamicResource SolidIconButton}"
+                                                                                  Icon="{StaticResource SemiIconDelete}"
+                                                                                  Margin="14,0,0,0" VerticalAlignment="Center"
+                                                                                  Command="{Binding $parent[ContentControl].((sf:AppOptionsFieldViewModel)DataContext).RemoveRowCommand}"
+                                                                                  CommandParameter="{Binding}"
+                                                                                  ToolTip.Tip="删除此应用" />
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                                  Icon="{StaticResource SemiIconPlus}"
+                                                                  HorizontalAlignment="Right"
+                                                                  Command="{Binding AddRowCommand}"
+                                                                  ToolTip.Tip="添加应用" />
+                                                </StackPanel>
+                                            </c:Cell.Detail>
+                                        </c:Cell>
+                                    </DataTemplate>
+
+                                </ContentControl.DataTemplates>
+                            </ContentControl>
+                        </DataTemplate>
+                    </c:CellGroup.ItemTemplate>
+                </c:CellGroup>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

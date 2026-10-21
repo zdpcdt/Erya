@@ -6,11 +6,11 @@
 
 基于 **Avalonia** 构建，一套代码覆盖 Windows（小狼毫 Weasel）、Linux（fcitx5-rime / ibus-rime）、macOS（鼠鬚管 Squirrel）。
 
-![外观设置（真实小狼毫配置，顶部为候选窗实时预览）](docs/screenshots/appearance.png)
+![皮肤库：亮/暗候选窗并排预览 + 皮肤列表与选中编辑（真实小狼毫配置）](docs/screenshots/skin.png)
 
-| 概览 | 方案管理 | 输入设置 | 高级设置 |
-|---|---|---|---|
-| ![概览](docs/screenshots/overview.png) | ![方案管理](docs/screenshots/schemas.png) | ![输入设置](docs/screenshots/input.png) | ![高级设置](docs/screenshots/advanced.png) |
+| 概览 | 方案管理 | 输入设置 | 候选窗排版 | 应用行为 |
+|---|---|---|---|---|
+| ![概览](docs/screenshots/overview.png) | ![方案管理](docs/screenshots/schemas.png) | ![输入设置](docs/screenshots/input.png) | ![排版](docs/screenshots/layout.png) | ![应用](docs/screenshots/apps.png) |
 
 > 截图由仓库里的无头渲染测试对着本机真实安装的小狼毫 0.17 生成（`DocsScreenshotGenerator`），所见即真实数据。
 
@@ -18,9 +18,9 @@
 
 | 功能 | Qt 版 rimetool（移植前） | 尔雅 Erya · Avalonia（移植后） |
 |---|---|---|
-| 主题配色 + 预览 | <img src="docs/screenshots/rimetool-qt-color.png" width="360"> | <img src="docs/screenshots/appearance.png" width="360"> |
-| 排版风格 | <img src="docs/screenshots/rimetool-qt-layout.png" width="360"> | <img src="docs/screenshots/appearance.png" width="360"> |
-| 深色主题 | <img src="docs/screenshots/rimetool-qt-misc.png" width="360"> | <img src="docs/screenshots/appearance-dark.png" width="360"> |
+| 主题配色 + 预览 | <img src="docs/screenshots/rimetool-qt-color.png" width="360"> | <img src="docs/screenshots/skin.png" width="360"> |
+| 排版风格 | <img src="docs/screenshots/rimetool-qt-layout.png" width="360"> | <img src="docs/screenshots/layout.png" width="360"> |
+| 深色主题 | <img src="docs/screenshots/rimetool-qt-misc.png" width="360"> | <img src="docs/screenshots/skin-dark.png" width="360"> |
 
 同样的功能面（配色/排版/杂项/热键/标点/方案/备份），从 Windows 专用 Qt 6 应用变成一套代码跑 Windows / Linux / macOS 的 Avalonia 应用。
 
@@ -34,8 +34,8 @@
 - [x] 主界面外壳（Semi.Avalonia + Ursa）
 - [x] 方案管理（勾选启用/停用、启用顺序调整即切换顺序；写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
 - [x] 输入设置（schema 驱动：候选词个数、方案选单、中英切换按键矩阵、功能快捷键、数字标点——全部前端通用，写入 `default.custom.yaml`）
-- [x] 外观设置（schema 驱动：候选面板样式/键盘体验/按应用行为，macOS 写 `squirrel.custom.yaml`、Windows 写 `weasel.custom.yaml`；Linux 前端显示指引——面板外观归 fcitx5/ibus 自身设置）
-- [x] 候选窗实时预览（外观页顶部：颜色/字体/间距/圆角/横竖排/阴影/内嵌编码全联动，未保存的编辑立即反映；同一份预览代码同时认小狼毫 `style/layout/*` 与鼠须管 `style/*` 两套键路径；可切暗色皮肤预览）
+- [x] 外观设置拆三子页（NavMenu 分组下拉：**皮肤库**（配色选择 + 亮/暗候选窗并排预览 + 皮肤列表/选中编辑的 master-detail，内置皮肤只读可「以此新增」派生）/ **候选窗排版**（排列行为/字体/间距/圆角边距/阴影/宽高限制分组 Cell，顶部固定预览）/ **应用行为**（按应用设置输入行为）；macOS 写 `squirrel.custom.yaml`、Windows 写 `weasel.custom.yaml`；Linux 前端显示指引——面板外观归 fcitx5/ibus 自身设置）
+- [x] 候选窗实时预览（颜色/字体/间距/圆角/横竖排/阴影/内嵌编码全联动，未保存的编辑立即反映；同一份预览代码同时认小狼毫 `style/layout/*` 与鼠须管 `style/*` 两套键路径；亮暗双窗对照）
 - [x] 皮肤库（`preset_color_schemes` 编辑器：BGR 颜色 + 候选条实时预览；内置皮肤以**叶子键补丁**写入——`preset_color_schemes/<id>/<字段>` 合并进官方定义，`label_color`/`border_color` 等未建模字段不丢；一键复制整皮肤 YAML）
 - [x] 排版风格补全（边距/阴影/宽高限制/边框宽/高亮扩张/序号注释字体/悬停响应/候选缩略——键名逐一对照小狼毫 0.17 源码与发行数据校验）
 - [x] 高级设置（base+patch 合并配置树、行内改值即写补丁、每键撤销、路径/值搜索、仅显示已修改；源码模式直接编辑 `.custom.yaml`，保存前 YAML 校验并留 `.bak`）

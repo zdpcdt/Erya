@@ -21,12 +21,16 @@ public sealed partial class SettingsSectionViewModel : ObservableObject
     {
         Title = section.Title;
         Description = section.Description;
+        Group = section.Group;
         foreach (var field in section.Fields) Fields.Add(CreateField(field, dynamicChoices));
     }
 
     public string Title { get; }
 
     public string? Description { get; }
+
+    /// <summary>页面归属（skin/layout/apps）；null = 无分组。</summary>
+    public string? Group { get; }
 
     public ObservableCollection<SettingsFieldViewModel> Fields { get; } = [];
 
@@ -82,6 +86,10 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     }
 
     public ObservableCollection<SettingsSectionViewModel> Sections { get; } = [];
+
+    /// <summary>某页面组（skin/layout/apps；null=无分组）的分节视图，供拆分后的外观子页绑定。</summary>
+    public IReadOnlyList<SettingsSectionViewModel> SectionsFor(string? group)
+        => Sections.Where(s => s.Group == group).ToList();
 
     [ObservableProperty]
     private bool _isLoading = true;
@@ -153,6 +161,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 }
                 Sections.Add(sectionVm);
             }
+            OnPropertyChanged(nameof(Sections)); // 子页经 SectionsFor 重新取列表
 
             Subtitle = $"显示合并后的生效值；修改会保存到 {Path.GetFileName(_store.CustomPath(targetFile))} 补丁，重新部署后生效。";
 
