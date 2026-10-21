@@ -58,6 +58,30 @@
           "keyPath": "style/paging_on_scroll"
         },
         {
+          "id": "hoverType",
+          "label": "悬停响应",
+          "description": "鼠标悬停在候选词上的效果：none 无 / semi_light 浮现半透明高亮 / hilite 完整高亮",
+          "type": "enum",
+          "icon": "td:Cursor",
+          "keyPath": "style/hover_type",
+          "choices": [
+            "none",
+            "semi_light",
+            "hilite"
+          ]
+        },
+        {
+          "id": "candidateAbbreviateLength",
+          "label": "候选缩略",
+          "description": "候选词超过此字数时中间缩略为省略号，0 表示不缩略",
+          "type": "stepper",
+          "icon": "td:Text",
+          "keyPath": "style/candidate_abbreviate_length",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
           "id": "fontFace",
           "label": "字体",
           "description": "从系统已安装字体中选择，如 微软雅黑 (Microsoft YaHei)",
@@ -77,6 +101,13 @@
           "default": 22
         },
         {
+          "id": "labelFontFace",
+          "label": "序号字体",
+          "type": "font",
+          "icon": "semi:SemiIconFont",
+          "keyPath": "style/label_font_face"
+        },
+        {
           "id": "labelFontPoint",
           "label": "序号字号",
           "type": "stepper",
@@ -85,6 +116,13 @@
           "min": 8,
           "max": 32,
           "step": 1
+        },
+        {
+          "id": "commentFontFace",
+          "label": "注释字体",
+          "type": "font",
+          "icon": "semi:SemiIconFont",
+          "keyPath": "style/comment_font_face"
         },
         {
           "id": "commentFontPoint",
@@ -161,12 +199,123 @@
         },
         {
           "id": "hiliteSpacing",
-          "label": "高亮内边距",
+          "label": "序号-候选间距",
           "type": "stepper",
           "keyPath": "style/layout/hilite_spacing",
           "min": 0,
           "max": 40,
           "step": 1
+        },
+        {
+          "id": "hilitePadding",
+          "label": "高亮扩张",
+          "description": "高亮候选背景向四周扩张的像素",
+          "type": "stepper",
+          "keyPath": "style/layout/hilite_padding",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "marginX",
+          "label": "横向边距",
+          "description": "候选窗内容与窗口边缘的左右留白",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/layout/margin_x",
+          "min": 0,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "marginY",
+          "label": "纵向边距",
+          "description": "候选窗内容与窗口边缘的上下留白",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/layout/margin_y",
+          "min": 0,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "borderWidth",
+          "label": "边框宽度",
+          "description": "候选窗描边像素；颜色取自配色方案的 border_color",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/layout/border_width",
+          "min": 0,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "id": "shadowRadius",
+          "label": "阴影圆角",
+          "description": "候选窗阴影模糊半径；需配色方案提供非透明的 shadow_color 才可见",
+          "type": "stepper",
+          "keyPath": "style/layout/shadow_radius",
+          "min": 0,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "shadowOffsetX",
+          "label": "阴影横向偏移",
+          "type": "stepper",
+          "keyPath": "style/layout/shadow_offset_x",
+          "min": -30,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "shadowOffsetY",
+          "label": "阴影纵向偏移",
+          "type": "stepper",
+          "keyPath": "style/layout/shadow_offset_y",
+          "min": -30,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "minWidth",
+          "label": "最小宽度",
+          "description": "候选窗最小宽度，0 表示不限制",
+          "type": "stepper",
+          "keyPath": "style/layout/min_width",
+          "min": 0,
+          "max": 800,
+          "step": 10
+        },
+        {
+          "id": "minHeight",
+          "label": "最小高度",
+          "description": "候选窗最小高度，0 表示不限制",
+          "type": "stepper",
+          "keyPath": "style/layout/min_height",
+          "min": 0,
+          "max": 400,
+          "step": 10
+        },
+        {
+          "id": "maxWidth",
+          "label": "最大宽度",
+          "description": "候选窗最大宽度，0 表示不限制",
+          "type": "stepper",
+          "keyPath": "style/layout/max_width",
+          "min": 0,
+          "max": 1200,
+          "step": 10
+        },
+        {
+          "id": "maxHeight",
+          "label": "最大高度",
+          "description": "候选窗最大高度，0 表示不限制",
+          "type": "stepper",
+          "keyPath": "style/layout/max_height",
+          "min": 0,
+          "max": 800,
+          "step": 10
         }
       ]
     },

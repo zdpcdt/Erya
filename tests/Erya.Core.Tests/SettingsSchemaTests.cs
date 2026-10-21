@@ -48,6 +48,24 @@ public sealed class SettingsSchemaTests
     }
 
     [Fact]
+    public void Squirrel_schema_carries_the_layout_keys_squirrel_style_reads()
+    {
+        // 鼠须管把这些排版参数平铺在 style 下（没有 layout 一层）；
+        // 与小狼毫同名不同路径，预览与 schema 都要两套键各认各的。
+        var schema = SettingsSchemas.LoadForUiConfig("squirrel.yaml");
+        var keyPaths = schema.Sections.SelectMany(s => s.Fields).Select(f => f.KeyPath).ToHashSet();
+
+        Assert.Superset(
+            new HashSet<string>
+            {
+                "style/margin_x", "style/margin_y", "style/candidate_spacing",
+                "style/hilite_spacing", "style/hilite_padding",
+                "style/label_font_face", "style/comment_font_face",
+            },
+            keyPaths);
+    }
+
+    [Fact]
     public void Weasel_schema_key_paths_are_all_read_by_weasel_017()
     {
         var schema = SettingsSchemas.LoadForUiConfig("weasel.yaml");
@@ -64,9 +82,15 @@ public sealed class SettingsSchemaTests
             "style/paging_on_scroll", "style/font_face", "style/font_point",
             "style/label_font_face", "style/label_font_point", "style/label_format",
             "style/mark_text", "style/comment_font_face", "style/comment_font_point",
+            "style/hover_type", "style/candidate_abbreviate_length",
             "style/layout/corner_radius", "style/layout/hilited_corner_radius",
             "style/layout/linespacing", "style/layout/spacing",
             "style/layout/candidate_spacing", "style/layout/hilite_spacing",
+            "style/layout/hilite_padding", "style/layout/margin_x", "style/layout/margin_y",
+            "style/layout/border_width", "style/layout/shadow_radius",
+            "style/layout/shadow_offset_x", "style/layout/shadow_offset_y",
+            "style/layout/min_width", "style/layout/min_height",
+            "style/layout/max_width", "style/layout/max_height",
         };
         foreach (var field in schema.Sections.SelectMany(s => s.Fields))
         {

@@ -29,6 +29,75 @@
         <ScrollViewer Grid.Row="1" Margin="0,12" IsVisible="{Binding IsSupported}">
             <StackPanel Spacing="20">
 
+                <!--  候选窗实时预览（外观页顶部）：随下方排版字段与皮肤库联动。
+                      ContentControl 把预览 VM 变成模板根的 DataContext，行内绑定零强转。  -->
+                <c:CellGroup Header="候选窗预览" IsVisible="{Binding HasCandidatePreview}"
+                             Description="随下方排版设置与所选皮肤实时联动；高亮候选为第一项，竖排文本为近似预览。">
+                    <ContentControl Content="{Binding CandidatePreview}">
+                        <ContentControl.DataTemplates>
+                            <DataTemplate x:DataType="sf:CandidatePreviewViewModel">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Caption}" Opacity="0.65" VerticalAlignment="Center" />
+                                        <TextBlock Text="预览暗色皮肤" Opacity="0.65" VerticalAlignment="Center"
+                                                   Margin="16,0,0,0" />
+                                        <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
+                                                      IsChecked="{Binding PreviewDark, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <Border HorizontalAlignment="Center"
+                                            Background="{Binding BackBrush}"
+                                            CornerRadius="{Binding WindowCorner}"
+                                            BorderBrush="{Binding FrameBrush}" BorderThickness="{Binding FrameThickness}"
+                                            Padding="{Binding WindowPadding}"
+                                            MinWidth="{Binding MinWidth}" MinHeight="{Binding MinHeight}"
+                                            MaxWidth="{Binding MaxWidth}" MaxHeight="{Binding MaxHeight}"
+                                            Opacity="{Binding WindowOpacity}"
+                                            Effect="{Binding Shadow}">
+                                        <StackPanel Orientation="{Binding PanelOrientation}" Spacing="{Binding PreeditGap}">
+                                            <TextBlock Text="{Binding PreeditText}" IsVisible="{Binding ShowPreedit}"
+                                                       Foreground="{Binding PreeditBrush}"
+                                                       FontFamily="{Binding PreviewFont}" FontSize="{Binding FontSize}" />
+                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="{Binding PanelOrientation}"
+                                                                    Spacing="{Binding CandidateGap}" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="sf:CandidatePreviewItem">
+                                                        <Border Background="{Binding RowBack}"
+                                                                CornerRadius="{Binding RowCorner}"
+                                                                Padding="{Binding RowPadding}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
+                                                                           Foreground="{Binding LabelBrush}"
+                                                                           FontFamily="{Binding LabelFont}"
+                                                                           FontSize="{Binding LabelSize}"
+                                                                           Margin="{Binding LabelMargin}" />
+                                                                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"
+                                                                           Foreground="{Binding TextBrush}"
+                                                                           FontFamily="{Binding TextFont}"
+                                                                           FontSize="{Binding TextSize}" />
+                                                                <TextBlock Text="{Binding Comment}" VerticalAlignment="Center"
+                                                                           IsVisible="{Binding HasComment}"
+                                                                           Foreground="{Binding CommentBrush}"
+                                                                           FontFamily="{Binding CommentFont}"
+                                                                           FontSize="{Binding CommentSize}"
+                                                                           Margin="{Binding CommentMargin}" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ContentControl.DataTemplates>
+                    </ContentControl>
+                </c:CellGroup>
+
                 <!--  schema 分节 → CellGroup；字段 → Cell（按类型分发编辑器）  -->
                 <ItemsControl ItemsSource="{Binding Sections}">
                     <ItemsControl.ItemsPanel>

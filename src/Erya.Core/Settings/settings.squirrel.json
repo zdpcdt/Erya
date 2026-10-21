@@ -107,6 +107,20 @@
           "default": 22
         },
         {
+          "id": "labelFontFace",
+          "label": "序号字体",
+          "type": "font",
+          "icon": "semi:SemiIconFont",
+          "keyPath": "style/label_font_face"
+        },
+        {
+          "id": "commentFontFace",
+          "label": "注释字体",
+          "type": "font",
+          "icon": "semi:SemiIconFont",
+          "keyPath": "style/comment_font_face"
+        },
+        {
           "id": "cornerRadius",
           "label": "圆角",
           "type": "stepper",
@@ -161,6 +175,56 @@
           "keyPath": "style/spacing",
           "min": 0,
           "max": 20,
+          "step": 1
+        },
+        {
+          "id": "candidateSpacing",
+          "label": "候选间距",
+          "type": "stepper",
+          "keyPath": "style/candidate_spacing",
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "hiliteSpacing",
+          "label": "序号-候选间距",
+          "type": "stepper",
+          "keyPath": "style/hilite_spacing",
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "hilitePadding",
+          "label": "高亮扩张",
+          "description": "高亮候选背景向四周扩张的像素",
+          "type": "stepper",
+          "keyPath": "style/hilite_padding",
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "marginX",
+          "label": "横向边距",
+          "description": "候选窗内容与窗口边缘的左右留白",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/margin_x",
+          "min": 0,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "marginY",
+          "label": "纵向边距",
+          "description": "候选窗内容与窗口边缘的上下留白",
+          "type": "stepper",
+          "icon": "td:Frame",
+          "keyPath": "style/margin_y",
+          "min": 0,
+          "max": 30,
           "step": 1
         },
         {

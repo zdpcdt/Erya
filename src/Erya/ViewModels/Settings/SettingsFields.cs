@@ -40,6 +40,12 @@ public abstract partial class SettingsFieldViewModel : ObservableObject
     /// <summary>The value a save should write; null = nothing pending.</summary>
     public abstract object? PendingValue();
 
+    /// <summary>
+    /// The control's value as it stands — pending or not; null = 未设置.
+    /// What the候选窗预览 renders: it must reflect unsaved edits too.
+    /// </summary>
+    public virtual object? CurrentValue() => PendingValue();
+
     /// <summary>True when a save should REMOVE this key from the patch (back to base default).</summary>
     public virtual bool PendingRemoval() => PendingValue() is null && HasPendingEdits;
 
@@ -79,12 +85,15 @@ public sealed partial class ToggleFieldViewModel : SettingsFieldViewModel
 
     public override object? PendingValue() => HasPendingEdits ? IsChecked : null;
 
+    public override object? CurrentValue() => IsChecked;
+
     partial void OnIsCheckedChanged(bool value) => HasPendingEdits = value != _loaded;
 }
 
 public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
 {
     private double _loaded;
+    private bool _loadedHadValue; // false = base/patch 里都没有，控件只是显示 Min
 
     public NumberFieldViewModel(SettingsField field) : base(field) { }
 
@@ -104,6 +113,7 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
 
     public override void Load(object? mergedValue)
     {
+        _loadedHadValue = AsNumber(mergedValue) is not null || Field.DefaultValue() is not null;
         _loaded = AsNumber(mergedValue) ?? AsNumber(Field.DefaultValue()) ?? Min;
         Value = _loaded;
         HasPendingEdits = false;
@@ -112,6 +122,10 @@ public sealed partial class NumberFieldViewModel : SettingsFieldViewModel
     public override object? PendingValue() => HasPendingEdits
         ? IsInteger ? (long)Math.Round(Value) : Value
         : null;
+
+    /// <summary>未设置时返回 null——候选窗预览需要区分「0」与「没配置」。</summary>
+    public override object? CurrentValue()
+        => HasPendingEdits || _loadedHadValue ? (IsInteger ? (long)Math.Round(Value) : Value) : null;
 
     partial void OnValueChanged(double value)
     {
@@ -143,6 +157,8 @@ public partial class TextFieldViewModel : SettingsFieldViewModel
         : Text;
 
     partial void OnTextChanged(string value) => HasPendingEdits = value != (_loaded ?? "");
+
+    public override object? CurrentValue() => Text.Length == 0 ? null : Text;
 }
 
 /// <summary>
@@ -240,6 +256,8 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
     }
 
     public override object? PendingValue() => HasPendingEdits ? Selected : null;
+
+    public override object? CurrentValue() => Selected;
 
     partial void OnSelectedChanged(string? value)
     {

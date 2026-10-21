@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -138,6 +139,56 @@ public sealed class SettingsPageRenderTests : IDisposable
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-dark.png"), ThemeVariant.Dark);
         window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Appearance_page_renders_candidate_window_preview()
+    {
+        Write("squirrel.yaml", """
+            style:
+              color_scheme: macos_light
+              font_point: 18
+              corner_radius: 8
+            preset_color_schemes:
+              macos_light:
+                author: ssnhd
+                back_color: 0xECECEC
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0xD3E3F6
+                hilited_candidate_text_color: 0x000000
+                comment_text_color: 0x888888
+            """);
+
+        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+        var (_, page, window) = Show(vm);
+
+        // 预览卡片在页首：编码行 + 三条候选（皮肤卡片的迷你预览是
+        // "1. 你好" 整串文本，不会撞上这里的裸候选词）。
+        var texts = page.GetVisualDescendants().OfType<TextBlock>()
+            .Select(t => t.Text).ToList();
+        Assert.Contains("ni hao", texts);
+        Assert.Equal(3, texts.Count(t => t is "你好" or "拟好" or "尼奥"));
+        Assert.Contains("皮肤：macos_light", texts);
+        // 暗色开关存在且可切换：没有暗色皮肤时回落到亮色，背景不变。
+        var dark = page.GetVisualDescendants().OfType<ToggleSwitch>()
+            .Single(t => t.DataContext is CandidatePreviewViewModel);
+        var backBefore = Assert.IsAssignableFrom<ISolidColorBrush>(previewBack(page)).Color;
+        dark.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(backBefore, Assert.IsAssignableFrom<ISolidColorBrush>(previewBack(page)).Color);
+
+        Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
+        window.Close();
+    }
+
+    private static IBrush? previewBack(SettingsPage page)
+    {
+        Border? win = null;
+        foreach (var b in page.GetVisualDescendants().OfType<Border>())
+            if (b.Background is ISolidColorBrush { Color: var c } && c is { R: 0xEC, G: 0xEC, B: 0xEC })
+            { win = b; break; }
+        return win?.Background;
     }
 
     [AvaloniaFact]

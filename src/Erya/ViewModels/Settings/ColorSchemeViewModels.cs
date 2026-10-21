@@ -445,6 +445,13 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>What the frontend ships for this id, untouched by the patch; null for user-created schemes.</summary>
     public IReadOnlyDictionary<string, object?>? ShippedDefinition { get; private init; }
 
+    /// <summary>
+    /// Any field of the loaded definition, modeled or not — the候选窗预览
+    /// reads border_color / shadow_color / label_color through this.
+    /// </summary>
+    public object? RawEntry(string key)
+        => Definition is not null && Definition.TryGetValue(key, out var value) ? value : null;
+
     private static readonly string[] ColorKeys =
     [
         "back_color", "candidate_text_color", "hilited_candidate_back_color", "hilited_candidate_text_color",
