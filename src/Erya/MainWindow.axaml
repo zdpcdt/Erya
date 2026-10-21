@@ -12,7 +12,8 @@
               x:DataType="vm:ShellViewModel"
               Title="尔雅 Erya"
               Width="1040" Height="680"
-              MinWidth="860" MinHeight="560">
+              MinWidth="860" MinHeight="560"
+              Background="{DynamicResource SemiGrey1}">
 
     <!-- Ctrl+R on Windows/Linux, Cmd+R on macOS -->
     <Window.KeyBindings>
@@ -23,7 +24,7 @@
     <Panel>
         <Grid ColumnDefinitions="Auto,*">
 
-            <!-- Sidebar -->
+            <!-- Sidebar：直接坐在窗口底色上（底色随主题翻转：浅 #E6E8EA / 暗 #2E3238，含标题栏） -->
             <u:NavMenu Grid.Column="0" Width="216"
                        ItemsSource="{Binding NavItems}"
                        SelectedItem="{Binding SelectedNav, Mode=TwoWay}">
@@ -53,30 +54,35 @@
                 </u:NavMenu.Footer>
             </u:NavMenu>
 
-            <!-- Content -->
-            <Grid Grid.Column="1" RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" Text="{Binding PageTitle}"
-                           FontSize="18" FontWeight="Bold" Margin="28,14,28,0" />
-                <ContentControl Grid.Row="1" Margin="28,12,28,24" Content="{Binding CurrentPage}">
-                    <ContentControl.DataTemplates>
-                        <DataTemplate DataType="vm:MainViewModel">
-                            <views:OverviewPage />
-                        </DataTemplate>
-                        <DataTemplate DataType="vm:SchemaManagerViewModel">
-                            <views:SchemaManagerPage />
-                        </DataTemplate>
-                        <DataTemplate DataType="settings:SettingsEditorViewModel">
-                            <views:SettingsPage />
-                        </DataTemplate>
-                        <DataTemplate DataType="adv:AdvancedSettingsViewModel">
-                            <views:AdvancedSettingsPage />
-                        </DataTemplate>
-                        <DataTemplate DataType="vm:BackupRestoreViewModel">
-                            <views:BackupRestorePage />
-                        </DataTemplate>
-                    </ContentControl.DataTemplates>
-                </ContentControl>
-            </Grid>
+            <!-- Content：内容画布（Background0）压在窗口底色上，朝侧栏一侧倒圆角，
+                 数值对应 SemiBorderRadiusMedium（6），与内容卡片同一家族 -->
+            <Border Grid.Column="1"
+                    Background="{DynamicResource SemiColorBackground0}"
+                    CornerRadius="6,0,0,6">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0" Text="{Binding PageTitle}"
+                               FontSize="18" FontWeight="Bold" Margin="28,14,28,0" />
+                    <ContentControl Grid.Row="1" Margin="28,12,28,24" Content="{Binding CurrentPage}">
+                        <ContentControl.DataTemplates>
+                            <DataTemplate DataType="vm:MainViewModel">
+                                <views:OverviewPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:SchemaManagerViewModel">
+                                <views:SchemaManagerPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="settings:SettingsEditorViewModel">
+                                <views:SettingsPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="adv:AdvancedSettingsViewModel">
+                                <views:AdvancedSettingsPage />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:BackupRestoreViewModel">
+                                <views:BackupRestorePage />
+                            </DataTemplate>
+                        </ContentControl.DataTemplates>
+                    </ContentControl>
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- Overlay dialogs (OverlayDialog.Show*) mount here -->
