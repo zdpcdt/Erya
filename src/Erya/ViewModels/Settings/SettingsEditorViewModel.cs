@@ -225,7 +225,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 try
                 {
                     await _distribution.DeployAsync();
-                    AppNotifications.Toast(saved ? "设置已保存并触发重新部署。" : "已触发重新部署。",
+                    AppNotifications.Toast(saved ? "设置已保存，重新部署完成" : "重新部署完成",
                         NotificationType.Success);
                 }
                 catch (OperationCanceledException)
