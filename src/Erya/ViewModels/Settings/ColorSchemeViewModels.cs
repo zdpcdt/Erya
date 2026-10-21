@@ -19,11 +19,17 @@ namespace Erya.ViewModels.Settings;
 /// are RIME <c>0xBBGGRR</c> hex strings (the weasel/squirrel convention);
 /// previews swap to RGB for display.
 /// <para>
-/// Saving writes one flat <c>preset_color_schemes/&lt;id&gt;</c> patch key per
-/// created/edited scheme — RIME merges those into the shipped collection.
-/// Writing the whole collection as one key would REPLACE it (patch semantics)
-/// and wipe every built-in scheme, so a legacy whole-collection key found in
-/// the file is migrated away on the next save.
+/// Two patch shapes, chosen per scheme. A scheme the frontend ships is edited
+/// through per-field keys — <c>preset_color_schemes/&lt;id&gt;/back_color</c> —
+/// which RIME merges into the shipped definition, so every field this editor
+/// does not model (label_color, border_*, name…) survives untouched. A scheme
+/// the user created lives only in the patch and is written whole as
+/// <c>preset_color_schemes/&lt;id&gt;</c>. Writing the whole collection as one key
+/// would REPLACE it (patch semantics) and wipe every built-in scheme, so a
+/// legacy whole-collection key found in the file is migrated away on the
+/// next save; likewise a whole-scheme key on a shipped scheme (what older
+/// builds wrote, dropping the fields they did not know) is converted to
+/// per-field keys the next time that scheme is saved.
 /// </para>
 /// </summary>
 public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
@@ -35,6 +41,9 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
 
     /// <summary>Schemes deleted in this session: (patch key, was actually patched).</summary>
     private readonly List<(string Name, bool WasPatched)> _removed = [];
+
+    /// <summary>Flat patch keys present at load time — the only keys a removal can target.</summary>
+    private HashSet<string> _patchKeys = new(StringComparer.Ordinal);
 
     /// <summary>True while the file still carries the legacy whole-collection key.</summary>
     private bool _hasLegacyCollectionKey;
@@ -70,83 +79,164 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
                     .ToDictionary(kv => ((YamlScalarNode)kv.Key).Value!, kv => kv.Value)
                 : new Dictionary<string, YamlNode>();
 
-        var patched = PatchedSchemes();
-        _hasLegacyCollectionKey = _store.ReadPatchValues(_targetFile).ContainsKey(CollectionKey);
+        var (blocks, fields) = PatchedSchemes();
+        _patchKeys = _store.ReadPatch(_targetFile).Select(kv => kv.Key).ToHashSet(StringComparer.Ordinal);
+        _hasLegacyCollectionKey = _patchKeys.Contains(CollectionKey);
 
         foreach (var (id, node) in shipped)
         {
-            var isPatched = patched.Remove(id, out var patchedNode);
+            // RIME applies the patch over the shipped tree: a whole-scheme key
+            // replaces the scheme, per-field keys then override single fields.
+            bool hasBlock = blocks.Remove(id, out var block);
+            bool hasFields = fields.Remove(id, out var overrides);
+            var shippedDefinition = AsDefinition(node);
             var scheme = ColorSchemeViewModel.Create(
-                id, PatchYaml.ToClrValue(isPatched ? patchedNode : node) as IReadOnlyDictionary<string, object?>,
-                isShipped: true, isPatched: isPatched);
+                id, Overlay(hasBlock ? AsDefinition(block) : shippedDefinition, overrides),
+                isShipped: true, isPatched: hasBlock || hasFields, shippedDefinition);
             Attach(scheme);
         }
-        foreach (var (id, node) in patched) // user-created schemes live only in the patch
+        foreach (var (id, node) in blocks) // user-created schemes live only in the patch
         {
-            var scheme = ColorSchemeViewModel.Create(
-                id, PatchYaml.ToClrValue(node) as IReadOnlyDictionary<string, object?>,
-                isShipped: false, isPatched: true);
-            Attach(scheme);
+            fields.Remove(id, out var overrides);
+            Attach(ColorSchemeViewModel.Create(id, Overlay(AsDefinition(node), overrides), isShipped: false, isPatched: true));
         }
+        foreach (var (id, overrides) in fields) // per-field keys with no definition anywhere else
+            Attach(ColorSchemeViewModel.Create(id, Overlay(null, overrides), isShipped: false, isPatched: true));
 
         IsModified = Schemes.Any(s => s.IsPatched);
         HasPendingEdits = false;
     }
 
     /// <summary>
-    /// Patch-defined schemes keyed by id: flat <c>preset_color_schemes/&lt;id&gt;</c>
-    /// entries plus members of a legacy whole-collection key.
+    /// Patch-defined scheme content keyed by id: whole-scheme nodes (flat
+    /// <c>preset_color_schemes/&lt;id&gt;</c> entries plus members of a legacy
+    /// whole-collection key) and per-field overrides
+    /// (<c>preset_color_schemes/&lt;id&gt;/&lt;field&gt;</c>).
     /// </summary>
-    private Dictionary<string, YamlNode> PatchedSchemes()
+    private (Dictionary<string, YamlNode> Blocks, Dictionary<string, Dictionary<string, YamlNode>> Fields) PatchedSchemes()
     {
-        var result = new Dictionary<string, YamlNode>();
+        var blocks = new Dictionary<string, YamlNode>();
+        var fields = new Dictionary<string, Dictionary<string, YamlNode>>();
         foreach (var (key, value) in _store.ReadPatch(_targetFile))
         {
             if (key == CollectionKey && value is YamlMappingNode legacy)
             {
                 foreach (var (id, node) in legacy.Children)
                     if (id is YamlScalarNode { Value: { } schemeId })
-                        result[schemeId] = node;
+                        blocks[schemeId] = node;
+                continue;
             }
-            else if (key.StartsWith(CollectionKey + "/", StringComparison.Ordinal)
-                     && key.AsSpan(CollectionKey.Length + 1).IndexOf('/') < 0)
+            if (!key.StartsWith(CollectionKey + "/", StringComparison.Ordinal) || key.EndsWith("/+", StringComparison.Ordinal))
+                continue;
+
+            var path = key[(CollectionKey.Length + 1)..].Split('/');
+            switch (path)
             {
-                result[key[(CollectionKey.Length + 1)..]] = value;
+                case [var id]:
+                    blocks[id] = value;
+                    break;
+                case [var id, var field] when field.Length > 0:
+                    (fields.TryGetValue(id, out var overrides) ? overrides : fields[id] = new())[field] = value;
+                    break;
             }
         }
-        return result;
+        return (blocks, fields);
     }
 
-    /// <summary>Flat patch keys to write on save (per scheme), keyed by patch path.</summary>
-    public IReadOnlyDictionary<string, object?> PendingWrites()
-    {
-        if (!HasPendingEdits) return new Dictionary<string, object?>();
+    private static IReadOnlyDictionary<string, object?>? AsDefinition(YamlNode? node)
+        => PatchYaml.ToClrValue(node) as IReadOnlyDictionary<string, object?>;
 
+    private static IReadOnlyDictionary<string, object?>? Overlay(
+        IReadOnlyDictionary<string, object?>? definition, Dictionary<string, YamlNode>? overrides)
+    {
+        if (overrides is null) return definition;
+        var merged = definition is null ? new Dictionary<string, object?>() : new Dictionary<string, object?>(definition);
+        foreach (var (field, value) in overrides) merged[field] = PatchYaml.ToClrValue(value);
+        return merged;
+    }
+
+    /// <summary>Flat patch keys to write on save, keyed by patch path.</summary>
+    public IReadOnlyDictionary<string, object?> PendingWrites() => PendingChanges().Writes;
+
+    /// <summary>Patch keys to remove on save: deleted schemes, renames, fields reverted to shipped, legacy keys.</summary>
+    public IReadOnlyList<string> PendingRemovals() => PendingChanges().Removals;
+
+    /// <summary>
+    /// Writes and removals are derived together: converting a whole-scheme key
+    /// into per-field keys is one write plus one removal, and they must agree.
+    /// </summary>
+    private (Dictionary<string, object?> Writes, List<string> Removals) PendingChanges()
+    {
         var writes = new Dictionary<string, object?>();
-        // Migrating off the legacy whole-collection key: every patched scheme
-        // must be re-written per-scheme or it would vanish with the old key.
+        var removals = new List<string>();
+        if (!HasPendingEdits) return (writes, removals);
+
+        foreach (var (name, wasPatched) in _removed.Where(r => r.WasPatched))
+            removals.AddRange(PatchKeysOf(name));
+
         foreach (var scheme in Schemes.Where(s => s.HasValidName))
         {
-            bool dirty = scheme.IsDirty;
+            var id = scheme.Name.Trim();
+            bool renamed = scheme.OriginalName.Length > 0 && scheme.OriginalName != id;
+            // Migrating off the legacy whole-collection key: every patched scheme
+            // must be re-written on its own or it would vanish with the old key.
             bool mustCarry = _hasLegacyCollectionKey && (scheme.IsPatched || scheme.IsAdded);
-            if (dirty || mustCarry)
-                writes[$"{CollectionKey}/{scheme.Name.Trim()}"] = scheme.ToPatchValue();
+            if (!scheme.IsDirty && !mustCarry) continue;
+
+            if (renamed && scheme.IsPatched)
+                removals.AddRange(PatchKeysOf(scheme.OriginalName));
+
+            if (scheme.IsShipped && !renamed)
+                AppendFieldChanges(scheme, id, writes, removals);
+            else
+                writes[$"{CollectionKey}/{id}"] = scheme.ToPatchValue(); // renaming a shipped scheme copies it under the new id
         }
-        return writes;
+
+        if (_hasLegacyCollectionKey && (writes.Count > 0 || removals.Count > 0))
+            removals.Add(CollectionKey);
+        return (writes, removals);
     }
 
-    /// <summary>Patch keys to remove on save: deleted schemes, renames, legacy key.</summary>
-    public IReadOnlyList<string> PendingRemovals()
+    /// <summary>
+    /// Per-field keys for a shipped scheme, diffed against what the frontend
+    /// ships: a field equal to the shipped value needs no key (and loses one
+    /// it had), a cleared field falls back to the shipped value the same way.
+    /// A whole-scheme key found on the scheme is dropped — it would mask the
+    /// per-field keys, which the patch applies before it — and whatever the
+    /// patch set that this editor does not model is carried over as
+    /// per-field keys so converting loses nothing the user had.
+    /// </summary>
+    private void AppendFieldChanges(ColorSchemeViewModel scheme, string id, Dictionary<string, object?> writes, List<string> removals)
     {
-        if (!HasPendingEdits) return [];
-        var removals = new List<string>();
-        foreach (var (name, wasPatched) in _removed.Where(r => r.WasPatched))
-            removals.Add($"{CollectionKey}/{name}");
-        foreach (var scheme in Schemes.Where(s => s.HasValidName && s.OriginalName != s.Name.Trim() && s.IsPatched))
-            removals.Add($"{CollectionKey}/{scheme.OriginalName}");
-        if (_hasLegacyCollectionKey && (PendingWrites().Count > 0 || removals.Count > 0))
-            removals.Add(CollectionKey);
-        return removals;
+        var block = $"{CollectionKey}/{id}";
+        var shipped = scheme.ShippedEntries();
+        foreach (var (field, value) in scheme.ModelEntries())
+        {
+            var key = $"{block}/{field}";
+            shipped.TryGetValue(field, out var baseline);
+            if (value is null || Equals(value, baseline))
+            {
+                if (_patchKeys.Contains(key)) removals.Add(key);
+            }
+            else
+            {
+                writes[key] = value;
+            }
+        }
+
+        if (_patchKeys.Contains(block)) removals.Add(block);
+        if (!scheme.IsPatched) return;
+        foreach (var (field, value) in scheme.UnmodeledEntriesDifferingFromShipped())
+            writes[$"{block}/{field}"] = value;
+    }
+
+    /// <summary>Every patch key that defines part of the scheme: the whole-scheme key and its per-field keys.</summary>
+    private IEnumerable<string> PatchKeysOf(string id)
+    {
+        var block = $"{CollectionKey}/{id}";
+        yield return block;
+        foreach (var key in _patchKeys.Where(k => k.StartsWith(block + "/", StringComparison.Ordinal)))
+            yield return key;
     }
 
     [RelayCommand]
@@ -317,21 +407,25 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     };
 
     public static ColorSchemeViewModel Create(
-        string name, IReadOnlyDictionary<string, object?>? definition, bool isShipped, bool isPatched)
+        string name, IReadOnlyDictionary<string, object?>? definition, bool isShipped, bool isPatched,
+        IReadOnlyDictionary<string, object?>? shippedDefinition = null)
     {
         string? Str(string key) => definition is not null && definition.TryGetValue(key, out var v) ? v?.ToString() : null;
-        string Color(string key, string fallback) => Normalize(Str(key)) ?? fallback;
+        string Color(string key)
+            => Normalize(definition is not null && definition.TryGetValue(key, out var v) ? ColorText(v) : null) ?? CoreColorFallbacks[key];
         var vm = new ColorSchemeViewModel
         {
             Name = name,
             OriginalName = name,
             IsShipped = isShipped,
             IsPatched = isPatched,
+            Definition = definition,
+            ShippedDefinition = shippedDefinition,
             Author = Str("author") ?? "",
-            BackColor = Color("back_color", "FFFFFF"),
-            CandidateTextColor = Color("candidate_text_color", "000000"),
-            HilitedBackColor = Color("hilited_candidate_back_color", "D3E3F6"),
-            HilitedTextColor = Color("hilited_candidate_text_color", "000000"),
+            BackColor = Color("back_color"),
+            CandidateTextColor = Color("candidate_text_color"),
+            HilitedBackColor = Color("hilited_candidate_back_color"),
+            HilitedTextColor = Color("hilited_candidate_text_color"),
             CommentTextColor = Str("comment_text_color") ?? "",
             HilitedCommentTextColor = Str("hilited_comment_text_color") ?? "",
             TextColor = Str("text_color") ?? "",
@@ -345,25 +439,123 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         return vm;
     }
 
-    /// <summary>Patch body for this scheme; colors without valid hex are skipped.</summary>
+    /// <summary>The scheme as loaded — shipped definition with any patch applied; null for a scheme added this session.</summary>
+    public IReadOnlyDictionary<string, object?>? Definition { get; private init; }
+
+    /// <summary>What the frontend ships for this id, untouched by the patch; null for user-created schemes.</summary>
+    public IReadOnlyDictionary<string, object?>? ShippedDefinition { get; private init; }
+
+    private static readonly string[] ColorKeys =
+    [
+        "back_color", "candidate_text_color", "hilited_candidate_back_color", "hilited_candidate_text_color",
+        "comment_text_color", "hilited_comment_text_color", "text_color", "hilited_text_color",
+    ];
+
+    private static readonly string[] TextKeys = ["author", "font_face"];
+
+    private static readonly string[] NumberKeys = ["font_point", "corner_radius", "line_spacing"];
+
+    /// <summary>Every YAML key this editor has a control for.</summary>
+    private static readonly HashSet<string> ModeledKeys = [.. ColorKeys, .. TextKeys, .. NumberKeys];
+
+    /// <summary>
+    /// What the controls show for the four base colors when a scheme leaves
+    /// them out. Shared by loading, the diff baseline and whole-scheme writes:
+    /// if the baseline did not fill them in exactly like loading does, every
+    /// save would write these fallbacks back as if the user had picked them.
+    /// </summary>
+    private static readonly Dictionary<string, string> CoreColorFallbacks = new()
+    {
+        ["back_color"] = "FFFFFF",
+        ["candidate_text_color"] = "000000",
+        ["hilited_candidate_back_color"] = "D3E3F6",
+        ["hilited_candidate_text_color"] = "000000",
+    };
+
+    /// <summary>
+    /// The modeled fields as the controls hold them, in YAML-ready form
+    /// (colors <c>0xBBGGRR</c>, numbers as long); null marks a field left
+    /// empty or holding invalid input.
+    /// </summary>
+    internal Dictionary<string, object?> ModelEntries() => EntriesOf(new Dictionary<string, object?>
+    {
+        ["back_color"] = BackColor,
+        ["candidate_text_color"] = CandidateTextColor,
+        ["hilited_candidate_back_color"] = HilitedBackColor,
+        ["hilited_candidate_text_color"] = HilitedTextColor,
+        ["comment_text_color"] = CommentTextColor,
+        ["hilited_comment_text_color"] = HilitedCommentTextColor,
+        ["text_color"] = TextColor,
+        ["hilited_text_color"] = HilitedPreeditColor,
+        ["author"] = Author,
+        ["font_face"] = FontFace,
+        ["font_point"] = FontPointText,
+        ["corner_radius"] = CornerRadiusText,
+        ["line_spacing"] = LineSpacingText,
+    });
+
+    /// <summary>
+    /// The modeled fields of the shipped definition as the controls would show
+    /// them — base colors the scheme leaves out filled in like loading does —
+    /// so a diff against <see cref="ModelEntries"/> only reports real edits.
+    /// </summary>
+    internal Dictionary<string, object?> ShippedEntries()
+    {
+        var entries = EntriesOf(ShippedDefinition);
+        foreach (var (key, fallback) in CoreColorFallbacks) entries[key] ??= "0x" + fallback;
+        return entries;
+    }
+
+    private static Dictionary<string, object?> EntriesOf(IReadOnlyDictionary<string, object?>? definition)
+    {
+        object? Raw(string key) => definition is not null && definition.TryGetValue(key, out var v) ? v : null;
+        var entries = new Dictionary<string, object?>();
+        foreach (var key in ColorKeys)
+            entries[key] = Normalize(ColorText(Raw(key))) is { } hex ? "0x" + hex : null;
+        foreach (var key in TextKeys)
+            entries[key] = Raw(key)?.ToString()?.Trim() is { Length: > 0 } text ? text : null;
+        foreach (var key in NumberKeys)
+            entries[key] = Raw(key) switch
+            {
+                long l => l,
+                double d when d % 1 == 0 => (long)d,
+                string s => ParseLong(s),
+                _ => null,
+            };
+        return entries;
+    }
+
+    /// <summary>
+    /// Fields of the loaded definition this editor has no control for, where
+    /// the value differs from the shipped one — carried into per-field keys
+    /// when a whole-scheme key is converted, so nothing the user set is lost.
+    /// </summary>
+    internal IEnumerable<KeyValuePair<string, object?>> UnmodeledEntriesDifferingFromShipped()
+    {
+        if (Definition is null) yield break;
+        foreach (var (key, value) in Definition)
+        {
+            if (value is null || ModeledKeys.Contains(key)) continue;
+            if (ShippedDefinition is { } shipped && shipped.TryGetValue(key, out var baseline) && Equals(value, baseline)) continue;
+            yield return new(key, value);
+        }
+    }
+
+    /// <summary>
+    /// Whole-scheme patch body: the loaded definition (so a copy keeps fields
+    /// this editor does not model) with every modeled field replaced by its
+    /// control value — cleared fields drop out, and the four base colors always
+    /// get a value because a scheme without them renders unpredictably.
+    /// </summary>
     public Dictionary<string, object?> ToPatchValue()
     {
-        var map = new Dictionary<string, object?>
+        var map = Definition is null ? new Dictionary<string, object?>() : new Dictionary<string, object?>(Definition);
+        foreach (var (key, value) in ModelEntries())
         {
-            ["back_color"] = ColorValue(BackColor, "FFFFFF"),
-            ["candidate_text_color"] = ColorValue(CandidateTextColor, "000000"),
-            ["hilited_candidate_back_color"] = ColorValue(HilitedBackColor, "D3E3F6"),
-            ["hilited_candidate_text_color"] = ColorValue(HilitedTextColor, "000000"),
-        };
-        if (Author.Trim().Length > 0) map["author"] = Author.Trim();
-        if (ColorSchemeLibraryViewModel.IsHexColor(CommentTextColor)) map["comment_text_color"] = ColorValue(CommentTextColor, "");
-        if (ColorSchemeLibraryViewModel.IsHexColor(HilitedCommentTextColor)) map["hilited_comment_text_color"] = ColorValue(HilitedCommentTextColor, "");
-        if (ColorSchemeLibraryViewModel.IsHexColor(TextColor)) map["text_color"] = ColorValue(TextColor, "");
-        if (ColorSchemeLibraryViewModel.IsHexColor(HilitedPreeditColor)) map["hilited_text_color"] = ColorValue(HilitedPreeditColor, "");
-        if (FontFace.Trim().Length > 0) map["font_face"] = FontFace.Trim();
-        if (ParseLong(FontPointText) is { } point) map["font_point"] = point;
-        if (ParseLong(CornerRadiusText) is { } radius) map["corner_radius"] = radius;
-        if (ParseLong(LineSpacingText) is { } spacing) map["line_spacing"] = spacing;
+            if (value is null) map.Remove(key);
+            else map[key] = value;
+        }
+        foreach (var (key, fallback) in CoreColorFallbacks) map.TryAdd(key, "0x" + fallback);
         return map;
     }
 
@@ -399,8 +591,16 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         return ColorSchemeLibraryViewModel.IsHexColor(hex) ? hex.ToUpperInvariant() : null;
     }
 
-    private static object ColorValue(string hex, string fallback)
-        => "0x" + (ColorSchemeLibraryViewModel.IsHexColor(hex) ? hex.ToUpperInvariant() : fallback);
+    /// <summary>
+    /// A color as read from YAML. A plain <c>0xFFFFFF</c> survives as text, but
+    /// other tools write the same color as the integer 16777215, which the
+    /// parser hands over as a long — render that back to hex digits.
+    /// </summary>
+    private static string? ColorText(object? raw) => raw switch
+    {
+        long value and >= 0 and <= 0xFFFFFF => value.ToString("X6", CultureInfo.InvariantCulture),
+        _ => raw?.ToString(),
+    };
 
     private static IBrush BrushOf(string hex, Color fallback)
     {

@@ -9,11 +9,13 @@ using Xunit;
 namespace Erya.UiTests;
 
 /// <summary>
-/// 皮肤库：schemes load as shipped (base file) + patched (per-scheme flat
-/// patch keys), saves write only created/edited schemes as
-/// preset_color_schemes/&lt;id&gt; keys — never the whole collection, which
-/// would REPLACE the shipped schemes — and previews swap RIME's BGR byte
-/// order into RGB brushes.
+/// 皮肤库：schemes load as shipped (base file) + patched (per-scheme and
+/// per-field flat patch keys). Saving edits a shipped scheme through
+/// per-field keys (preset_color_schemes/&lt;id&gt;/&lt;field&gt;) so the fields the
+/// editor does not model survive, writes user-created schemes whole as
+/// preset_color_schemes/&lt;id&gt; — never the whole collection, which would
+/// REPLACE the shipped schemes — and previews swap RIME's BGR byte order into
+/// RGB brushes.
 /// </summary>
 public sealed class ColorSchemeTests : IDisposable
 {
@@ -42,7 +44,7 @@ public sealed class ColorSchemeTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Saving_writes_per_scheme_keys_and_keeps_shipped_schemes()
+    public async Task Saving_writes_field_keys_for_shipped_schemes_and_whole_keys_for_new_ones()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -52,6 +54,7 @@ public sealed class ColorSchemeTests : IDisposable
                 candidate_text_color: 0x000000
                 hilited_candidate_back_color: 0xD3E3F6
                 hilited_candidate_text_color: 0x000000
+                label_color: 0x888888
               macos_dark:
                 back_color: 0x1C1C1E
             style:
@@ -80,26 +83,108 @@ public sealed class ColorSchemeTests : IDisposable
 
         await vm.SaveAndDeployCommand.ExecuteAsync(null);
 
-        var patch = new RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml");
-        // Only the edited + added scheme — as flat per-scheme keys; the
-        // untouched shipped scheme never lands in the patch.
+        var store = new RimeConfigStore(_dir);
+        var patch = store.ReadPatchValues("squirrel.yaml");
         Assert.DoesNotContain("preset_color_schemes", patch.Keys);
-        var edited = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(
-            patch["preset_color_schemes/macos_light"]);
-        Assert.Equal("0x1C1C1E", edited["back_color"]);
-        Assert.Equal("PingFang SC", edited["font_face"]);
+        // The shipped scheme is edited through per-field keys — just the two
+        // fields that changed — never a whole-scheme key, which would drop
+        // every field this editor does not model.
+        Assert.Equal("0x1C1C1E", patch["preset_color_schemes/macos_light/back_color"]);
+        Assert.Equal("PingFang SC", patch["preset_color_schemes/macos_light/font_face"]);
+        Assert.Equal(2, patch.Keys.Count(k => k.StartsWith("preset_color_schemes/macos_light/")));
+        Assert.DoesNotContain("preset_color_schemes/macos_light", patch.Keys);
+        // The added scheme has no shipped definition to merge into: whole key.
         Assert.Contains("preset_color_schemes/macos_light1", patch.Keys); // seeded from the first scheme
         Assert.DoesNotContain("preset_color_schemes/macos_dark", patch.Keys);
         Assert.False(vm.IsDirty);
 
-        // The merged view still carries every scheme: per-scheme patch keys
-        // merge INTO the shipped collection instead of replacing it.
+        // The merged view still carries every scheme, and the shipped fields
+        // the editor never touched are still there next to the edit.
         Assert.Equal(
             ["macos_dark", "macos_light", "macos_light1"],
-            new RimeConfigStore(_dir).ListMappingKeys("squirrel.yaml", "preset_color_schemes").Order().ToList());
+            store.ListMappingKeys("squirrel.yaml", "preset_color_schemes").Order().ToList());
+        Assert.Equal("ssnhd", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/macos_light/author"));
+        Assert.Equal("0x888888", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/macos_light/label_color"));
+        Assert.Equal("0x1C1C1E", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/macos_light/back_color"));
 
         var patched = File.ReadAllText(Path.Combine(_dir, "squirrel.custom.yaml"));
-        Assert.Contains("back_color: 0x1C1C1E", patched);
+        Assert.Contains("preset_color_schemes/macos_light/back_color: 0x1C1C1E", patched);
+    }
+
+    [AvaloniaFact]
+    public async Task Whole_scheme_key_on_a_shipped_scheme_becomes_field_keys_and_dropped_fields_return()
+    {
+        // 琥珀色熒光屏-style scheme: candidates take text_color, there is no
+        // candidate_text_color of its own.
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              retro:
+                name: 琥珀色
+                text_color: 0x0093FF
+                back_color: 0x000000
+                label_color: 0x0093FF
+                hilited_candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0x0093FF
+                corner_radius: 16
+            """);
+        // What older builds wrote after any edit: the editor's fixed field set
+        // with its fallbacks filled in (black candidate text on the black
+        // back), every field it did not model gone.
+        Write("squirrel.custom.yaml", """
+            patch:
+              preset_color_schemes/retro:
+                back_color: 0x000000
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0x0093FF
+                hilited_candidate_text_color: 0x000000
+                corner_radius: 16
+            """);
+        var vm = LoadUi();
+        var retro = Assert.Single(vm.SchemeLibrary!.Schemes, s => s.Name == "retro");
+        Assert.True(retro.IsShipped);
+        Assert.True(retro.IsPatched);
+
+        retro.BackColor = "101010";
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var store = new RimeConfigStore(_dir);
+        var patch = store.ReadPatchValues("squirrel.yaml");
+        Assert.DoesNotContain("preset_color_schemes/retro", patch.Keys); // whole key converted…
+        Assert.Equal("0x101010", patch["preset_color_schemes/retro/back_color"]); // …into the one real edit
+        Assert.Single(patch.Keys, k => k.StartsWith("preset_color_schemes/retro/"));
+
+        // Fields the whole key had dropped are back from the shipped
+        // definition, and the fallback it injected is gone.
+        Assert.Equal("0x0093FF", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/retro/text_color"));
+        Assert.Equal("0x0093FF", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/retro/label_color"));
+        Assert.Equal("琥珀色", store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/retro/name"));
+        Assert.Null(store.ReadMergedValue("squirrel.yaml", "preset_color_schemes/retro/candidate_text_color"));
+    }
+
+    [AvaloniaFact]
+    public async Task Setting_a_shipped_field_back_to_its_shipped_value_removes_the_field_key()
+    {
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              macos_light:
+                back_color: 0xECECEC
+            """);
+        Write("squirrel.custom.yaml", """
+            patch:
+              preset_color_schemes/macos_light/back_color: 0x1C1C1E
+              preset_color_schemes/macos_light/font_face: PingFang SC
+            """);
+        var vm = LoadUi();
+        var light = Assert.Single(vm.SchemeLibrary!.Schemes, s => s.Name == "macos_light");
+        Assert.True(light.IsPatched);
+        Assert.Equal("1C1C1E", light.BackColor); // the field key is what the editor shows
+
+        light.BackColor = "ECECEC";
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var patch = new RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml");
+        Assert.DoesNotContain("preset_color_schemes/macos_light/back_color", patch.Keys);
+        Assert.Equal("PingFang SC", patch["preset_color_schemes/macos_light/font_face"]); // the untouched key stays
     }
 
     [AvaloniaFact]
