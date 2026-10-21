@@ -118,13 +118,14 @@ public sealed class CandidatePreviewTests : IDisposable
         Assert.Equal(18, preview.FontSize);
         Assert.False(preview.ShowPreedit);
 
-        // 暗色开关切到 color_scheme_dark 的皮肤。
-        preview.PreviewDark = true;
-        Assert.Contains("aqua_dark", preview.Caption);
-        Assert.Equal(0x1C, ColorOf(preview.BackBrush).B);
+        // 暗色实例独立解析 color_scheme_dark：与亮色实例并排显示、互不影响。
+        var dark = vm.CandidatePreviewDark!;
+        Assert.Contains("aqua_dark", dark.Caption);
+        Assert.Equal(0x1C, ColorOf(dark.BackBrush).B);
+        Assert.Contains("aqua", preview.Caption);
+        Assert.Equal(0xEC, ColorOf(preview.BackBrush).B);
 
-        // 皮肤库里的编辑也联动：改激活皮肤的背景色，预览跟着变。
-        preview.PreviewDark = false;
+        // 皮肤库里的编辑也联动：改激活皮肤的背景色，亮色实例跟着变。
         var aqua = vm.SchemeLibrary!.Schemes.First(s => s.Name == "aqua");
         aqua.BackColor = "FFFFFF";
         Assert.Equal(0xFF, ColorOf(preview.BackBrush).R);
@@ -197,6 +198,40 @@ public sealed class CandidatePreviewTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void Edit_dialog_preview_is_pinned_to_the_scheme_and_revert_restores()
+    {
+        Write("weasel.yaml", """
+            style:
+              color_scheme: aqua
+              font_point: 14
+            preset_color_schemes:
+              aqua:
+                name: 碧水
+                back_color: 0xECEEEE
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0xD3E3F6
+                hilited_candidate_text_color: 0x000000
+            """);
+        var vm = LoadUi("weasel.yaml");
+        var aqua = vm.SchemeLibrary!.Schemes.Single(s => s.Name == "aqua");
+        var fields = vm.Sections.SelectMany(s => s.Fields).ToList();
+
+        var dialog = new SchemeEditDialogViewModel(aqua, fields);
+        // 预览固定渲染正在编辑的皮肤；排版参数仍取字段（字号 14）。
+        Assert.Contains("aqua", dialog.Preview.Caption);
+        Assert.Equal(14, dialog.Preview.FontSize);
+
+        // 对话框里的编辑直接落在皮肤 VM 上，预览立即反映。
+        aqua.BackColor = "FFFFFF";
+        Assert.Equal(0xFF, ColorOf(dialog.Preview.BackBrush).R);
+
+        // 取消：开框快照写回原实例，预览与皮肤一起复原（绑定不断）。
+        dialog.Revert();
+        Assert.Equal(0xEC, ColorOf(dialog.Preview.BackBrush).B);
+        Assert.Equal("ECEEEE", aqua.BackColor);
+    }
+
+    [AvaloniaFact]
     public void Input_settings_have_no_preview()
     {
         Write("default.yaml", "menu:\n  page_size: 5\n");
@@ -204,6 +239,7 @@ public sealed class CandidatePreviewTests : IDisposable
         vm.LoadCommand.Execute(null);
 
         Assert.Null(vm.CandidatePreview);
+        Assert.Null(vm.CandidatePreviewDark);
         Assert.False(vm.HasCandidatePreview);
     }
 

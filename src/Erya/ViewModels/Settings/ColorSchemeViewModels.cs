@@ -63,6 +63,9 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
     /// <summary> Fires when any scheme edit/add/remove is pending a save.</summary>
     public event EventHandler? EditsPending;
 
+    /// <summary>行内「编辑」被点击：设置页订阅后打开编辑对话框。</summary>
+    public event Action<ColorSchemeViewModel>? EditRequested;
+
     [ObservableProperty]
     private bool _hasPendingEdits;
 
@@ -253,7 +256,26 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
             : new SchemeState(
                 UniqueName("custom"), "",
                 "FFFFFF", "000000", "D3E3F6", "000000", "333333", "333333", "000000", "000000");
-        var scheme = ColorSchemeViewModel.FromState(seed);
+        AddFromState(seed);
+    }
+
+    /// <summary>以此皮肤为底新增一套自定义皮肤（内置皮肤只读，派生后可编辑）。</summary>
+    [RelayCommand]
+    private void DuplicateScheme(ColorSchemeViewModel? scheme)
+    {
+        if (scheme is null) return;
+        AddFromState(scheme.CloneableState with { Name = UniqueName(scheme.Name) });
+    }
+
+    [RelayCommand]
+    private void EditScheme(ColorSchemeViewModel? scheme)
+    {
+        if (scheme is not null) EditRequested?.Invoke(scheme);
+    }
+
+    private void AddFromState(SchemeState state)
+    {
+        var scheme = ColorSchemeViewModel.FromState(state);
         scheme.IsAdded = true;
         Attach(scheme);
         MarkDirty();
@@ -349,6 +371,15 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>Bind target inside the scheme card template.</summary>
     public System.Windows.Input.ICommand? RemoveCommand => Owner?.RemoveSchemeCommand;
 
+    /// <summary>打开编辑对话框（自定义皮肤独有；内置皮肤走「以此新增」派生）。</summary>
+    public System.Windows.Input.ICommand? EditCommand => Owner?.EditSchemeCommand;
+
+    /// <summary>以此皮肤为底新增自定义皮肤。</summary>
+    public System.Windows.Input.ICommand? DuplicateCommand => Owner?.DuplicateSchemeCommand;
+
+    /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
+    public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
+
     public bool HasValidName => Name.Trim().Length > 0;
 
     /// <summary>Dropdown source for the font_face editor — this machine's font families.</summary>
@@ -409,6 +440,25 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         CornerRadiusText = state.CornerRadius >= 0 ? state.CornerRadius.ToString() : "",
         LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "",
     };
+
+    /// <summary>把快照写回当前实例（编辑对话框「取消」用），不换实例、不断绑定。</summary>
+    public void Restore(SchemeState state)
+    {
+        Name = state.Name;
+        Author = state.Author;
+        BackColor = state.BackColor;
+        CandidateTextColor = state.CandidateTextColor;
+        HilitedBackColor = state.HilitedBackColor;
+        HilitedTextColor = state.HilitedTextColor;
+        CommentTextColor = state.CommentTextColor ?? "";
+        HilitedCommentTextColor = state.HilitedCommentTextColor ?? "";
+        TextColor = state.TextColor ?? "";
+        HilitedPreeditColor = state.HilitedPreeditColor ?? "";
+        FontFace = state.FontFace ?? "";
+        FontPointText = state.FontPoint > 0 ? state.FontPoint.ToString() : "";
+        CornerRadiusText = state.CornerRadius >= 0 ? state.CornerRadius.ToString() : "";
+        LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "";
+    }
 
     public static ColorSchemeViewModel Create(
         string name, IReadOnlyDictionary<string, object?>? definition, bool isShipped, bool isPatched,

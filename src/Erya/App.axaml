@@ -3,6 +3,7 @@
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:ip="https://irihi.tech/iconica/iconpark"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
              x:Class="Erya.App"
              RequestedThemeVariant="Default">
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
@@ -19,6 +20,61 @@
                 <!-- ReorderableItemsControl / DragHandle（拖拽排序列表，Semi 风格） -->
                 <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--  候选窗预览模板：外观页亮/暗两个实例 + 皮肤编辑对话框共用（ContentTemplate 引用）  -->
+            <DataTemplate x:Key="CandidateWindowTemplate" DataType="sf:CandidatePreviewViewModel">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Caption}" Opacity="0.6" HorizontalAlignment="Center" />
+                    <Border HorizontalAlignment="Center"
+                            Background="{Binding BackBrush}"
+                            CornerRadius="{Binding WindowCorner}"
+                            BorderBrush="{Binding FrameBrush}" BorderThickness="{Binding FrameThickness}"
+                            Padding="{Binding WindowPadding}"
+                            MinWidth="{Binding MinWidth}" MinHeight="{Binding MinHeight}"
+                            MaxWidth="{Binding MaxWidth}" MaxHeight="{Binding MaxHeight}"
+                            Opacity="{Binding WindowOpacity}"
+                            Effect="{Binding Shadow}">
+                        <StackPanel Orientation="{Binding PanelOrientation}" Spacing="{Binding PreeditGap}">
+                            <TextBlock Text="{Binding PreeditText}" IsVisible="{Binding ShowPreedit}"
+                                       Foreground="{Binding PreeditBrush}"
+                                       FontFamily="{Binding PreviewFont}" FontSize="{Binding FontSize}" />
+                            <ItemsControl ItemsSource="{Binding Items}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="{Binding PanelOrientation}"
+                                                    Spacing="{Binding CandidateGap}" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="sf:CandidatePreviewItem">
+                                        <Border Background="{Binding RowBack}"
+                                                CornerRadius="{Binding RowCorner}"
+                                                Padding="{Binding RowPadding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
+                                                           Foreground="{Binding LabelBrush}"
+                                                           FontFamily="{Binding LabelFont}"
+                                                           FontSize="{Binding LabelSize}"
+                                                           Margin="{Binding LabelMargin}" />
+                                                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"
+                                                           Foreground="{Binding TextBrush}"
+                                                           FontFamily="{Binding TextFont}"
+                                                           FontSize="{Binding TextSize}" />
+                                                <TextBlock Text="{Binding Comment}" VerticalAlignment="Center"
+                                                           IsVisible="{Binding HasComment}"
+                                                           Foreground="{Binding CommentBrush}"
+                                                           FontFamily="{Binding CommentFont}"
+                                                           FontSize="{Binding CommentSize}"
+                                                           Margin="{Binding CommentMargin}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 
