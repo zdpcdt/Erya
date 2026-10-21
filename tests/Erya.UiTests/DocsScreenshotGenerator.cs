@@ -59,6 +59,10 @@ public sealed class DocsScreenshotGenerator
         Dispatcher.UIThread.RunJobs();
         Capture(vm, window, "appearance.png", ThemeVariant.Light);
         Capture(vm, window, "appearance-dark.png", ThemeVariant.Dark);
+        // 皮肤库在页面底部：滚到底拍行布局（只读行 + 按钮组）。
+        window.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
+        Dispatcher.UIThread.RunJobs();
+        Capture(vm, window, "appearance-schemes.png", ThemeVariant.Light);
 
         vm.SelectedNav = vm.NavItems[4]; // 高级设置
         Dispatcher.UIThread.RunJobs();

@@ -142,7 +142,7 @@ public sealed class SettingsPageRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Appearance_page_renders_candidate_window_preview()
+    public async Task Appearance_page_renders_both_previews_in_a_fixed_band()
     {
         Write("squirrel.yaml", """
             style:
@@ -163,36 +163,38 @@ public sealed class SettingsPageRenderTests : IDisposable
         await vm.LoadCommand.ExecuteAsync(null);
         var (_, page, window) = Show(vm);
 
-        // 预览卡片在页首：编码行 + 三条候选（皮肤卡片的迷你预览是
-        // "1. 你好" 整串文本，不会撞上这里的裸候选词）。
+        // 亮/暗两个预览窗并排（定位到两个预览宿主，而非按文本数——皮肤行的
+        // 迷你预览也带 "ni hao"）。
+        var previewHosts = page.GetVisualDescendants().OfType<ContentControl>()
+            .Where(cc => cc.Content is CandidatePreviewViewModel).ToList();
+        Assert.Equal(2, previewHosts.Count);
+        foreach (var h in previewHosts)
+        {
+            // 每个预览窗内：编码行 + 三条候选。
+            var hostTexts = h.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+            Assert.Contains("ni hao", hostTexts);
+            Assert.Equal(["你好", "拟好", "尼奥"],
+                hostTexts.Where(t => t is "你好" or "拟好" or "尼奥"));
+        }
         var texts = page.GetVisualDescendants().OfType<TextBlock>()
             .Select(t => t.Text).ToList();
-        Assert.Contains("ni hao", texts);
-        Assert.Equal(3, texts.Count(t => t is "你好" or "拟好" or "尼奥"));
+        Assert.Contains("亮色皮肤", texts);
+        Assert.Contains("暗色皮肤", texts);
+
+        // 预览带固定在设置区之外：预览宿主不在任何 ScrollViewer 里，
+        // 滚动设置不会把预览带走。
+        Assert.All(previewHosts, h =>
+            Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
+
+        // 没有暗色皮肤选择时，暗色实例回落亮色（Caption 如实显示皮肤名）。
         Assert.Contains("皮肤：macos_light", texts);
-        // 暗色开关存在且可切换：没有暗色皮肤时回落到亮色，背景不变。
-        var dark = page.GetVisualDescendants().OfType<ToggleSwitch>()
-            .Single(t => t.DataContext is CandidatePreviewViewModel);
-        var backBefore = Assert.IsAssignableFrom<ISolidColorBrush>(previewBack(page)).Color;
-        dark.IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
-        Assert.Equal(backBefore, Assert.IsAssignableFrom<ISolidColorBrush>(previewBack(page)).Color);
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 
-    private static IBrush? previewBack(SettingsPage page)
-    {
-        Border? win = null;
-        foreach (var b in page.GetVisualDescendants().OfType<Border>())
-            if (b.Background is ISolidColorBrush { Color: var c } && c is { R: 0xEC, G: 0xEC, B: 0xEC })
-            { win = b; break; }
-        return win?.Background;
-    }
-
     [AvaloniaFact]
-    public async Task Appearance_settings_render_scheme_library_as_rows()
+    public async Task Appearance_scheme_rows_are_readonly_and_user_schemes_edit_via_dialog()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -205,43 +207,47 @@ public sealed class SettingsPageRenderTests : IDisposable
             style:
               color_scheme: macos_light
             """);
-
+        Write("squirrel.custom.yaml", """
+            patch:
+              "preset_color_schemes/user_dark":
+                back_color: 0x1C1C1E
+            """);
         var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "ui");
         await vm.LoadCommand.ExecuteAsync(null);
-        Assert.True(vm.HasSchemeLibrary);
-
         var (_, page, window) = Show(vm);
 
-        // 每套皮肤一行：名称 + 候选条预览，点开是编辑表单。
-        var schemeCells = page.GetVisualDescendants().OfType<Cell>()
-            .Where(c => (c.Content as string) == "macos_light")
-            .ToList();
-        var schemeRow = Assert.Single(schemeCells);
-        Assert.NotNull(schemeRow.Detail);
-        schemeRow.IsExpanded = true;
-        Dispatcher.UIThread.RunJobs();
-        var detail = schemeRow.GetVisualDescendants()
-            .OfType<Border>().Single(b => b.Name == "PART_DetailHost");
-        Assert.True(detail.IsVisible);
+        Cell Row(string name) => page.GetVisualDescendants().OfType<Cell>()
+            .Single(c => (c.Content as string) == name);
 
-        // 颜色编辑用 ColorPicker（背景/候选文字/高亮背景/高亮文字/注释 ≥ 5 个）。
-        Assert.True(schemeRow.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
-        // 字体编辑是固定宽度的系统字体下拉（不可编辑）——合并默认值可能是
-        // ~200 字符的 Emoji 回退长串，不能撑开挤掉同行控件。
-        var fontCell = Assert.Single(
-            page.GetVisualDescendants().OfType<Cell>().Where(c => (c.Content as string) == "字体"));
-        var fontCombo = Assert.Single(fontCell.GetVisualDescendants().OfType<ComboBox>());
-        Assert.False(fontCombo.IsEditable);
-        Assert.Equal(240, fontCombo.Width);
-        // 皮肤库里的字体同样固定宽度，空值显示「未设置」。
-        var schemeFontCombo = schemeRow.GetVisualDescendants().OfType<ComboBox>().Single();
-        Assert.Equal(150, schemeFontCombo.Width);
-        Assert.Equal("未设置", schemeFontCombo.SelectedItem);
+        // 行是只读摘要：没有 Detail 展开区（旧内联表单已移除）。
+        Assert.Null(Row("macos_light").Detail);
+        // 内置皮肤：编辑按钮在树上但隐藏；自定义皮肤：可点。
+        Ursa.Controls.IconButton EditButton(Cell row) => row.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Single(b => (ToolTip.GetTip(b) as string) == "编辑此皮肤（对话框）");
+        Assert.False(IsEffectivelyVisible(EditButton(Row("macos_light"))));
+        var edit = EditButton(Row("user_dark"));
+        Assert.True(IsEffectivelyVisible(edit));
+        var schemeVm = Assert.IsType<ColorSchemeViewModel>(edit.CommandParameter);
+        Assert.Same(schemeVm, vm.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark"));
 
-        // 皮肤库在页面底部：滚到底再截屏，截图才能拍到展开的编辑表单。
-        page.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
+        // 编辑对话框本体：Cell 表单 + 取色器 + 固定渲染本皮肤的候选窗预览。
+        var dialogVm = new SchemeEditDialogViewModel(schemeVm,
+            vm.Sections.SelectMany(s => s.Fields).ToList());
+        var dialog = new SchemeEditDialog { DataContext = dialogVm, Width = 600, Height = 700 };
+        var host = new Window { Width = 640, Height = 760, Content = dialog };
+        host.Show();
         Dispatcher.UIThread.RunJobs();
-        Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-appearance-light.png"), ThemeVariant.Light);
+        Assert.True(dialog.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
+        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+        host.Close();
+
+        // 以此新增：内置皮肤派生成自定义皮肤（唯一名、可编辑、库变脏）。
+        vm.SchemeLibrary.DuplicateSchemeCommand.Execute(vm.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
+        Assert.True(vm.IsDirty);
+        var copy = vm.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light1");
+        Assert.False(copy.IsShipped);
+
+        Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 

@@ -23,12 +23,13 @@ public sealed record CandidatePreviewItem(
     IBrush CommentBrush, FontFamily? CommentFont, double CommentSize, Thickness CommentMargin, bool HasComment);
 
 /// <summary>
-/// 候选窗实时预览：把外观页字段（字体/间距/圆角/排列/阴影…）与皮肤库当前
-/// 选中皮肤的颜色合成一个小狼毫/鼠须管样子的候选窗。任一字段或皮肤变化都
-/// 整体重算（属性少，整刷最稳）；未保存的编辑通过 <see
-/// cref="SettingsFieldViewModel.CurrentValue"/> 立即反映。排版键在小狼毫
-/// （style/layout/*）与鼠须管（style/*）两套路径里取第一个存在的，同一份
-/// 预览逻辑通吃两个前端；竖排文本为近似预览（逐行竖排）。
+/// 候选窗实时预览：把外观页字段（字体/间距/圆角/排列/阴影…）与某个皮肤的颜色
+/// 合成一个小狼毫/鼠须管样子的候选窗。任一字段或皮肤变化都整体重算（属性少，
+/// 整刷最稳）；未保存的编辑通过 <see cref="SettingsFieldViewModel.CurrentValue"/>
+/// 立即反映。排版键在小狼毫（style/layout/*）与鼠须管（style/*）两套路径里取
+/// 第一个存在的，同一份预览逻辑通吃两个前端；竖排文本为近似预览（逐行竖排）。
+/// 外观页放亮/暗两个实例并排显示；皮肤编辑对话框用 <see cref="AttachToScheme"/>
+/// 固定渲染正在编辑的那个皮肤。
 /// </summary>
 public sealed partial class CandidatePreviewViewModel : ObservableObject
 {
@@ -39,23 +40,42 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
         ("尼奥", null),
     ];
 
+    private readonly bool _preferDark;
     private readonly Dictionary<string, SettingsFieldViewModel> _fields = new(StringComparer.Ordinal);
     private ColorSchemeLibraryViewModel? _library;
+    private Func<ColorSchemeViewModel?> _resolveScheme = () => null;
     private ColorSchemeViewModel? _watchedScheme;
+
+    public CandidatePreviewViewModel(bool preferDark = false) => _preferDark = preferDark;
 
     /// <summary>把预览挂到一组字段与皮肤库上；每次 Load 后重新调用，旧的订阅自动解绑。</summary>
     public void Attach(IEnumerable<SettingsFieldViewModel> fields, ColorSchemeLibraryViewModel library)
     {
         Detach();
         _library = library;
+        _resolveScheme = () => ResolveFromSelection();
+        AttachFields(fields);
+        library.EditsPending += OnLibraryEdited;
+        Refresh();
+    }
+
+    /// <summary>把预览固定到某个皮肤上（皮肤编辑对话框）：排版参数仍取字段，颜色永远来自它。</summary>
+    public void AttachToScheme(IEnumerable<SettingsFieldViewModel> fields, ColorSchemeViewModel scheme)
+    {
+        Detach();
+        _resolveScheme = () => scheme;
+        AttachFields(fields);
+        Refresh();
+    }
+
+    private void AttachFields(IEnumerable<SettingsFieldViewModel> fields)
+    {
         _fields.Clear();
         foreach (var field in fields)
         {
             _fields[field.KeyPath] = field;
             field.PropertyChanged += OnAnythingChanged;
         }
-        library.EditsPending += OnLibraryEdited;
-        Refresh();
     }
 
     private void Detach()
@@ -66,11 +86,6 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
         _library = null;
         WatchScheme(null);
     }
-
-    [ObservableProperty]
-    private bool _previewDark;
-
-    partial void OnPreviewDarkChanged(bool value) => Refresh();
 
     public string PreeditText => "ni hao";
 
@@ -130,7 +145,7 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
     /// <summary>整体重算并广播所有属性；也把皮肤 VM 的编辑接到重算上。</summary>
     private void Refresh()
     {
-        var scheme = ActiveScheme();
+        var scheme = _resolveScheme();
         WatchScheme(scheme);
 
         var baseFaces = SchemeText(scheme, s => s.FontFace) ?? Str("style/font_face");
@@ -263,10 +278,11 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
 
     // ---------- 皮肤：编辑中的值优先，其次选中方案，再是内置兜底 ----------
 
-    private ColorSchemeViewModel? ActiveScheme()
+    /// <summary>外观页模式：按 style/color_scheme(_dark) 的当前选择解析（暗色未设时回落亮色）。</summary>
+    private ColorSchemeViewModel? ResolveFromSelection()
     {
         if (_library is null) return null;
-        var wanted = (PreviewDark ? Str("style/color_scheme_dark") : null) ?? Str("style/color_scheme");
+        var wanted = (_preferDark ? Str("style/color_scheme_dark") : null) ?? Str("style/color_scheme");
         return _library.Schemes.FirstOrDefault(s => string.Equals(s.Name, wanted, StringComparison.OrdinalIgnoreCase))
                ?? _library.Schemes.FirstOrDefault();
     }
@@ -275,7 +291,7 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
     /// 皮肤颜色：已建模字段读控件里的活值（皮肤库里未保存的编辑也立即反映），
     /// 编辑器没有建模的键（border_color/shadow_color/label_color…）读加载的定义。
     /// </summary>
-    private Color? SchemeColor(string key) => ActiveScheme() is not { } scheme ? null : ParseRime(key switch
+    private Color? SchemeColor(string key) => _resolveScheme() is not { } scheme ? null : ParseRime(key switch
     {
         "back_color" => scheme.BackColor,
         "candidate_text_color" => scheme.CandidateTextColor,
