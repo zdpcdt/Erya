@@ -133,13 +133,14 @@
                         </Grid>
                     </Border>
 
-                    <!--  点开的详细设置：顶部分隔线 + 内容区；区域内的点击不会收缩（见 Cell.cs）  -->
+                    <!--  点开的详细设置：顶部分隔线 + 内容区；区域内的点击不会收缩（见 Cell.cs）。
+                          左缩进与正文对齐：行内边距 16 + 图标 20 + 间距 12 = 48（图标列恒占位）  -->
                     <Border Name="PART_DetailHost"
                             BorderBrush="{DynamicResource SemiColorBorder}"
                             BorderThickness="0,1,0,0"
                             IsVisible="{TemplateBinding IsExpanded}">
                         <ContentPresenter Name="PART_Detail"
-                                          Margin="16,12"
+                                          Margin="48,12,16,12"
                                           Content="{TemplateBinding Detail}"
                                           ContentTemplate="{TemplateBinding DetailTemplate}" />
                     </Border>

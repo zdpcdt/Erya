@@ -117,6 +117,12 @@ public sealed class SettingsPageRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Contains(hotkeyCell.GetVisualDescendants(), d => d is Ursa.Controls.KeyGestureInput);
 
+        // 记忆选项行也展开，截屏才能拍到编辑区。
+        cells[fields.FindIndex(f => f is CheckListFieldViewModel)].IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+        hotkeyCell.BringIntoView();
+        Dispatcher.UIThread.RunJobs();
+
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-dark.png"), ThemeVariant.Dark);
         window.Close();
@@ -169,6 +175,9 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.Equal(150, schemeFontCombo.Width);
         Assert.Equal("未设置", schemeFontCombo.SelectedItem);
 
+        // 皮肤库在页面底部：滚到底再截屏，截图才能拍到展开的编辑表单。
+        page.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
+        Dispatcher.UIThread.RunJobs();
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-appearance-light.png"), ThemeVariant.Light);
         window.Close();
     }
