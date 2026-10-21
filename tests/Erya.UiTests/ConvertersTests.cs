@@ -67,4 +67,25 @@ public class ConvertersTests
         Assert.Null(HotkeyConv.Convert("KP_Add", typeof(KeyGesture), null, C));
         Assert.Equal(BindingOperations.DoNothing, HotkeyConv.ConvertBack(null, typeof(string), null, C));
     }
+
+    [Fact]
+    public void Rime_hotkey_modifier_side_keys_display_like_hotkey_input()
+    {
+        // 键位映射行的按键名：string 目标 = 纯显示，风格与 KeyGestureInput 一致。
+        Assert.Equal("CapsLock", HotkeyConv.Convert("Caps_Lock", typeof(string), null, C));
+        Assert.Equal("LeftShift", HotkeyConv.Convert("Shift_L", typeof(string), null, C));
+        Assert.Equal("RightCtrl", HotkeyConv.Convert("Control_R", typeof(string), null, C));
+        // 识别不了的键原样显示，行不至于无名。
+        Assert.Equal("Eisu_toggle", HotkeyConv.Convert("Eisu_toggle", typeof(string), null, C));
+    }
+
+    [Fact]
+    public void Rime_hotkey_modifier_side_keys_round_trip_to_rime_names()
+    {
+        // 出现在快捷键列表里也不能把 Shift_L 写坏成 leftshift。
+        var caps = Assert.IsType<KeyGesture>(HotkeyConv.Convert("Caps_Lock", typeof(KeyGesture), null, C));
+        Assert.Equal("Caps_Lock", HotkeyConv.ConvertBack(caps, typeof(string), null, C));
+        var shift = Assert.IsType<KeyGesture>(HotkeyConv.Convert("Shift_L", typeof(KeyGesture), null, C));
+        Assert.Equal("Shift_L", HotkeyConv.ConvertBack(shift, typeof(string), null, C));
+    }
 }

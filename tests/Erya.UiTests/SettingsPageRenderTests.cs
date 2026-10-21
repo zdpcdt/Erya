@@ -120,7 +120,19 @@ public sealed class SettingsPageRenderTests : IDisposable
         // 记忆选项行也展开，截屏才能拍到编辑区。
         cells[fields.FindIndex(f => f is CheckListFieldViewModel)].IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
-        hotkeyCell.BringIntoView();
+
+        // 键位映射：左列按键名按快捷键输入框同款风格显示（Caps_Lock → CapsLock），
+        // 不再出现 RIME 原始 token。
+        var mappingCell = cells[fields.FindIndex(f => f is KeyMappingFieldViewModel)];
+        mappingCell.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+        var keyTexts = mappingCell.GetVisualDescendants().OfType<TextBlock>()
+            .Where(t => !string.IsNullOrEmpty(t.Text)).Select(t => t.Text!).ToList();
+        Assert.Contains("CapsLock", keyTexts);
+        Assert.DoesNotContain("Caps_Lock", keyTexts);
+
+        // 滚到键位映射行：它在分节里最靠下，滚到它，上方的快捷键/记忆选项也在视野内。
+        mappingCell.BringIntoView();
         Dispatcher.UIThread.RunJobs();
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);

@@ -119,6 +119,8 @@ public sealed class RimeColorConverter : IValueConverter
 /// RIME 快捷键字符串（如 "Control+grave"、"F4"）↔ Avalonia KeyGesture
 /// （KeyGestureInput 绑定用）。无法识别的值显示为空且不会被覆盖；
 /// 录入新组合时写回 RIME 命名（Control/Shift/Alt/Super + 键名）。
+/// 目标类型为 string 时是纯显示模式（键位映射行的按键名）：
+/// 按快捷键输入框同款风格输出（Caps_Lock → CapsLock），识别不了退回原文。
 /// </summary>
 public sealed class RimeHotkeyConverter : IValueConverter
 {
@@ -153,11 +155,31 @@ public sealed class RimeHotkeyConverter : IValueConverter
         ["down"] = Key.Down,
         ["left"] = Key.Left,
         ["right"] = Key.Right,
+        // 独立修饰键（switch_key 等键位映射的键名）
+        ["caps_lock"] = Key.Capital,
+        ["shift_l"] = Key.LeftShift,
+        ["shift_r"] = Key.RightShift,
+        ["control_l"] = Key.LeftCtrl,
+        ["control_r"] = Key.RightCtrl,
+        ["alt_l"] = Key.LeftAlt,
+        ["alt_r"] = Key.RightAlt,
+        ["super_l"] = Key.LWin,
+        ["super_r"] = Key.RWin,
     };
 
     // 反向表额外收录各平台同物理键的其它报告值，写回时统一用 RIME 命名。
     private static readonly Dictionary<Key, string> KeyToName = new()
     {
+        // 独立修饰键写回 RIME 命名（键位映射值回写/快捷键重录时不能变成 leftshift）
+        [Key.Capital] = "Caps_Lock",
+        [Key.LeftShift] = "Shift_L",
+        [Key.RightShift] = "Shift_R",
+        [Key.LeftCtrl] = "Control_L",
+        [Key.RightCtrl] = "Control_R",
+        [Key.LeftAlt] = "Alt_L",
+        [Key.RightAlt] = "Alt_R",
+        [Key.LWin] = "Super_L",
+        [Key.RWin] = "Super_R",
         [Key.OemTilde] = "grave",
         [Key.Oem3] = "grave",
         [Key.OemComma] = "comma",
@@ -223,7 +245,15 @@ public sealed class RimeHotkeyConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string text || text.Trim().Length == 0) return null;
+        var gesture = Parse(text);
+        // 文本目标（键位映射行的按键名）：按 KeyGestureInput 同款风格显示
+        // （Caps_Lock → CapsLock）；无法识别的键退回原始 token，行不至于无名。
+        if (targetType == typeof(string)) return gesture?.ToString() ?? text;
+        return gesture;
+    }
 
+    private static KeyGesture? Parse(string text)
+    {
         var modifiers = KeyModifiers.None;
         Key? key = null;
         foreach (var part in text.Split('+'))
