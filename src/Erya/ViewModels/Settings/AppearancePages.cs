@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -63,40 +65,68 @@ public abstract partial class AppearancePageViewModel : ObservableObject
     }
 }
 
-/// <summary>皮肤库页：配色选择 + 亮/暗双预览 + 皮肤列表（左）与选中皮肤编辑面板（右）。</summary>
+/// <summary>
+/// 皮肤库页（Windows 对比度主题式）：顶部皮肤画廊（点击应用为亮色主题）+
+/// 亮色/暗色主题两个 Cell；「编辑」进入页面内深一层（<see cref="EditingScheme"/>，
+/// 面包屑返回），不弹 Dialog 也不占 NavMenu 层级。
+/// </summary>
 public sealed partial class SkinPageViewModel : AppearancePageViewModel
 {
     public SkinPageViewModel(SettingsEditorViewModel editor) : base(editor, "skin")
     {
-        editor.PropertyChanged += OnEditorChangedForSelection;
-        if (editor.HasSchemeLibrary) SelectDefault(); // 编辑器已先行加载（如测试）的场景
+        editor.PropertyChanged += OnEditorChangedForScheme;
     }
 
+    /// <summary>正在深页编辑的皮肤；null = 画廊视图。</summary>
     [ObservableProperty]
-    private ColorSchemeViewModel? _selectedScheme;
+    [NotifyPropertyChangedFor(nameof(EditingSchemeIsNull))]
+    private ColorSchemeViewModel? _editingScheme;
+
+    /// <summary>视图切换用：true = 画廊，false = 深页编辑。</summary>
+    public bool EditingSchemeIsNull => EditingScheme is null;
+
+    /// <summary>style/color_scheme 字段（schema skinChoice 节加载，画廊点击与 Cell 下拉都写它）。</summary>
+    public ChoiceFieldViewModel? LightSchemeField => FieldOf("style/color_scheme");
+
+    public ChoiceFieldViewModel? DarkSchemeField => FieldOf("style/color_scheme_dark");
+
+    private ChoiceFieldViewModel? FieldOf(string keyPath)
+        => Sections.FirstOrDefault(s => s.Group == "skin")?.Fields
+            .OfType<ChoiceFieldViewModel>().FirstOrDefault(f => f.KeyPath == keyPath);
+
+    /// <summary>画廊卡片点击：应用为亮色主题（待保存编辑，随本页「保存并部署」落盘）。</summary>
+    [RelayCommand]
+    private void UseAsLightScheme(ColorSchemeViewModel? scheme)
+    {
+        if (scheme?.HasValidName == true && LightSchemeField is { } field)
+            field.Selected = scheme.Name.Trim();
+    }
+
+    [RelayCommand]
+    private void EditLightScheme() => EditingScheme = Find(LightSchemeField?.Selected);
+
+    [RelayCommand]
+    private void EditDarkScheme() => EditingScheme = Find(DarkSchemeField?.Selected);
+
+    [RelayCommand]
+    private void BackToGallery() => EditingScheme = null;
+
+    private ColorSchemeViewModel? Find(string? name)
+        => Editor.SchemeLibrary?.Schemes.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// 重新加载或库变更（增删/编辑）后校验选中项：失效（被删/列表刷新）时回落到
-    /// 第一套——ListBox 在选中项被删时会写回 null，右栏不能因此空掉。
+    /// 重新加载后刷新字段引用；正在编辑的皮肤被删/被重载替换时退回画廊，
+    /// 深页永远绑定一个真实存在的皮肤。
     /// </summary>
-    private void OnEditorChangedForSelection(object? sender, PropertyChangedEventArgs e)
+    private void OnEditorChangedForScheme(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(SettingsEditorViewModel.Sections)
-            or nameof(SettingsEditorViewModel.HasSchemeLibrary)
-            or nameof(SettingsEditorViewModel.IsDirty))) return;
-        SelectDefault();
-    }
-
-    private void SelectDefault()
-    {
+        if (e.PropertyName != nameof(SettingsEditorViewModel.Sections)
+            && e.PropertyName != nameof(SettingsEditorViewModel.IsDirty)) return;
+        OnPropertyChanged(nameof(LightSchemeField));
+        OnPropertyChanged(nameof(DarkSchemeField));
         var schemes = Editor.SchemeLibrary?.Schemes;
-        if (schemes is null || schemes.Count == 0)
-        {
-            SelectedScheme = null;
-            return;
-        }
-        if (SelectedScheme is null || !schemes.Contains(SelectedScheme))
-            SelectedScheme = schemes[0];
+        if (EditingScheme is { } editing && (schemes is null || !schemes.Contains(editing)))
+            EditingScheme = null;
     }
 }
 
