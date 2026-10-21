@@ -199,7 +199,7 @@ public sealed class SettingsPageRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Skin_page_lists_schemes_and_edits_the_selected_one()
+    public async Task Skin_gallery_applies_light_scheme_and_edits_in_a_deep_page()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -225,42 +225,61 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 左列表两行；默认选中第一套（内置）——右侧表单只读 + 引导横幅。
-        var list = page.GetVisualDescendants().OfType<ListBox>().Single();
-        Assert.Equal(2, list.ItemCount);
-        Assert.Equal("macos_light", vm.SelectedScheme!.Name);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
-        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "0xECECEC");
-        // 内置选中也有候选窗预览与「以此新增」。
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+        // 画廊：两套皮肤缩略卡 + 亮/暗主题两个 Cell；没有皮肤级字体排版
+        //（与「候选窗排版」页冲突，已从皮肤编辑里移除）。
+        var cards = page.GetVisualDescendants().OfType<Button>()
+            .Where(b => (ToolTip.GetTip(b) as string) == "应用为亮色主题").ToList();
+        Assert.Equal(2, cards.Count);
+        var cellTitles = page.GetVisualDescendants().OfType<Cell>().Select(c => c.Content as string).ToList();
+        Assert.Contains("亮色主题", cellTitles);
+        Assert.Contains("暗色主题", cellTitles);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "字体与排版");
 
-        // 切到自定义皮肤：表单可编辑、删除可见且绑到选中项。
+        // 点卡片 = 应用为亮色主题（待保存编辑）。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
-        vm.SelectedScheme = userDark;
+        vm.UseAsLightSchemeCommand.Execute(userDark);
         Dispatcher.UIThread.RunJobs();
+        Assert.Equal("user_dark", vm.LightSchemeField!.Selected);
+        Assert.True(vm.IsDirty);
+
+        // 「编辑」进入页面内深一层：自定义皮肤可编辑，删除按钮绑到正在编辑的皮肤。
+        vm.EditLightSchemeCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Same(userDark, vm.EditingScheme);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "← 返回皮肤库");
         Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => !t.IsReadOnly);
-        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => p.IsEnabled);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao"); // 深页预览
         var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
-            .Single(b => (ToolTip.GetTip(b) as string)?.Contains("删除") == true && b.IsVisible);
+            .Single(b => b.Classes.Contains("Danger"));
         Assert.Same(userDark, delete.CommandParameter);
         delete.Command!.Execute(delete.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == "user_dark");
-        // 删除后选中项回落到第一套，右栏不空。
-        Assert.Equal("macos_light", vm.SelectedScheme!.Name);
+        Assert.Null(vm.EditingScheme); // 删除后自动返回画廊，不留空深页
 
-        // 以此新增：内置派生成自定义皮肤（唯一名、可编辑、库变脏）。
-        editor.SchemeLibrary.DuplicateSchemeCommand.Execute(editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
-        Assert.True(vm.IsDirty);
+        // 内置皮肤深页只读。
+        vm.LightSchemeField.Selected = "macos_light";
+        vm.EditLightSchemeCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(vm.EditingScheme!.IsShipped);
+        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
+        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
+
+        // 以此新增：内置派生成自定义皮肤（唯一名、库变脏）。
+        editor.SchemeLibrary.DuplicateSchemeCommand.Execute(vm.EditingScheme);
         Assert.Contains(editor.SchemeLibrary.Schemes, s => s.Name == "macos_light1");
+
+        // 返回画廊。
+        vm.BackToGalleryCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Null(vm.EditingScheme);
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Scheme_delete_button_is_wired_to_the_selected_scheme()
+    public async Task Scheme_delete_button_is_wired_to_the_scheme_being_edited()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -280,10 +299,11 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 选中自定义皮肤：删除按钮必须携带选中项作 CommandParameter——
+        // 深页里编辑自定义皮肤：删除按钮必须携带正在编辑的皮肤作 CommandParameter——
         // 否则命令收到 null 静默不动（「删除皮肤没有反应」回归）。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
-        vm.SelectedScheme = userDark;
+        vm.LightSchemeField!.Selected = "user_dark";
+        vm.EditLightSchemeCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
             .Single(b => b.Classes.Contains("Danger"));
@@ -291,9 +311,11 @@ public sealed class SettingsPageRenderTests : IDisposable
         delete.Command!.Execute(delete.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == userDark.Name);
+        Assert.Null(vm.EditingScheme); // 删除的是当前深页 → 返回画廊
 
-        // 内置皮肤选中时：删除按钮隐藏。
-        vm.SelectedScheme = editor.SchemeLibrary.Schemes.Single(s => s.Name == "shipped_light");
+        // 内置皮肤：编辑进入深页后删除按钮隐藏。
+        vm.LightSchemeField.Selected = "shipped_light";
+        vm.EditLightSchemeCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         Assert.False(page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
             .Single(b => b.Classes.Contains("Danger")).IsVisible);
