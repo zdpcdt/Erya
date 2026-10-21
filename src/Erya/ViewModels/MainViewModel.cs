@@ -134,7 +134,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await Distribution.DeployAsync();
-            AppNotifications.Toast("已触发重新部署，修改过的 YAML 配置将重新生效。", NotificationType.Success);
+            AppNotifications.Toast("重新部署完成，修改过的 YAML 配置已生效", NotificationType.Success);
         }
         catch (Exception ex)
         {

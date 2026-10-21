@@ -93,7 +93,7 @@ public partial class BackupRestoreViewModel : ObservableObject
     {
         if (!UserDirExists)
         {
-            AppNotifications.Toast("用户目录尚不存在，无法打开。", NotificationType.Warning);
+            AppNotifications.Toast("用户目录尚不存在，无法打开", NotificationType.Warning);
             return;
         }
 
@@ -109,7 +109,7 @@ public partial class BackupRestoreViewModel : ObservableObject
         var target = SingleLocalPath(parameter);
         if (target is null)
         {
-            AppNotifications.Toast("未选择保存位置，已取消备份。", NotificationType.Information);
+            AppNotifications.Toast("未选择保存位置，已取消备份", NotificationType.Information);
             return;
         }
 
@@ -142,7 +142,7 @@ public partial class BackupRestoreViewModel : ObservableObject
         if (path is null) return; // picker cancelled
         if (!string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase))
         {
-            AppNotifications.Toast("请选择 .zip 格式的备份文件。", NotificationType.Warning);
+            AppNotifications.Toast("请选择 .zip 格式的备份文件", NotificationType.Warning);
             return;
         }
 
@@ -179,8 +179,19 @@ public partial class BackupRestoreViewModel : ObservableObject
 
             if (_distribution is { CanDeploy: true })
             {
-                await _distribution.DeployAsync();
-                AppNotifications.Toast("已触发重新部署，恢复的配置即将生效。", NotificationType.Success);
+                // The restore itself already succeeded — a deploy problem is
+                // reported on its own instead of reading as a restore failure.
+                try
+                {
+                    await _distribution.DeployAsync();
+                    AppNotifications.Toast("重新部署完成，恢复的配置已生效", NotificationType.Success);
+                }
+                catch (Exception ex)
+                {
+                    AppNotifications.Notify("已恢复，但重新部署失败",
+                        $"文件已写回用户目录。{ex.Message} 稍后可按 Ctrl+R 重试。",
+                        NotificationType.Warning);
+                }
             }
             else
             {
