@@ -126,23 +126,25 @@
                                                     </c:Cell>
                                                 </DataTemplate>
 
-                                                <!--  hotkeyList / hotkeyPairList：行内摘要 + 点开录入按键组合  -->
+                                                <!--  hotkeyList / hotkeyPairList：行内摘要 + 点开录入按键组合。
+                                                      录入框固定宽度靠左，删除/添加按钮紧随其后  -->
                                                 <DataTemplate x:DataType="sf:ListFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Items.Count, StringFormat=已设 {0} 项}">
                                                         <c:Cell.Detail>
-                                                            <StackPanel Spacing="10" MaxWidth="480">
+                                                            <StackPanel Spacing="10">
                                                                 <ItemsControl ItemsSource="{Binding Items}">
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate x:DataType="sf:HotkeyRowViewModel">
                                                                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
-                                                                                <u:KeyGestureInput Width="230"
+                                                                                <u:KeyGestureInput Width="280"
                                                                                                    Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
                                                                                                    ToolTip.Tip="{Binding Value}" />
                                                                                 <u:IconButton Classes="Danger"
                                                                                               Theme="{DynamicResource SolidIconButton}"
                                                                                               Icon="{StaticResource SemiIconDelete}"
+                                                                                              VerticalAlignment="Center"
                                                                                               Command="{Binding $parent[ContentControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
                                                                                               CommandParameter="{Binding}"
                                                                                               ToolTip.Tip="删除此快捷键" />
@@ -151,11 +153,12 @@
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
                                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                    <u:KeyGestureInput Width="230"
+                                                                    <u:KeyGestureInput Width="280"
                                                                                        Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
                                                                                        ToolTip.Tip="聚焦后按下新的组合键" />
                                                                     <u:IconButton Theme="{DynamicResource SolidIconButton}"
                                                                                   Icon="{StaticResource SemiIconPlus}"
+                                                                                  VerticalAlignment="Center"
                                                                                   Command="{Binding AddItemCommand}"
                                                                                   ToolTip.Tip="添加快捷键" />
                                                                 </StackPanel>
@@ -195,8 +198,14 @@
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding EnabledSummary}">
                                                         <c:Cell.Detail>
-                                                            <StackPanel Spacing="10" MaxWidth="480">
+                                                            <StackPanel Spacing="10">
                                                                 <ItemsControl ItemsSource="{Binding Options}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <!--  Semi 复选框行高小，拉开行距避免拥挤  -->
+                                                                            <StackPanel Spacing="14" />
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate x:DataType="sf:CheckOptionViewModel">
                                                                             <CheckBox Content="{Binding Value}"
@@ -215,13 +224,12 @@
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Rows.Count, StringFormat={}{0} 个应用}">
                                                         <c:Cell.Detail>
-                                                            <StackPanel Spacing="12" MaxWidth="560">
+                                                            <StackPanel Spacing="12">
                                                                 <ItemsControl ItemsSource="{Binding Rows}">
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
                                                                             <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,4">
                                                                                 <TextBox Grid.Column="0" Text="{Binding AppId, Mode=TwoWay}"
-                                                                                         MinWidth="220" HorizontalAlignment="Left"
                                                                                          PlaceholderText="应用标识（macOS Bundle ID / Windows exe 名）" />
                                                                                 <CheckBox Grid.Column="1" Content="默认英文"
                                                                                           IsChecked="{Binding AsciiMode}"
@@ -229,17 +237,22 @@
                                                                                 <CheckBox Grid.Column="2" Content="Vim 模式"
                                                                                           IsChecked="{Binding VimMode}"
                                                                                           Margin="14,0,0,0" VerticalAlignment="Center" />
-                                                                                <Button Grid.Column="3" Content="删除" Classes="Danger"
-                                                    Theme="{DynamicResource SolidButton}"
-                                                                                        Margin="14,0,0,0"
-                                                                                        Command="{Binding $parent[ContentControl].((sf:AppOptionsFieldViewModel)DataContext).RemoveRowCommand}"
-                                                                                        CommandParameter="{Binding}" />
+                                                                                <u:IconButton Grid.Column="3" Classes="Danger"
+                                                                                              Theme="{DynamicResource SolidIconButton}"
+                                                                                              Icon="{StaticResource SemiIconDelete}"
+                                                                                              Margin="14,0,0,0" VerticalAlignment="Center"
+                                                                                              Command="{Binding $parent[ContentControl].((sf:AppOptionsFieldViewModel)DataContext).RemoveRowCommand}"
+                                                                                              CommandParameter="{Binding}"
+                                                                                              ToolTip.Tip="删除此应用" />
                                                                             </Grid>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
-                                                                <Button Content="添加应用" HorizontalAlignment="Left"
-                                                                        Command="{Binding AddRowCommand}" />
+                                                                <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                                              Icon="{StaticResource SemiIconPlus}"
+                                                                              HorizontalAlignment="Right"
+                                                                              Command="{Binding AddRowCommand}"
+                                                                              ToolTip.Tip="添加应用" />
                                                             </StackPanel>
                                                         </c:Cell.Detail>
                                                     </c:Cell>
@@ -300,13 +313,14 @@
                                         </StackPanel>
                                     </c:Cell.RightContent>
                                     <c:Cell.Detail>
-                                        <StackPanel Spacing="10" MaxWidth="620">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <StackPanel Spacing="10">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,*">
                                                 <TextBlock Text="名称" VerticalAlignment="Center" Width="130" />
-                                                <TextBox Text="{Binding Name, Mode=TwoWay}" Width="200" />
-                                                <TextBlock Text="作者" VerticalAlignment="Center" Margin="16,0,0,0" />
-                                                <TextBox Text="{Binding Author, Mode=TwoWay}" Width="200" />
-                                            </StackPanel>
+                                                <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay}" />
+                                                <TextBlock Grid.Column="2" Text="作者" VerticalAlignment="Center"
+                                                           Margin="16,0,8,0" />
+                                                <TextBox Grid.Column="3" Text="{Binding Author, Mode=TwoWay}" />
+                                            </Grid>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="背景 / 候选文字" VerticalAlignment="Center" Width="130" />
                                                 <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
@@ -326,15 +340,20 @@
                                                 <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
                                                              Color="{Binding CommentTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=333333, Mode=TwoWay}" />
                                             </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                                                 <TextBlock Text="字体 / 字号 / 圆角 / 行距" VerticalAlignment="Center" Width="130" />
-                                                <ComboBox ItemsSource="{Binding FontOptions}"
+                                                <!--  字体下拉固定宽度：合并默认值可能是超长 Emoji 回退串，
+                                                      拉伸会让长文本挤压同行控件（见 SettingsPageRenderTests）  -->
+                                                <ComboBox Grid.Column="1" ItemsSource="{Binding FontOptions}"
                                                           SelectedItem="{Binding SelectedFontFace, Mode=TwoWay}"
                                                           Width="150" />
-                                                <TextBox Text="{Binding FontPointText, Mode=TwoWay}" Width="60" PlaceholderText="字号" />
-                                                <TextBox Text="{Binding CornerRadiusText, Mode=TwoWay}" Width="60" PlaceholderText="圆角" />
-                                                <TextBox Text="{Binding LineSpacingText, Mode=TwoWay}" Width="60" PlaceholderText="行距" />
-                                            </StackPanel>
+                                                <TextBox Grid.Column="2" Text="{Binding FontPointText, Mode=TwoWay}"
+                                                         Margin="8,0,0,0" Width="60" PlaceholderText="字号" />
+                                                <TextBox Grid.Column="3" Text="{Binding CornerRadiusText, Mode=TwoWay}"
+                                                         Margin="8,0,0,0" Width="60" PlaceholderText="圆角" />
+                                                <TextBox Grid.Column="4" Text="{Binding LineSpacingText, Mode=TwoWay}"
+                                                         Margin="8,0,0,0" Width="60" PlaceholderText="行距" />
+                                            </Grid>
                                         </StackPanel>
                                     </c:Cell.Detail>
                                 </c:Cell>
