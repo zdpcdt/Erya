@@ -63,8 +63,11 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
     /// <summary> Fires when any scheme edit/add/remove is pending a save.</summary>
     public event EventHandler? EditsPending;
 
-    /// <summary>行内「编辑」被点击：设置页订阅后打开编辑对话框。</summary>
-    public event Action<ColorSchemeViewModel>? EditRequested;
+    /// <summary>
+    /// 展开区的候选窗预览工厂（设置页注入：预览需要外观字段做排版参数）。
+    /// 每个皮肤首次展开时惰性创建一个固定渲染自己的预览。
+    /// </summary>
+    internal Func<ColorSchemeViewModel, CandidatePreviewViewModel>? PreviewFactory { get; set; }
 
     [ObservableProperty]
     private bool _hasPendingEdits;
@@ -246,31 +249,12 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
             yield return key;
     }
 
-    [RelayCommand]
-    private void AddScheme()
-    {
-        // Seed a new scheme from a sensible light default (or the first
-        // existing one when the frontend ships its own baseline).
-        var seed = Schemes.FirstOrDefault()?.CloneableState is { } existing
-            ? existing with { Name = UniqueName(existing.Name) }
-            : new SchemeState(
-                UniqueName("custom"), "",
-                "FFFFFF", "000000", "D3E3F6", "000000", "333333", "333333", "000000", "000000");
-        AddFromState(seed);
-    }
-
     /// <summary>以此皮肤为底新增一套自定义皮肤（内置皮肤只读，派生后可编辑）。</summary>
     [RelayCommand]
     private void DuplicateScheme(ColorSchemeViewModel? scheme)
     {
         if (scheme is null) return;
         AddFromState(scheme.CloneableState with { Name = UniqueName(scheme.Name) });
-    }
-
-    [RelayCommand]
-    private void EditScheme(ColorSchemeViewModel? scheme)
-    {
-        if (scheme is not null) EditRequested?.Invoke(scheme);
     }
 
     private void AddFromState(SchemeState state)
@@ -371,14 +355,19 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>Bind target inside the scheme card template.</summary>
     public System.Windows.Input.ICommand? RemoveCommand => Owner?.RemoveSchemeCommand;
 
-    /// <summary>打开编辑对话框（自定义皮肤独有；内置皮肤走「以此新增」派生）。</summary>
-    public System.Windows.Input.ICommand? EditCommand => Owner?.EditSchemeCommand;
-
     /// <summary>以此皮肤为底新增自定义皮肤。</summary>
     public System.Windows.Input.ICommand? DuplicateCommand => Owner?.DuplicateSchemeCommand;
 
     /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
     public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
+
+    private CandidatePreviewViewModel? _detailPreview;
+
+    /// <summary>
+    /// 展开区的候选窗预览：首次展开时惰性创建，固定渲染本皮肤
+    /// （排版参数取外观字段），编辑颜色/字号立即反映。
+    /// </summary>
+    public CandidatePreviewViewModel? DetailPreview => _detailPreview ??= Owner?.PreviewFactory?.Invoke(this);
 
     public bool HasValidName => Name.Trim().Length > 0;
 

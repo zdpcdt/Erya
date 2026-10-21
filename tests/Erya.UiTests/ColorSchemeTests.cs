@@ -78,7 +78,7 @@ public sealed class ColorSchemeTests : IDisposable
         light.SelectedFontFace = null!;
         Assert.Equal("未设置", light.SelectedFontFace);
         light.SelectedFontFace = "PingFang SC";
-        library.AddSchemeCommand.Execute(null);
+        library.DuplicateSchemeCommand.Execute(light);
         Assert.True(vm.IsDirty);
 
         await vm.SaveAndDeployCommand.ExecuteAsync(null);

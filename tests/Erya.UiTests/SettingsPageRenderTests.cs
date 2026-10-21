@@ -219,27 +219,26 @@ public sealed class SettingsPageRenderTests : IDisposable
         Cell Row(string name) => page.GetVisualDescendants().OfType<Cell>()
             .Single(c => (c.Content as string) == name);
 
-        // 行是只读摘要：没有 Detail 展开区（旧内联表单已移除）。
-        Assert.Null(Row("macos_light").Detail);
-        // 内置皮肤：编辑按钮在树上但隐藏；自定义皮肤：可点。
-        Ursa.Controls.IconButton EditButton(Cell row) => row.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
-            .Single(b => (ToolTip.GetTip(b) as string) == "编辑此皮肤（对话框）");
-        Assert.False(IsEffectivelyVisible(EditButton(Row("macos_light"))));
-        var edit = EditButton(Row("user_dark"));
-        Assert.True(IsEffectivelyVisible(edit));
-        var schemeVm = Assert.IsType<ColorSchemeViewModel>(edit.CommandParameter);
-        Assert.Same(schemeVm, vm.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark"));
-
-        // 编辑对话框本体：Cell 表单 + 取色器 + 固定渲染本皮肤的候选窗预览。
-        var dialogVm = new SchemeEditDialogViewModel(schemeVm,
-            vm.Sections.SelectMany(s => s.Fields).ToList());
-        var dialog = new SchemeEditDialog { DataContext = dialogVm, Width = 600, Height = 700 };
-        var host = new Window { Width = 640, Height = 760, Content = dialog };
-        host.Show();
+        // 行展开（Windows 设置式）：内置皮肤可看不可改，自定义皮肤可改。
+        var shippedRow = Row("macos_light");
+        Assert.NotNull(shippedRow.Detail);
+        shippedRow.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.True(dialog.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
-        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
-        host.Close();
+        Assert.True(shippedRow.GetVisualDescendants()
+            .OfType<Border>().Single(b => b.Name == "PART_DetailHost" && b.IsVisible).IsVisible);
+        // 内置皮肤：表单控件只读/禁用；颜色行显示 0x 十六进制旁注。
+        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
+        Assert.Contains(shippedRow.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
+        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "0xECECEC");
+        // 展开区带固定渲染本皮肤的候选窗预览。
+        Assert.Contains(shippedRow.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+
+        // 自定义皮肤展开后可编辑。
+        var userRow = Row("user_dark");
+        userRow.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains(userRow.GetVisualDescendants().OfType<TextBox>(), t => !t.IsReadOnly);
+        Assert.Contains(userRow.GetVisualDescendants().OfType<ColorPicker>(), p => p.IsEnabled);
 
         // 以此新增：内置皮肤派生成自定义皮肤（唯一名、可编辑、库变脏）。
         vm.SchemeLibrary.DuplicateSchemeCommand.Execute(vm.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
