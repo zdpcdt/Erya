@@ -167,23 +167,26 @@
                                                     </c:Cell>
                                                 </DataTemplate>
 
-                                                <!--  keyMapping：每键一行下拉  -->
+                                                <!--  keyMapping：每键一行下拉。左列按键名经 RimeHotkey
+                                                      转成与快捷键输入框一致的显示（Caps_Lock → CapsLock）  -->
                                                 <DataTemplate x:DataType="sf:KeyMappingFieldViewModel">
                                                     <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                             Content="{Binding Label}" Description="{Binding Description}"
                                                             Note="{Binding Summary}">
                                                         <c:Cell.Detail>
-                                                            <StackPanel Spacing="10" MaxWidth="480">
+                                                            <StackPanel Spacing="10">
                                                                 <ItemsControl ItemsSource="{Binding Rows}">
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate x:DataType="sf:KeyMappingRowViewModel">
-                                                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,2">
-                                                                                <TextBlock Text="{Binding Key}" Width="110"
+                                                                            <Grid ColumnDefinitions="Auto,Auto" Margin="0,2">
+                                                                                <TextBlock Text="{Binding Key, Converter={x:Static views:Converters.RimeHotkey}}"
+                                                                                           Width="110"
                                                                                            VerticalAlignment="Center" Opacity="0.7" />
-                                                                                <ComboBox ItemsSource="{Binding $parent[ContentControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
+                                                                                <ComboBox Grid.Column="1"
+                                                                                          ItemsSource="{Binding $parent[ContentControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
                                                                                           SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
-                                                                                          MinWidth="180" />
-                                                                            </StackPanel>
+                                                                                          Width="200" />
+                                                                            </Grid>
                                                                         </DataTemplate>
                                                                     </ItemsControl.ItemTemplate>
                                                                 </ItemsControl>
