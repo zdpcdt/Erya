@@ -103,6 +103,16 @@ dotnet build Erya.slnx
 dotnet run --project src/Erya
 ```
 
+### 可下载构建（比赛评委可直接运行）
+
+`dist/` 下为自包含发布包（无需安装 .NET 运行时；Windows zip 解压即用，macOS zip 解压后运行 `Erya.app` 内的二进制或 `chmod +x Erya && ./Erya`，Linux 同理）：
+
+| 平台 | 文件 |
+|---|---|
+| Windows x64 | `Erya_0.1.0_win_x64.zip`（73 MB，Release 构建冒烟通过） |
+| macOS arm64 | `Erya_0.1.0_osx_arm64.zip`（交叉发布；未经真机签名/公证，首次运行需 `xattr -cr` 解除隔离） |
+| Linux x64 | `Erya_0.1.0_linux_x64.zip`（另有三件套发行包见下节） |
+
 ## Linux 发行包
 
 ```bash
