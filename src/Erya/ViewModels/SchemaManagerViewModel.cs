@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -185,11 +186,14 @@ public partial class SchemaManagerViewModel : ObservableObject
             }
 
             await _distribution.DeployAsync();
-            AppNotifications.Toast("方案已保存并触发重新部署。", NotificationType.Success);
+            AppNotifications.Toast("方案已保存，重新部署完成", NotificationType.Success);
         }
         catch (Exception ex)
         {
             ErrorMessage = $"保存失败：{ex.Message}";
+            // The error banner sits above the schema list; the save button is
+            // in the page toolbar — also surface the failure as a toast.
+            AppNotifications.Toast($"保存失败：{ex.Message}", NotificationType.Error);
         }
         finally
         {
@@ -215,7 +219,8 @@ public partial class SchemaManagerViewModel : ObservableObject
         {
             ErrorMessage = "";
             var report = await _installer.InstallAsync(item.Package, _distribution.UserDir, progress);
-            await LoadAsync(); // the fresh schemas show up in the list, waiting to be enabled
+            await LoadAsync(); // the fresh schemas show up in the list
+            var enableNote = await EnableMarkerSchemasAsync(item.Package);
 
             var deployNote = _distribution.CanDeploy
                 ? await DeployQuietlyAsync()
@@ -224,8 +229,8 @@ public partial class SchemaManagerViewModel : ObservableObject
             AppNotifications.Notify("方案安装完成",
                 $"已将 {item.Name} 的 {report.InstalledFiles} 个文件写入用户目录。" +
                 (report.BackupPath is { } backup ? $"安装前的原配置已备份：{backup}。" : "") +
-                deployNote +
-                "在上方列表勾选启用新方案后保存即可使用。",
+                enableNote +
+                deployNote,
                 NotificationType.Success);
         }
         catch (Exception ex)
@@ -239,13 +244,44 @@ public partial class SchemaManagerViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// A freshly installed package is invisible to RIME until one of its
+    /// schemas is in schema_list — tick the package's marker schema when none
+    /// of them is enabled yet, so install plus the deploy that follows yields
+    /// a schema the user can actually switch to. A reinstall keeps whatever
+    /// the user has arranged.
+    /// </summary>
+    private async Task<string> EnableMarkerSchemasAsync(SchemaPackage package)
+    {
+        var markerIds = package.MarkerSchemas.Select(SchemaIdOf).ToHashSet(StringComparer.Ordinal);
+        var rows = Schemas.Where(s => markerIds.Contains(s.Id)).ToList();
+        if (rows.Count == 0) return "在上方列表勾选启用新方案后保存即可使用。";
+        if (rows.Any(r => r.IsSelected)) return "";
+
+        foreach (var row in rows) row.IsSelected = true;
+        try
+        {
+            await _distribution!.SetSelectedSchemasAsync(Schemas.Where(s => s.IsSelected).Select(s => s.Id).ToList());
+            return $"已自动启用 {string.Join("、", rows.Select(r => r.Name))}，可在上方列表调整顺序或取消。";
+        }
+        catch (Exception ex)
+        {
+            foreach (var row in rows) row.IsSelected = false;
+            return $"未能自动启用方案：{ex.Message} 可在上方列表勾选后保存。";
+        }
+    }
+
+    /// <summary>Schema id of a marker file, derived the way the catalog does (rime_ice.schema.yaml → rime_ice).</summary>
+    private static string SchemaIdOf(string markerFile)
+        => Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(markerFile));
+
     /// <summary>Deploy after install; a deploy failure must not read as an install failure.</summary>
     private async Task<string> DeployQuietlyAsync()
     {
         try
         {
             await _distribution!.DeployAsync();
-            return "已触发重新部署。";
+            return "重新部署完成。";
         }
         catch (Exception ex)
         {
