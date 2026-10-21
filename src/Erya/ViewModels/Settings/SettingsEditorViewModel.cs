@@ -110,6 +110,9 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
 
     public bool IsSupported => UnsupportedReason.Length == 0;
 
+    /// <summary>前端自己的 UI 配置文件（weasel.yaml / squirrel.yaml）；Linux 前端为 null。</summary>
+    public string? UiConfigFile => _distribution?.UiConfigFile;
+
     public bool IsDirty => Sections.SelectMany(s => s.Fields).Any(f => f.HasPendingEdits)
                            || (SchemeLibrary?.HasPendingEdits ?? false);
 

@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Erya.Views;
+using Ursa.Controls;
 
 namespace Erya.ViewModels.Settings;
 
@@ -54,6 +57,12 @@ public abstract partial class AppearancePageViewModel : ObservableObject
 
     public bool HasCandidatePreview => Editor.HasCandidatePreview;
 
+    /// <summary>
+    /// 是否鼠须管：只有它支持皮肤级字体/排版（SquirrelTheme.swift 里皮肤键覆盖全局
+    /// style 键）；小狼毫从皮肤只读颜色，皮肤级排版控件对它是 placebo。
+    /// </summary>
+    public bool IsSquirrel => Editor.UiConfigFile == "squirrel.yaml";
+
     public IAsyncRelayCommand LoadCommand => Editor.LoadCommand;
 
     public IAsyncRelayCommand SaveAndDeployCommand => Editor.SaveAndDeployCommand;
@@ -67,8 +76,8 @@ public abstract partial class AppearancePageViewModel : ObservableObject
 
 /// <summary>
 /// 皮肤库页（Windows 对比度主题式）：顶部皮肤画廊（点击应用为亮色主题）+
-/// 亮色/暗色主题两个 Cell；「编辑」进入页面内深一层（<see cref="EditingScheme"/>，
-/// 面包屑返回），不弹 Dialog 也不占 NavMenu 层级。
+/// 亮色/暗色主题两个 Cell；「编辑」打开 Ursa 标准对话框（内置皮肤可调整，
+/// 确定时另存为新的自定义皮肤）。
 /// </summary>
 public sealed partial class SkinPageViewModel : AppearancePageViewModel
 {
@@ -76,14 +85,6 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
     {
         editor.PropertyChanged += OnEditorChangedForScheme;
     }
-
-    /// <summary>正在深页编辑的皮肤；null = 画廊视图。</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(EditingSchemeIsNull))]
-    private ColorSchemeViewModel? _editingScheme;
-
-    /// <summary>视图切换用：true = 画廊，false = 深页编辑。</summary>
-    public bool EditingSchemeIsNull => EditingScheme is null;
 
     /// <summary>style/color_scheme 字段（schema skinChoice 节加载，画廊点击与 Cell 下拉都写它）。</summary>
     public ChoiceFieldViewModel? LightSchemeField => FieldOf("style/color_scheme");
@@ -103,30 +104,43 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
     }
 
     [RelayCommand]
-    private void EditLightScheme() => EditingScheme = Find(LightSchemeField?.Selected);
+    private Task EditLightSchemeAsync() => EditAsync(Find(LightSchemeField?.Selected));
 
     [RelayCommand]
-    private void EditDarkScheme() => EditingScheme = Find(DarkSchemeField?.Selected);
-
-    [RelayCommand]
-    private void BackToGallery() => EditingScheme = null;
+    private Task EditDarkSchemeAsync() => EditAsync(Find(DarkSchemeField?.Selected));
 
     private ColorSchemeViewModel? Find(string? name)
         => Editor.SchemeLibrary?.Schemes.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// 重新加载后刷新字段引用；正在编辑的皮肤被删/被重载替换时退回画廊，
-    /// 深页永远绑定一个真实存在的皮肤。
+    /// 编辑对话框：确定 = 保留（内置皮肤 = 另存为新的自定义皮肤），取消 = 还原。
+    /// 对话框里的删除按钮可能在等待期间把皮肤从库中移走——返回后按存在性分流。
     /// </summary>
+    private async Task EditAsync(ColorSchemeViewModel? scheme)
+    {
+        if (scheme is null || SchemeLibrary is null) return;
+        var fields = Sections.SelectMany(s => s.Fields).ToList();
+        var vm = new SchemeEditDialogViewModel(scheme, fields, SchemeLibrary, IsSquirrel);
+        var result = await OverlayDialog.ShowStandardAsync(
+            new SchemeEditDialog(), vm, "main",
+            new OverlayDialogOptions
+            {
+                Title = vm.Title,
+                Mode = DialogMode.None,
+                Buttons = DialogButton.OKCancel,
+            });
+        vm.Detach(); // 解开预览对字段的订阅
+        if (!SchemeLibrary.Schemes.Contains(scheme)) return; // 已在对话框里删除
+        if (result == DialogResult.OK) vm.Commit();
+        else vm.Revert();
+    }
+
+    /// <summary>重新加载后刷新字段引用。</summary>
     private void OnEditorChangedForScheme(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(SettingsEditorViewModel.Sections)
-            && e.PropertyName != nameof(SettingsEditorViewModel.IsDirty)) return;
+        if (e.PropertyName != nameof(SettingsEditorViewModel.Sections)) return;
         OnPropertyChanged(nameof(LightSchemeField));
         OnPropertyChanged(nameof(DarkSchemeField));
-        var schemes = Editor.SchemeLibrary?.Schemes;
-        if (EditingScheme is { } editing && (schemes is null || !schemes.Contains(editing)))
-            EditingScheme = null;
     }
 }
 

@@ -265,6 +265,22 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
         MarkDirty();
     }
 
+    /// <summary>
+    /// 内置皮肤在编辑对话框里的「另存为」：编辑结果（当前控件值）存成新的自定义
+    /// 皮肤（唯一名），原内置皮肤还原开框快照——内置定义永远不被写。
+    /// </summary>
+    public ColorSchemeViewModel SaveEditedAsCustom(ColorSchemeViewModel scheme, SchemeState snapshot)
+    {
+        var edited = scheme.CloneableState;
+        scheme.Restore(snapshot);
+        var copy = edited with { Name = UniqueName(edited.Name) };
+        var custom = ColorSchemeViewModel.FromState(copy);
+        custom.IsAdded = true;
+        Attach(custom);
+        MarkDirty();
+        return custom;
+    }
+
     [RelayCommand]
     private void RemoveScheme(ColorSchemeViewModel? scheme)
     {
@@ -429,6 +445,25 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         CornerRadiusText = state.CornerRadius >= 0 ? state.CornerRadius.ToString() : "",
         LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "",
     };
+
+    /// <summary>把快照写回当前实例（编辑对话框「取消」/内置皮肤「另存为」用），不换实例、不断绑定。</summary>
+    public void Restore(SchemeState state)
+    {
+        Name = state.Name;
+        Author = state.Author;
+        BackColor = state.BackColor;
+        CandidateTextColor = state.CandidateTextColor;
+        HilitedBackColor = state.HilitedBackColor;
+        HilitedTextColor = state.HilitedTextColor;
+        CommentTextColor = state.CommentTextColor ?? "";
+        HilitedCommentTextColor = state.HilitedCommentTextColor ?? "";
+        TextColor = state.TextColor ?? "";
+        HilitedPreeditColor = state.HilitedPreeditColor ?? "";
+        FontFace = state.FontFace ?? "";
+        FontPointText = state.FontPoint > 0 ? state.FontPoint.ToString() : "";
+        CornerRadiusText = state.CornerRadius >= 0 ? state.CornerRadius.ToString() : "";
+        LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "";
+    }
 
     public static ColorSchemeViewModel Create(
         string name, IReadOnlyDictionary<string, object?>? definition, bool isShipped, bool isPatched,
