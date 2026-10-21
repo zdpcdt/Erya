@@ -198,7 +198,7 @@ public sealed class CandidatePreviewTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Edit_dialog_preview_is_pinned_to_the_scheme_and_revert_restores()
+    public void Expanded_row_preview_is_pinned_to_the_scheme()
     {
         Write("weasel.yaml", """
             style:
@@ -214,21 +214,16 @@ public sealed class CandidatePreviewTests : IDisposable
             """);
         var vm = LoadUi("weasel.yaml");
         var aqua = vm.SchemeLibrary!.Schemes.Single(s => s.Name == "aqua");
-        var fields = vm.Sections.SelectMany(s => s.Fields).ToList();
 
-        var dialog = new SchemeEditDialogViewModel(aqua, fields);
-        // 预览固定渲染正在编辑的皮肤；排版参数仍取字段（字号 14）。
-        Assert.Contains("aqua", dialog.Preview.Caption);
-        Assert.Equal(14, dialog.Preview.FontSize);
+        // 展开区的预览惰性创建，固定渲染本皮肤；排版参数仍取字段（字号 14）。
+        var preview = aqua.DetailPreview!;
+        Assert.Contains("aqua", preview.Caption);
+        Assert.Equal(14, preview.FontSize);
 
-        // 对话框里的编辑直接落在皮肤 VM 上，预览立即反映。
+        // 展开区里的编辑直接落在皮肤 VM 上，预览立即反映。
         aqua.BackColor = "FFFFFF";
-        Assert.Equal(0xFF, ColorOf(dialog.Preview.BackBrush).R);
-
-        // 取消：开框快照写回原实例，预览与皮肤一起复原（绑定不断）。
-        dialog.Revert();
-        Assert.Equal(0xEC, ColorOf(dialog.Preview.BackBrush).B);
-        Assert.Equal("ECEEEE", aqua.BackColor);
+        Assert.Equal(0xFF, ColorOf(preview.BackBrush).R);
+        Assert.Equal(0xFF, ColorOf(vm.CandidatePreview!.BackBrush).R); // 顶部亮色窗联动（同一实例）
     }
 
     [AvaloniaFact]

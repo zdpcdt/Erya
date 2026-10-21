@@ -59,7 +59,20 @@ public sealed class DocsScreenshotGenerator
         Dispatcher.UIThread.RunJobs();
         Capture(vm, window, "appearance.png", ThemeVariant.Light);
         Capture(vm, window, "appearance-dark.png", ThemeVariant.Dark);
-        // 皮肤库在页面底部：滚到底拍行布局（只读行 + 按钮组）。
+        // 皮肤库在页面底部：展开一套自定义皮肤（没有则内置）拍新表单，滚到底。
+        var appearance = Assert.IsType<SettingsEditorViewModel>(vm.CurrentPage);
+        var expandable = appearance.SchemeLibrary!.Schemes.FirstOrDefault(s => !s.IsShipped)
+                         ?? appearance.SchemeLibrary.Schemes.FirstOrDefault();
+        if (expandable is not null)
+        {
+            var row = window.GetVisualDescendants().OfType<Erya.Controls.Cell>()
+                .FirstOrDefault(c => (c.Content as string) == expandable.Name);
+            if (row is not null)
+            {
+                row.IsExpanded = true;
+                Dispatcher.UIThread.RunJobs();
+            }
+        }
         window.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
         Dispatcher.UIThread.RunJobs();
         Capture(vm, window, "appearance-schemes.png", ThemeVariant.Light);

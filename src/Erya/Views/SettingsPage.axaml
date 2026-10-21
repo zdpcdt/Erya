@@ -300,7 +300,7 @@
                             </StackPanel>
                         </c:CellGroup.Header>
                         <c:CellGroup.Description>
-                            皮肤集合（preset_color_schemes），颜色为 0xBBGGRR。内置皮肤只读：可复制 YAML 或以此为基础派生；自定义皮肤点「编辑」在对话框里调整（带实时预览）。
+                            皮肤集合（preset_color_schemes），颜色为 0xBBGGRR。展开查看/调整：内置皮肤只读，可复制 YAML 或「以此新增」派生；自定义皮肤展开即可编辑（预览实时联动）。
                         </c:CellGroup.Description>
                         <c:CellGroup.ItemTemplate>
                             <DataTemplate x:DataType="sf:ColorSchemeViewModel">
@@ -329,12 +329,6 @@
                                                     <TextBlock Text=" ní hǎo" Foreground="{Binding CommentTextPreview}" FontSize="11" />
                                                 </StackPanel>
                                             </Border>
-                                            <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                                          VerticalAlignment="Center"
-                                                          IsVisible="{Binding !IsShipped}"
-                                                          Command="{Binding EditCommand}"
-                                                          CommandParameter="{Binding}"
-                                                          ToolTip.Tip="编辑此皮肤（对话框）" />
                                             <u:IconButton Icon="{StaticResource SemiIconPlus}"
                                                           VerticalAlignment="Center"
                                                           Command="{Binding DuplicateCommand}"
@@ -354,12 +348,124 @@
                                                           ToolTip.Tip="删除此皮肤（内置皮肤不可删除）" />
                                         </StackPanel>
                                     </c:Cell.RightContent>
+                                    <!--  展开区（Windows 设置式）：一行一个 Cell；内置皮肤只读（IsReadOnly/IsEnabled 绑定）  -->
+                                    <c:Cell.Detail>
+                                        <StackPanel Spacing="12">
+                                            <ContentControl Content="{Binding DetailPreview}"
+                                                            ContentTemplate="{StaticResource CandidateWindowTemplate}" />
+                                            <c:CellGroup Header="信息">
+                                                <c:Cell Content="名称">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <TextBox Text="{Binding Name, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                                     Width="240" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="作者">
+                                                    <c:Cell.RightContent>
+                                                        <TextBox Text="{Binding Author, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                                 Width="240" />
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                            </c:CellGroup>
+                                            <c:CellGroup Header="颜色（0xBBGGRR）">
+                                                <c:Cell Content="背景 / 候选文字">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding BackColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=FFFFFF, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding BackColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding CandidateTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding CandidateTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="高亮背景 / 高亮文字">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding HilitedBackColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=D3E3F6, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding HilitedBackColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding HilitedTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding HilitedTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="注释文字">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding CommentTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=333333, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding CommentTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="高亮注释文字">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding HilitedCommentTextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=333333, Mode=TwoWay}" />
+                                                            <TextBlock Text="{Binding HilitedCommentTextColor, StringFormat={}0x{0}}" Opacity="0.6" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="编码文字 / 高亮编码">
+                                                    <c:Cell.RightContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding TextColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                            <ColorPicker IsColorSpectrumVisible="False" IsColorSpectrumSliderVisible="False" Margin="16,0,0,0"
+                                                                         IsEnabled="{Binding !IsShipped}"
+                                                                         Color="{Binding HilitedPreeditColor, Converter={x:Static views:Converters.RimeColor}, ConverterParameter=000000, Mode=TwoWay}" />
+                                                        </StackPanel>
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                            </c:CellGroup>
+                                            <c:CellGroup Header="字体与排版">
+                                                <c:Cell Content="字体">
+                                                    <c:Cell.RightContent>
+                                                        <!--  固定宽：回退长串不能挤爆行  -->
+                                                        <ComboBox ItemsSource="{Binding FontOptions}"
+                                                                  SelectedItem="{Binding SelectedFontFace, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding !IsShipped}"
+                                                                  Width="240" />
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="字号（像素，0 = 跟随全局）">
+                                                    <c:Cell.RightContent>
+                                                        <TextBox Text="{Binding FontPointText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                                 Width="120" PlaceholderText="未设置" />
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="圆角（像素，空 = 跟随全局）">
+                                                    <c:Cell.RightContent>
+                                                        <TextBox Text="{Binding CornerRadiusText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                                 Width="120" PlaceholderText="未设置" />
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                                <c:Cell Content="行距（像素，空 = 跟随全局）">
+                                                    <c:Cell.RightContent>
+                                                        <TextBox Text="{Binding LineSpacingText, Mode=TwoWay}" IsReadOnly="{Binding IsShipped}"
+                                                                 Width="120" PlaceholderText="未设置" />
+                                                    </c:Cell.RightContent>
+                                                </c:Cell>
+                                            </c:CellGroup>
+                                        </StackPanel>
+                                    </c:Cell.Detail>
                                 </c:Cell>
                             </DataTemplate>
                         </c:CellGroup.ItemTemplate>
                     </c:CellGroup>
-                    <Button Content="新增皮肤（基于第一套或浅色默认）" HorizontalAlignment="Left"
-                            Command="{Binding SchemeLibrary.AddSchemeCommand}" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

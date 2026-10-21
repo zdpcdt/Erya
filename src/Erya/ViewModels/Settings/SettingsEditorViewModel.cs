@@ -12,8 +12,6 @@ using Erya.Core.Configuration;
 using Erya.Core.Distributions;
 using Erya.Core.Settings;
 using Erya.Services;
-using Erya.Views;
-using Ursa.Controls;
 
 namespace Erya.ViewModels.Settings;
 
@@ -162,11 +160,17 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             {
                 SchemeLibrary = new ColorSchemeLibraryViewModel(_store, targetFile);
                 SchemeLibrary.EditsPending += (_, _) => OnPropertyChanged(nameof(IsDirty));
-                SchemeLibrary.EditRequested += OnSchemeEditRequested;
                 SchemeLibrary.Load();
                 OnPropertyChanged(nameof(HasSchemeLibrary));
 
                 var fields = Sections.SelectMany(s => s.Fields).ToList();
+                // 展开区的皮肤预览：排版参数取外观字段当前值（含未保存编辑）。
+                SchemeLibrary.PreviewFactory = scheme =>
+                {
+                    var preview = new CandidatePreviewViewModel();
+                    preview.AttachToScheme(fields, scheme);
+                    return preview;
+                };
                 CandidatePreview ??= new CandidatePreviewViewModel();
                 CandidatePreviewDark ??= new CandidatePreviewViewModel(preferDark: true);
                 CandidatePreview.Attach(fields, SchemeLibrary);
@@ -274,29 +278,5 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(SettingsFieldViewModel.HasPendingEdits))
             OnPropertyChanged(nameof(IsDirty));
-    }
-
-    /// <summary>自定义皮肤的行内「编辑」：Ursa 标准对话框 + Cell 表单 + 实时预览；取消回滚快照。</summary>
-    private async void OnSchemeEditRequested(ColorSchemeViewModel scheme)
-    {
-        if (SchemeLibrary is null) return;
-        try
-        {
-            var vm = new SchemeEditDialogViewModel(
-                scheme, Sections.SelectMany(s => s.Fields).ToList());
-            var result = await OverlayDialog.ShowStandardAsync(
-                new SchemeEditDialog(), vm, "main",
-                new OverlayDialogOptions
-                {
-                    Title = vm.Title,
-                    Mode = DialogMode.None,
-                    Buttons = DialogButton.OKCancel,
-                });
-            if (result != DialogResult.OK) vm.Revert();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"打开皮肤编辑失败：{ex.Message}";
-        }
     }
 }
