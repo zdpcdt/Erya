@@ -199,7 +199,7 @@ public sealed class SettingsPageRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Skin_gallery_applies_light_scheme_and_edits_in_a_deep_page()
+    public async Task Skin_gallery_applies_light_scheme_and_edit_opens_dialog()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -225,15 +225,14 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 画廊：两套皮肤缩略卡 + 亮/暗主题两个 Cell；没有皮肤级字体排版
-        //（与「候选窗排版」页冲突，已从皮肤编辑里移除）。
+        // 画廊：两套皮肤缩略卡 + 亮/暗主题两个 Cell（带图标，Note 不再重复显示皮肤名）。
         var cards = page.GetVisualDescendants().OfType<Button>()
             .Where(b => (ToolTip.GetTip(b) as string) == "应用为亮色主题").ToList();
         Assert.Equal(2, cards.Count);
-        var cellTitles = page.GetVisualDescendants().OfType<Cell>().Select(c => c.Content as string).ToList();
-        Assert.Contains("亮色主题", cellTitles);
-        Assert.Contains("暗色主题", cellTitles);
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "字体与排版");
+        var lightCell = page.GetVisualDescendants().OfType<Cell>().Single(c => (c.Content as string) == "亮色主题");
+        var darkCell = page.GetVisualDescendants().OfType<Cell>().Single(c => (c.Content as string) == "暗色主题");
+        Assert.Null(lightCell.Note); // Note 不再重复显示皮肤名（下拉里已有）
+        Assert.Null(darkCell.Note);
 
         // 点卡片 = 应用为亮色主题（待保存编辑）。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
@@ -241,45 +240,60 @@ public sealed class SettingsPageRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Equal("user_dark", vm.LightSchemeField!.Selected);
         Assert.True(vm.IsDirty);
+        vm.LightSchemeField.Selected = "macos_light"; // 还原，后续断言用
 
-        // 「编辑」进入页面内深一层：自定义皮肤可编辑，删除按钮绑到正在编辑的皮肤。
-        vm.EditLightSchemeCommand.Execute(null);
-        Dispatcher.UIThread.RunJobs();
-        Assert.Same(userDark, vm.EditingScheme);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "← 返回皮肤库");
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => !t.IsReadOnly);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao"); // 深页预览
-        var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
-            .Single(b => b.Classes.Contains("Danger"));
-        Assert.Same(userDark, delete.CommandParameter);
-        delete.Command!.Execute(delete.CommandParameter);
-        Dispatcher.UIThread.RunJobs();
-        Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == "user_dark");
-        Assert.Null(vm.EditingScheme); // 删除后自动返回画廊，不留空深页
+        // 编辑语义（不经 OverlayDialog，直接构造对话框 VM）：
+        // 内置皮肤可编辑，「确定」另存为新的自定义皮肤、原内置还原。
+        var fields = editor.Sections.SelectMany(s => s.Fields).ToList();
+        var dialog = new SchemeEditDialogViewModel(
+            editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"), fields, editor.SchemeLibrary, isSquirrel: true);
+        Assert.True(dialog.SavesAsCopy);
+        Assert.Contains("另存为", dialog.Tip);
+        dialog.Scheme.BackColor = "1C1C1E";
+        dialog.Scheme.Name = "我的浅色改";
+        var saved = dialog.Commit();
+        Assert.Equal("我的浅色改1", saved!.Name); // 唯一名
+        Assert.False(saved.IsShipped);
+        Assert.Equal("1C1C1E", saved.BackColor); // 编辑结果进副本
+        var original = editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light");
+        Assert.Equal("ECECEC", original.BackColor); // 原内置还原快照
+        Assert.True(vm.IsDirty);
 
-        // 内置皮肤深页只读。
-        vm.LightSchemeField.Selected = "macos_light";
-        vm.EditLightSchemeCommand.Execute(null);
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(vm.EditingScheme!.IsShipped);
-        Assert.Contains(page.GetVisualDescendants().OfType<TextBox>(), t => t.IsReadOnly);
-        Assert.Contains(page.GetVisualDescendants().OfType<ColorPicker>(), p => !p.IsEnabled);
+        // 取消：全部还原。
+        var dialog2 = new SchemeEditDialogViewModel(original, fields, editor.SchemeLibrary, isSquirrel: true);
+        dialog2.Scheme.BackColor = "000000";
+        dialog2.Revert();
+        Assert.Equal("ECECEC", original.BackColor);
 
-        // 以此新增：内置派生成自定义皮肤（唯一名、库变脏）。
-        editor.SchemeLibrary.DuplicateSchemeCommand.Execute(vm.EditingScheme);
+        // 对话框控件本体：预览 + 取色器 + 鼠须管下显示字体与排版组。
+        var control = new SchemeEditDialog { DataContext = dialog2, Width = 600, Height = 700 };
+        var host = new Window { Width = 640, Height = 760, Content = control };
+        host.Show();
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(control.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
+        Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+        Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("字体与排版"));
+        host.Close();
+
+        // 小狼毫：字体与排版组不显示（皮肤级排版对它是 placebo）。
+        var weaselDialog = new SchemeEditDialogViewModel(original, fields, editor.SchemeLibrary, isSquirrel: false);
+        var control2 = new SchemeEditDialog { DataContext = weaselDialog, Width = 600, Height = 700 };
+        var host2 = new Window { Width = 640, Height = 760, Content = control2 };
+        host2.Show();
+        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain(control2.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("字体与排版"));
+        host2.Close();
+
+        // 以此新增：内置派生成自定义皮肤（唯一名）。
+        editor.SchemeLibrary.DuplicateSchemeCommand.Execute(editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"));
         Assert.Contains(editor.SchemeLibrary.Schemes, s => s.Name == "macos_light1");
-
-        // 返回画廊。
-        vm.BackToGalleryCommand.Execute(null);
-        Dispatcher.UIThread.RunJobs();
-        Assert.Null(vm.EditingScheme);
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Scheme_delete_button_is_wired_to_the_scheme_being_edited()
+    public async Task Scheme_delete_button_is_wired_inside_the_edit_dialog()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -299,27 +313,31 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 深页里编辑自定义皮肤：删除按钮必须携带正在编辑的皮肤作 CommandParameter——
-        // 否则命令收到 null 静默不动（「删除皮肤没有反应」回归）。
+        // 编辑对话框里的删除按钮必须携带皮肤作 CommandParameter——否则命令收到
+        // null 静默不动（「删除皮肤没有反应」回归）。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
-        vm.LightSchemeField!.Selected = "user_dark";
-        vm.EditLightSchemeCommand.Execute(null);
+        var fields = editor.Sections.SelectMany(s => s.Fields).ToList();
+        var dialogVm = new SchemeEditDialogViewModel(userDark, fields, editor.SchemeLibrary);
+        var control = new SchemeEditDialog { DataContext = dialogVm, Width = 600, Height = 700 };
+        var host = new Window { Width = 640, Height = 760, Content = control };
+        host.Show();
         Dispatcher.UIThread.RunJobs();
-        var delete = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+        var delete = control.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
             .Single(b => b.Classes.Contains("Danger"));
         Assert.Same(userDark, delete.CommandParameter);
         delete.Command!.Execute(delete.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == userDark.Name);
-        Assert.Null(vm.EditingScheme); // 删除的是当前深页 → 返回画廊
 
-        // 内置皮肤：编辑进入深页后删除按钮隐藏。
-        vm.LightSchemeField.Selected = "shipped_light";
-        vm.EditLightSchemeCommand.Execute(null);
+        // 内置皮肤：对话框里删除按钮隐藏。
+        var shipped = editor.SchemeLibrary.Schemes.Single(s => s.Name == "shipped_light");
+        var dialogVm2 = new SchemeEditDialogViewModel(shipped, fields, editor.SchemeLibrary);
+        control.DataContext = dialogVm2;
         Dispatcher.UIThread.RunJobs();
-        Assert.False(page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+        Assert.False(control.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
             .Single(b => b.Classes.Contains("Danger")).IsVisible);
 
+        host.Close();
         window.Close();
     }
 }

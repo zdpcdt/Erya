@@ -78,7 +78,8 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
         }
     }
 
-    private void Detach()
+    /// <summary>解绑全部订阅（对话框关闭后调用，防预览累积订阅外观字段）。</summary>
+    public void Detach()
     {
         foreach (var field in _fields.Values) field.PropertyChanged -= OnAnythingChanged;
         _fields.Clear();
