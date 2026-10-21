@@ -430,25 +430,6 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "",
     };
 
-    /// <summary>把快照写回当前实例（编辑对话框「取消」用），不换实例、不断绑定。</summary>
-    public void Restore(SchemeState state)
-    {
-        Name = state.Name;
-        Author = state.Author;
-        BackColor = state.BackColor;
-        CandidateTextColor = state.CandidateTextColor;
-        HilitedBackColor = state.HilitedBackColor;
-        HilitedTextColor = state.HilitedTextColor;
-        CommentTextColor = state.CommentTextColor ?? "";
-        HilitedCommentTextColor = state.HilitedCommentTextColor ?? "";
-        TextColor = state.TextColor ?? "";
-        HilitedPreeditColor = state.HilitedPreeditColor ?? "";
-        FontFace = state.FontFace ?? "";
-        FontPointText = state.FontPoint > 0 ? state.FontPoint.ToString() : "";
-        CornerRadiusText = state.CornerRadius >= 0 ? state.CornerRadius.ToString() : "";
-        LineSpacingText = state.LineSpacing >= 0 ? state.LineSpacing.ToString() : "";
-    }
-
     public static ColorSchemeViewModel Create(
         string name, IReadOnlyDictionary<string, object?>? definition, bool isShipped, bool isPatched,
         IReadOnlyDictionary<string, object?>? shippedDefinition = null)
