@@ -26,8 +26,10 @@ internal static class AppNotifications
         var window = MainWindowOrNull();
         if (window is null) return;
         if (!WindowToastManager.TryGetToastManager(window, out var manager) || manager is null) return;
-        manager.Show(new Toast(content, type, expiration ?? TimeSpan.FromSeconds(4),
-            showClose: true, onClick: null, onClose: null));
+        // The "Light" class pins the card to the Semi theme's light palette
+        // (solid background + border) regardless of the app theme variant.
+        manager.Show(content, type, expiration ?? TimeSpan.FromSeconds(4),
+            showIcon: true, showClose: true, onClick: null, onClose: null, classes: ["Light"]);
     }
 
     public static void Notify(string title, string content, NotificationType type)
