@@ -110,6 +110,11 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
 
     public bool HasSchemeLibrary => SchemeLibrary is not null;
 
+    /// <summary>候选窗实时预览（仅外观目标）：随字段与皮肤库联动。</summary>
+    public CandidatePreviewViewModel? CandidatePreview { get; private set; }
+
+    public bool HasCandidatePreview => CandidatePreview is not null;
+
     [RelayCommand]
     private async Task LoadAsync()
     {
@@ -155,6 +160,10 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 SchemeLibrary.EditsPending += (_, _) => OnPropertyChanged(nameof(IsDirty));
                 SchemeLibrary.Load();
                 OnPropertyChanged(nameof(HasSchemeLibrary));
+
+                CandidatePreview ??= new CandidatePreviewViewModel();
+                CandidatePreview.Attach(Sections.SelectMany(s => s.Fields).ToList(), SchemeLibrary);
+                OnPropertyChanged(nameof(HasCandidatePreview));
             }
         }
         catch (Exception ex)
