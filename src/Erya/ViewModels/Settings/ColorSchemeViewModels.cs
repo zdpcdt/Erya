@@ -4,7 +4,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Avalonia.Controls.Notifications;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -563,8 +567,54 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
             else map[key] = value;
         }
         foreach (var (key, fallback) in CoreColorFallbacks) map.TryAdd(key, "0x" + fallback);
+        // A user-created scheme has no shipped definition to carry the display
+        // name — without this key the frontend would show the raw id.
+        map.TryAdd("name", Name.Trim());
         return map;
     }
+
+    /// <summary>复制到剪贴板的补丁片段：整皮肤定义，颜色保持 0xBBGGRR 原样。</summary>
+    [RelayCommand]
+    private async Task CopyYaml()
+    {
+        var yaml = BuildYamlSnippet();
+        if (AppNotifications.ClipboardOrNull() is { } clipboard)
+            await clipboard.SetTextAsync(yaml);
+        AppNotifications.Toast($"已复制皮肤「{Name.Trim()}」的 YAML 定义", NotificationType.Success);
+    }
+
+    internal string BuildYamlSnippet()
+    {
+        var id = HasValidName ? Name.Trim() : OriginalName;
+        var map = ToPatchValue();
+        var sb = new StringBuilder("preset_color_schemes:\n  ").Append(Quote(id)).Append(":\n");
+        foreach (var key in SnippetOrder.Where(map.ContainsKey))
+            AppendEntry(sb, key, map[key]);
+        foreach (var (key, value) in map.Where(kv => !SnippetOrder.Contains(kv.Key)).OrderBy(kv => kv.Key, StringComparer.Ordinal))
+            AppendEntry(sb, key, value);
+        return sb.ToString();
+    }
+
+    private static readonly string[] SnippetOrder =
+    [
+        "name", "author",
+        "back_color", "candidate_text_color",
+        "hilited_candidate_back_color", "hilited_candidate_text_color",
+        "comment_text_color", "hilited_comment_text_color", "text_color", "hilited_text_color",
+        "label_color", "border_color", "shadow_color",
+        "font_face", "font_point", "corner_radius", "line_spacing",
+    ];
+
+    private static void AppendEntry(StringBuilder sb, string key, object? value)
+    {
+        if (value is null) return;
+        sb.Append("    ").Append(key).Append(": ")
+          .Append(value is long or double or bool ? value.ToString() : Quote(value.ToString()!))
+          .Append('\n');
+    }
+
+    private static string Quote(string text)
+        => "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
     // ---------- previews (BGR → RGB) ----------
 

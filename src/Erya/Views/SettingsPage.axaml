@@ -375,13 +375,18 @@
                                                     <TextBlock Text=" ní hǎo" Foreground="{Binding CommentTextPreview}" FontSize="11" />
                                                 </StackPanel>
                                             </Border>
-                                            <u:IconButton Classes="Danger" Theme="{DynamicResource SolidIconButton}"
-                                                          Icon="{StaticResource SemiIconDelete}"
-                                                          VerticalAlignment="Center"
-                                                          IsVisible="{Binding CanRemove}"
-                                                          Command="{Binding RemoveCommand}"
-                                                          CommandParameter="{Binding}"
-                                                          ToolTip.Tip="删除此皮肤（内置皮肤不可删除）" />
+                                        <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                      Icon="{StaticResource SemiIconCopy}"
+                                                      VerticalAlignment="Center"
+                                                      Command="{Binding CopyYamlCommand}"
+                                                      ToolTip.Tip="复制此皮肤的 YAML 定义" />
+                                        <u:IconButton Classes="Danger" Theme="{DynamicResource SolidIconButton}"
+                                                      Icon="{StaticResource SemiIconDelete}"
+                                                      VerticalAlignment="Center"
+                                                      IsVisible="{Binding CanRemove}"
+                                                      Command="{Binding RemoveCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      ToolTip.Tip="删除此皮肤（内置皮肤不可删除）" />
                                         </StackPanel>
                                     </c:Cell.RightContent>
                                     <c:Cell.Detail>
