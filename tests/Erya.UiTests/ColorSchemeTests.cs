@@ -273,6 +273,36 @@ public sealed class ColorSchemeTests : IDisposable
         Assert.Equal(byte.MaxValue, brush.Color.B);
     }
 
+    [AvaloniaFact]
+    public void Copy_yaml_builds_a_quoted_patch_snippet()
+    {
+        Write("squirrel.yaml", """
+            preset_color_schemes:
+              macos_light:
+                name: 浅色
+                author: ssnhd
+                back_color: 0xECECEC
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0xD3E3F6
+                hilited_candidate_text_color: 0x000000
+                label_color: 0x888888
+            style:
+              color_scheme: macos_light
+            """);
+        var vm = LoadUi();
+        var light = vm.SchemeLibrary!.Schemes.Single(s => s.Name == "macos_light");
+
+        var yaml = light.BuildYamlSnippet();
+        Assert.StartsWith("preset_color_schemes:\n  \"macos_light\":\n", yaml);
+        // 0x 颜色必须带引号：YAML 1.1 会把裸 0xECECEC 读成整数。
+        Assert.Contains("    back_color: \"0xECECEC\"", yaml);
+        Assert.Contains("    name: \"浅色\"", yaml);
+        Assert.Contains("    author: \"ssnhd\"", yaml);
+        Assert.Contains("    label_color: \"0x888888\"", yaml); // 未建模键原样带上
+        // 无头环境没有主窗口剪贴板——命令不应抛错（静默跳过复制，只出提示）。
+        light.CopyYamlCommand.Execute(null);
+    }
+
     private sealed class StubDistribution : RimeDistributionBase
     {
         public StubDistribution(string userDir) => UserDir = userDir;
