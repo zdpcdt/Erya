@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
              mc:Ignorable="d" d:DesignWidth="340" d:DesignHeight="440"
              Width="340"
@@ -47,8 +48,8 @@
                                     <TextBlock Grid.Column="0" Text="{Binding Id}" FontSize="12"
                                                FontFamily="Consolas, Menlo, monospace"
                                                TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Grid.Column="1" Text="已添加" Opacity="0.45" FontSize="11"
-                                               VerticalAlignment="Center" IsVisible="{Binding IsAdded}" />
+                                    <u:Badge Grid.Column="1" Content="已添加" VerticalAlignment="Center"
+                                             IsVisible="{Binding IsAdded}" />
                                 </Grid>
                             </Button>
                         </DataTemplate>
