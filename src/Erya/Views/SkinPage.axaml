@@ -88,12 +88,12 @@
                     <ItemsControl ItemsSource="{Binding FilteredSchemes}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <u:ElasticWrapPanel IsFillHorizontal="True" ItemWidth="190" ItemSpacing="12" LineSpacing="12"/>
+                                <u:ElasticWrapPanel IsFillHorizontal="True" ItemWidth="232" ItemSpacing="12" LineSpacing="12"/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="sf:ColorSchemeViewModel">
-                                <Border HorizontalAlignment="Left" Width="190" Padding="10" CornerRadius="6"
+                                <Border HorizontalAlignment="Left" Width="232" Padding="10" CornerRadius="6"
                                         BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1">
                                     <StackPanel Spacing="8">
                                         <!--  卡片主体：点击 = 应用为亮色主题  -->
@@ -120,15 +120,9 @@
                                                     </Border>
                                                     <!--  当前角色角标  -->
                                                     <StackPanel Orientation="Horizontal" Spacing="4"
-                                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0">
-                                                        <Border Background="#CC0064FA" CornerRadius="3" Padding="4,1"
-                                                                IsVisible="{Binding IsCurrentLight}">
-                                                            <TextBlock Text="亮色" FontSize="10" Foreground="White" />
-                                                        </Border>
-                                                        <Border Background="#CC5B5F6E" CornerRadius="3" Padding="4,1"
-                                                                IsVisible="{Binding IsCurrentDark}">
-                                                            <TextBlock Text="暗色" FontSize="10" Foreground="White" />
-                                                        </Border>
+                                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0">
+                                                        <u:Badge Content="亮色" IsVisible="{Binding IsCurrentLight}" />
+                                                        <u:Badge Content="暗色" IsVisible="{Binding IsCurrentDark}" />
                                                     </StackPanel>
                                                 </Panel>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"

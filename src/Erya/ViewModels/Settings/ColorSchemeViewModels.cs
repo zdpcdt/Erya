@@ -369,12 +369,12 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
     public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
 
-    /// <summary>卡片第二行：类型 + 原作者（有则带出）。</summary>
+    /// <summary>卡片第二行：类型 + 原作者（去掉 &lt;邮箱&gt;，太长放不下）。</summary>
     public string DetailText
     {
         get
         {
-            var author = Author.Trim();
+            var author = Regex.Replace(Author.Trim(), @"\s*<[^>]*>", "");
             return author.Length == 0 ? KindText : $"{KindText} · {author}";
         }
     }

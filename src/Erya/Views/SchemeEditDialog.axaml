@@ -28,8 +28,8 @@
                 </c:Cell>
             </c:CellGroup>
 
-            <!--  颜色：一排色块，点击弹取色器（对比度主题式）  -->
-            <c:CellGroup Header="颜色（0xBBGGRR）">
+            <!--  颜色：一排色块，点击弹取色面板（对比度主题式）  -->
+            <c:CellGroup Header="颜色">
                 <c:Cell Content="背景 / 候选文字">
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">

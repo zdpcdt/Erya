@@ -5,6 +5,7 @@
              xmlns:ip="https://irihi.tech/iconica/iconpark"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
              xmlns:views="clr-namespace:Erya.Views"
+             xmlns:colorpicker="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ColorPicker"
              x:Class="Erya.App"
              RequestedThemeVariant="Default">
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
@@ -74,7 +75,7 @@
                 </Border>
             </DataTemplate>
 
-            <!--  颜色色块（对比度主题式）：圆角矩形显色，点击弹完整取色器  -->
+            <!--  颜色色块（对比度主题式）：圆角矩形显色，点击弹扁平取色面板（ColorView 直出）  -->
             <ControlTheme x:Key="{x:Type views:ColorSwatch}" TargetType="views:ColorSwatch">
                 <Setter Property="Template">
                     <ControlTemplate>
@@ -85,7 +86,11 @@
                                     BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1" />
                             <Button.Flyout>
                                 <Flyout Placement="Bottom">
-                                    <ColorPicker x:Name="PART_Picker" Width="280" />
+                                    <colorpicker:ColorView Width="300"
+                                                           IsAccentColorsVisible="False"
+                                                           IsColorPaletteVisible="False"
+                                                           IsColorModelVisible="False"
+                                                           Color="{Binding SwatchColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
