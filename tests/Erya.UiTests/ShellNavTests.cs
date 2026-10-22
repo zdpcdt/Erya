@@ -8,6 +8,7 @@ using Avalonia.VisualTree;
 using Erya;
 using Erya.Core.Distributions;
 using Erya.ViewModels;
+using Erya.ViewModels.Advanced;
 using Erya.ViewModels.Settings;
 using Ursa.Controls;
 using Xunit;
@@ -118,6 +119,31 @@ public class ShellNavTests
         vm.SelectedNav = vm.NavItems[2];
         Dispatcher.UIThread.RunJobs();
         Assert.Same(input, vm.CurrentPage);
+    }
+
+    [AvaloniaFact]
+    public void Appearance_nav_group_hidden_stays_flat_and_navigable()
+    {
+        Application.Current!.Resources.MergedDictionaries.Add(Icons(AllIconKeys));
+
+        // Linux 运行时由 App.axaml.cs 传入 false：外观三页编辑的 UI YAML
+        // （squirrel/weasel）在 fcitx5/ibus 前端上不存在。
+        var vm = new ShellViewModel(new DistributionManager(), showAppearance: false);
+        Assert.Equal(["overview", "schemas", "inputSettings", "advanced", "backup"],
+            vm.NavItems.Select(n => n.Key).ToList());
+
+        var window = new MainWindow { DataContext = vm };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // 分组拿掉后导航保持扁平可用：输入设置之后直接是高级设置、备份恢复。
+        vm.SelectedNav = vm.NavItems[3];
+        Dispatcher.UIThread.RunJobs();
+        Assert.IsType<AdvancedSettingsViewModel>(vm.CurrentPage);
+        vm.SelectedNav = vm.NavItems[4];
+        Dispatcher.UIThread.RunJobs();
+        Assert.IsType<BackupRestoreViewModel>(vm.CurrentPage);
+        Assert.Equal("备份恢复", vm.PageTitle);
     }
 
     [AvaloniaFact]
