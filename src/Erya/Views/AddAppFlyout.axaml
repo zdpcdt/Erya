@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d" d:DesignWidth="340" d:DesignHeight="480"
+             Width="340"
+             x:Class="Erya.Views.AddAppFlyout"
+             x:DataType="sf:AddAppPickerViewModel">
+
+    <!--  添加应用弹层：搜索/手输合一；点任意条目=立即添加并关闭（回车=添加手输的标识）。  -->
+    <StackPanel Spacing="8">
+
+        <TextBox x:Name="SearchBox" Text="{Binding SearchText, Mode=TwoWay}"
+                 Watermark="搜索或输入应用标识…" KeyDown="OnSearchKeyDown">
+            <TextBox.InnerLeftContent>
+                <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
+            </TextBox.InnerLeftContent>
+        </TextBox>
+
+        <!--  首行三态：添加手输标识 / 加不了的行内提示（重复、夹空白）  -->
+        <Button Classes="Tertiary" Padding="10,8" HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Command="{Binding AddCustomCommand}"
+                IsVisible="{Binding CanAddCustom}">
+            <TextBlock Text="{Binding CustomAddLabel}" FontWeight="SemiBold" />
+        </Button>
+        <TextBlock Text="{Binding HintText}" Opacity="0.55" FontSize="12" Margin="2,0,0,0"
+                   IsVisible="{Binding HintText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                   TextWrapping="Wrap" />
+
+        <ScrollViewer MaxHeight="380">
+            <StackPanel Spacing="6">
+
+                <!--  常用应用（平台相关预设；组内被过滤空时连组头一起隐藏）  -->
+                <TextBlock Text="常用应用" FontSize="12" Opacity="0.55" Margin="2,2,0,2"
+                           IsVisible="{Binding HasFilteredPresets}" />
+                <ItemsControl ItemsSource="{Binding FilteredPresets}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="sf:AddAppEntry">
+                            <Button Classes="Tertiary" Padding="10,7" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding $parent[ItemsControl].((sf:AddAppPickerViewModel)DataContext).PickEntryCommand}"
+                                    CommandParameter="{Binding}"
+                                    IsEnabled="{Binding !IsAdded}"
+                                    ToolTip.Tip="{Binding Id}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="1">
+                                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
+                                                   FontFamily="Consolas, Menlo, monospace"
+                                                   IsVisible="{Binding ShowId}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="已添加" Opacity="0.45" FontSize="11"
+                                               VerticalAlignment="Center" IsVisible="{Binding IsAdded}" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!--  正在运行（仅 Windows；exe 名即标识，单行条目）  -->
+                <TextBlock Text="正在运行" FontSize="12" Opacity="0.55" Margin="2,8,0,2"
+                           IsVisible="{Binding HasFilteredRunning}" />
+                <ItemsControl ItemsSource="{Binding FilteredRunning}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="sf:AddAppEntry">
+                            <Button Classes="Tertiary" Padding="10,7" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding $parent[ItemsControl].((sf:AddAppPickerViewModel)DataContext).PickEntryCommand}"
+                                    CommandParameter="{Binding}"
+                                    IsEnabled="{Binding !IsAdded}"
+                                    ToolTip.Tip="添加为「默认英文」">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Id}" FontSize="12"
+                                               FontFamily="Consolas, Menlo, monospace"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="已添加" Opacity="0.45" FontSize="11"
+                                               VerticalAlignment="Center" IsVisible="{Binding IsAdded}" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>
