@@ -162,8 +162,10 @@ public class ShellNavTests
 
         var backup = Assert.IsType<BackupRestoreViewModel>(vm.CurrentPage);
         Assert.Equal("备份恢复", vm.PageTitle);
-        Assert.True(backup.HasHint); // no distribution in the test harness → Load ran
-        Assert.Equal(2, window.GetVisualDescendants().OfType<PathPicker>().Count());
+        Assert.False(backup.HasUserDir); // no distribution in the test harness → Load ran, empty state
+        // 重构后的页面：零 Banner、零 PathPicker（文件选择器移到 code-behind）。
+        Assert.Empty(window.GetVisualDescendants().OfType<Banner>());
+        Assert.Empty(window.GetVisualDescendants().OfType<PathPicker>());
 
         vm.SelectedNav = vm.NavItems[0];
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

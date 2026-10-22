@@ -3,72 +3,84 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.BackupRestorePage"
              x:DataType="vm:BackupRestoreViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <StackPanel Spacing="20">
 
-        <!-- User directory the operations act on -->
-        <StackPanel Grid.Row="0" Spacing="4">
-            <TextBlock Text="备份与恢复均针对 RIME 用户目录（方案配置、自定义补丁、用户词典）。"
-                       Opacity="0.6" />
-            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasUserDir}">
-                <TextBox Text="{Binding UserDir}" IsReadOnly="True" MinWidth="440" />
-                <u:IconButton Command="{Binding OpenUserDirCommand}"
-                              Theme="{DynamicResource SolidIconButton}"
-                              Icon="{StaticResource SemiIconFolderOpen}"
-                              ToolTip.Tip="在资源管理器中打开用户目录" />
-            </StackPanel>
-            <TextBlock Text="{Binding UserDirSummary}" FontSize="12" Opacity="0.6"
-                       IsVisible="{Binding UserDirExists}" />
+        <TextBlock Text="备份与恢复均针对 RIME 用户目录（方案配置、自定义补丁、用户词典）。"
+                   Opacity="0.6" TextWrapping="Wrap" />
+
+        <!--  备份 / 恢复两组。结果反馈走 Toast；busy 由按钮文案与禁用表达，页面不放状态条  -->
+        <StackPanel Spacing="20" IsVisible="{Binding HasUserDir}">
+
+            <c:CellGroup Header="备份"
+                         Description="打包用户目录为 zip，用于存档或迁移；build 目录是部署产物，不参与备份">
+                <c:Cell Icon="{StaticResource SemiIconSaveStroked}"
+                        Content="备份用户目录">
+                    <c:Cell.Note>
+                        <TextBlock Text="{Binding UserDirSummary}" FontSize="13" Opacity="0.75"
+                                   VerticalAlignment="Center" />
+                    </c:Cell.Note>
+                    <c:Cell.RightContent>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <u:IconButton Command="{Binding OpenUserDirCommand}"
+                                          Theme="{DynamicResource SolidIconButton}"
+                                          Icon="{StaticResource SemiIconFolderOpen}"
+                                          ToolTip.Tip="在资源管理器中打开用户目录" />
+                            <Button Classes="Primary" MinWidth="120"
+                                    Content="{Binding BackupButtonText}"
+                                    IsEnabled="{Binding CanBackup}"
+                                    Click="OnBackupClick" />
+                        </StackPanel>
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
+
+            <c:CellGroup Header="恢复"
+                         Description="同名文件会被覆盖；恢复前自动在备份所在目录生成安全备份，完成后自动重新部署">
+                <c:Cell Icon="{StaticResource SemiIconRestoreStroked}"
+                        Content="从备份恢复">
+                    <c:Cell.Note>
+                        <TextBlock Text="{Binding RestoreNote}" FontSize="13" Opacity="0.75"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="280"
+                                   VerticalAlignment="Center"
+                                   ToolTip.Tip="{Binding RestoreSourcePath}" />
+                    </c:Cell.Note>
+                    <c:Cell.RightContent>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button MinWidth="108" Content="选择备份文件…"
+                                    IsEnabled="{Binding !IsBusy}"
+                                    Click="OnPickRestoreClick" />
+                            <Button Classes="Primary" MinWidth="108"
+                                    Content="{Binding RestoreButtonText}"
+                                    IsEnabled="{Binding CanRestore}"
+                                    Command="{Binding RestoreCommand}" />
+                        </StackPanel>
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
         </StackPanel>
 
-        <!-- Two operations -->
-        <StackPanel Grid.Row="1" Margin="0,18" Spacing="24">
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="备份" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="将用户目录打包为一个 zip 压缩包，用于存档或迁移。build 目录是部署产物，不参与备份。"
-                           Opacity="0.6" FontSize="12" />
-                <u:PathPicker UsePickerType="SaveFile"
-                              Title="选择备份保存位置"
-                              ButtonContent="选择位置并备份…"
-                              SuggestedStartPath="{Binding DefaultStartFolder}"
-                              SuggestedFileName="{Binding BackupFileName}"
-                              DefaultFileExtension="zip"
-                              FileFilter="[备份压缩包, *.zip]"
-                              IsOmitCommandOnCancel="True"
-                              Command="{Binding BackupCommand}"
-                              IsEnabled="{Binding HasUserDir}" />
+        <!--  未检测到 RIME：与概览页英雄卡空态同语言的整页空态  -->
+        <Border Background="{DynamicResource SemiColorBackground1}"
+                BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1"
+                CornerRadius="{DynamicResource SemiBorderRadiusMedium}"
+                Padding="20,36" IsVisible="{Binding !HasUserDir}">
+            <StackPanel HorizontalAlignment="Center" Spacing="10">
+                <PathIcon Width="28" Height="28" HorizontalAlignment="Center"
+                          Theme="{DynamicResource InnerPathIcon}"
+                          Data="{StaticResource SemiIconMonitorStroked}"
+                          Foreground="{DynamicResource SemiColorText3}" />
+                <TextBlock Text="未检测到 RIME 发行版" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="安装鼠须管、小狼毫等 RIME 前端后，可在此备份与恢复用户目录配置。"
+                           Opacity="0.6" FontSize="12" HorizontalAlignment="Center"
+                           TextWrapping="Wrap" />
             </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="恢复" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="从备份压缩包写回用户目录：同名文件被覆盖，恢复前自动在备份所在目录生成安全备份。完成后自动触发重新部署。"
-                           Opacity="0.6" FontSize="12" />
-                <u:PathPicker UsePickerType="OpenFile"
-                              Title="选择要恢复的备份压缩包"
-                              ButtonContent="选择备份文件…"
-                              SuggestedStartPath="{Binding DefaultStartFolder}"
-                              FileFilter="[备份压缩包, *.zip]"
-                              IsOmitCommandOnCancel="True"
-                              Command="{Binding PickRestoreSourceCommand}" />
-                <Button Content="从备份恢复" Classes="Primary" HorizontalAlignment="Left"
-                        MinWidth="108" Margin="0,2,0,0"
-                        Command="{Binding RestoreCommand}"
-                        IsEnabled="{Binding CanRestore}" />
-            </StackPanel>
-        </StackPanel>
-
-        <!-- Inline states -->
-        <StackPanel Grid.Row="2" Spacing="10">
-            <TextBlock Text="正在处理…" IsVisible="{Binding IsBusy}" Opacity="0.6" />
-            <u:Banner Type="Warning" Content="{Binding Hint}" ShowIcon="True"
-                      IsVisible="{Binding HasHint}" />
-            <u:Banner Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
-                      IsVisible="{Binding HasError}" />
-        </StackPanel>
-    </Grid>
+        </Border>
+    </StackPanel>
 </UserControl>
