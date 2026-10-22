@@ -217,6 +217,15 @@ public sealed partial class FontFieldViewModel : TextFieldViewModel
     }
 }
 
+/// <summary>
+/// hotkey：单个标量快捷键（如 key_binder/select_first_character）——文本
+/// 语义（清空 = 移除补丁键、回落方案默认），控件换 KeyGestureInput 录入。
+/// </summary>
+public sealed partial class HotkeyFieldViewModel : TextFieldViewModel
+{
+    public HotkeyFieldViewModel(SettingsField field) : base(field) { }
+}
+
 /// <summary>enum / segmented: a choice list where null means “跟随默认（未设置）”。</summary>
 public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
 {

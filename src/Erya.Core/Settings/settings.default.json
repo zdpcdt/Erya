@@ -113,39 +113,23 @@
     {
       "id": "keyBinder",
       "title": "功能快捷键",
+      "description": "翻页、移动光标等通用按键映射由方案在 key_binder/bindings 预置，如需修改请在「高级设置」编辑 default.yaml 补丁。",
       "fields": [
         {
-          "id": "selectPair",
-          "label": "以词定字",
-          "type": "hotkeyPairList",
+          "id": "selectFirstCharacter",
+          "label": "以词定字（首字）",
+          "description": "按下后直接上屏当前候选的首个字；需方案自带以词定字脚本（如雾凇拼音），librime 引擎本身不读此键",
+          "type": "hotkey",
           "icon": "td:CheckRectangle",
-          "keyPath": "key_binder/select_pair",
-          "itemLabels": [
-            "首字",
-            "末字"
-          ]
+          "keyPath": "key_binder/select_first_character"
         },
         {
-          "id": "cursorPair",
-          "label": "移动光标",
-          "type": "hotkeyPairList",
-          "icon": "td:Cursor",
-          "keyPath": "key_binder/cursor_pair",
-          "itemLabels": [
-            "上个拼音",
-            "下个拼音"
-          ]
-        },
-        {
-          "id": "pagePair",
-          "label": "翻页",
-          "type": "hotkeyPairList",
-          "icon": "ip:UpOne",
-          "keyPath": "key_binder/page_pair",
-          "itemLabels": [
-            "上页",
-            "下页"
-          ]
+          "id": "selectLastCharacter",
+          "label": "以词定字（末字）",
+          "description": "按下后直接上屏当前候选的最后一个字；需方案自带以词定字脚本（如雾凇拼音），librime 引擎本身不读此键",
+          "type": "hotkey",
+          "icon": "td:CheckRectangle",
+          "keyPath": "key_binder/select_last_character"
         }
       ]
     },
@@ -156,14 +140,14 @@
         {
           "id": "digitSeparators",
           "label": "数字分隔符",
-          "description": "连续输入数字时不上屏的分隔字符，如 \"',\"",
+          "description": "连续输入数字时不上屏的分隔字符，如 \"',\"（需 librime ≥ 1.13）",
           "type": "text",
           "keyPath": "punctuator/digit_separators"
         },
         {
           "id": "digitSeparatorAction",
           "label": "分隔符行为",
-          "description": "commit 为上屏分隔符，noop 为不处理",
+          "description": "commit 为上屏分隔符，noop 为不处理（需 librime ≥ 1.13.1）",
           "type": "enum",
           "keyPath": "punctuator/digit_separator_action",
           "choices": [

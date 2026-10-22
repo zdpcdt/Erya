@@ -35,6 +35,42 @@ public sealed class SettingsSchemaTests
     }
 
     [Fact]
+    public void Default_schema_key_paths_are_all_read_by_librime()
+    {
+        // 键集对照 rime/librime 1.16 源码逐一核实（注释为读取处）。key_binder
+        // 组件只读 key_binder/bindings（key_binder.cc），引擎没有成对快捷键
+        // API——select_pair/cursor_pair/page_pair 写进补丁永远不生效，已撤下。
+        var schema = SettingsSchemas.LoadDefault();
+
+        var librimeReadKeys = new HashSet<string>
+        {
+            "menu/page_size",                                             // schema.cc
+            "switcher/caption", "switcher/hotkeys",                       // switcher.cc
+            "switcher/save_options", "switcher/fold_options",
+            "switcher/option_list_separator", "switcher/abbreviate_options", // switch_translator.cc
+            "ascii_composer/good_old_caps_lock", "ascii_composer/switch_key", // ascii_composer.cc
+            "punctuator/digit_separators", "punctuator/digit_separator_action", // punctuator.cc，≥1.13
+        };
+        // 引擎不读、由方案附带脚本消费的键：雾凇拼音 lua/select_character.lua
+        // 用 config:get_string 读取（标量——控件必须写单键，不能写列表）。
+        var schemeScriptKeys = new HashSet<string>
+        {
+            "key_binder/select_first_character", "key_binder/select_last_character",
+        };
+        foreach (var field in schema.Sections.SelectMany(s => s.Fields))
+        {
+            Assert.True(
+                librimeReadKeys.Contains(field.KeyPath) || schemeScriptKeys.Contains(field.KeyPath),
+                $"librime 与常见方案脚本都不读取 {field.KeyPath}（字段 {field.Id}）——写进补丁也不会生效。");
+        }
+        // 曾以不存在的 key_binder/*_pair 键固化过三个 placebo 控件，防止回归。
+        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields),
+            f => f.KeyPath is "key_binder/select_pair" or "key_binder/cursor_pair" or "key_binder/page_pair");
+        Assert.All(schema.Sections.Single(s => s.Id == "keyBinder").Fields,
+            f => Assert.Equal("hotkey", f.Type)); // get_string 标量；列表值脚本读不出来
+    }
+
+    [Fact]
     public void Squirrel_schema_targets_squirrel_yaml_with_dynamic_color_schemes()
     {
         var schema = SettingsSchemas.LoadForUiConfig("squirrel.yaml");
@@ -80,6 +116,7 @@ public sealed class SettingsSchemaTests
             "style/comment_font_face", "style/comment_font_point",
             "style/preedit_font_face", "style/preedit_font_point",
             "keyboard_layout", "chord_duration", "show_notifications_when", "status_icon/show",
+            "style/status_message_type", // SquirrelTheme.swift 也读；schema 暂未暴露，留给未来字段
         };
         foreach (var field in schema.Sections.SelectMany(s => s.Fields))
         {
