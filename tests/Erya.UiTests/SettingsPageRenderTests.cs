@@ -269,12 +269,13 @@ public sealed class SettingsPageRenderTests : IDisposable
         var fields = editor.Sections.SelectMany(s => s.Fields).ToList();
         var original = editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light");
         var draft = SkinPageViewModel.CreateDraft(original);
-        Assert.Equal("macos_light 副本", draft.Name);
+        Assert.Equal("我的皮肤", draft.Name);
+        Assert.Equal("ECECEC", draft.BackColor); // 配色以内置为底
         var dialog = new SchemeEditDialogViewModel(draft, fields, editor.SchemeLibrary,
-            isSquirrel: true, isDraft: true, baseName: original.Name);
+            isSquirrel: true, isDraft: true);
         Assert.True(dialog.IsDraft);
+        Assert.Equal("新建皮肤", dialog.Title);
         Assert.False(dialog.CanManage); // 草稿无库身份：删除/以此新增不显示
-        Assert.Contains("副本", dialog.Tip);
         dialog.Scheme.BackColor = "1C1C1E";
         dialog.Scheme.Name = "我的浅色改";
         var saved = dialog.Commit();
@@ -288,7 +289,7 @@ public sealed class SettingsPageRenderTests : IDisposable
         // 草稿取消 = 丢弃（无还原动作、不进库）。
         var draftDrop = SkinPageViewModel.CreateDraft(original);
         var dialogDrop = new SchemeEditDialogViewModel(draftDrop, fields, editor.SchemeLibrary,
-            isSquirrel: true, isDraft: true, baseName: original.Name);
+            isSquirrel: true, isDraft: true);
         dialogDrop.Scheme.BackColor = "000000";
         dialogDrop.Revert();
         Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == draftDrop.Name);

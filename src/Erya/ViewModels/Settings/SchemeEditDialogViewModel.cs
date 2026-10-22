@@ -4,8 +4,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Erya.ViewModels.Settings;
 
 /// <summary>
-/// 皮肤编辑对话框，两种模式：
-/// <para><b>草稿</b>（新建/内置派生）——编辑一个未入库的副本，从第一下起改的就是
+/// 皮肤编辑对话框（窗口级），两种模式：
+/// <para><b>草稿</b>（新建/内置复制）——编辑一个未入库的副本，从第一下起改的就是
 /// 自己的新皮肤：确定 = 入库为自定义皮肤，取消 = 丢弃（无还原动作）。</para>
 /// <para><b>已有</b>（自定义皮肤）——编辑直接落在库中实例上：确定 = 保留，取消 =
 /// 还原开框快照。</para>
@@ -18,15 +18,13 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
 
     public SchemeEditDialogViewModel(ColorSchemeViewModel scheme,
         IReadOnlyCollection<SettingsFieldViewModel> fields,
-        ColorSchemeLibraryViewModel? library = null, bool isSquirrel = false,
-        bool isDraft = false, string? baseName = null)
+        ColorSchemeLibraryViewModel? library = null, bool isSquirrel = false, bool isDraft = false)
     {
         Scheme = scheme;
         _snapshot = scheme.CloneableState;
         _library = library;
         IsSquirrel = isSquirrel;
         IsDraft = isDraft;
-        BaseName = baseName;
         Preview = new CandidatePreviewViewModel();
         Preview.AttachToScheme(fields, scheme);
     }
@@ -41,16 +39,7 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
     /// <summary>草稿模式：编辑未入库的副本，确定=创建，取消=丢弃。</summary>
     public bool IsDraft { get; }
 
-    /// <summary>草稿来源皮肤名（内置派生/当前亮色皮肤）；从零新建为 null。</summary>
-    public string? BaseName { get; }
-
     public string Title => IsDraft ? "新建皮肤" : $"编辑皮肤：{Scheme.Name.Trim()}";
-
-    public string Tip => IsDraft
-        ? BaseName is { Length: > 0 } baseName
-            ? $"基于「{baseName}」的副本：改好名字和配色后点「确定」，保存为你的自定义皮肤。"
-            : "从零开始配一套自己的皮肤：点「确定」保存为自定义皮肤。"
-        : "修改实时预览；「确定」保留，「取消」还原。";
 
     /// <summary>删除/以此新增只对已入库的自定义皮肤有意义（草稿没有库身份）。</summary>
     public bool CanManage => !IsDraft && _library is not null && Scheme.CanRemove;

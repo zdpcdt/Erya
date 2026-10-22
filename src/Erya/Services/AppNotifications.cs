@@ -45,6 +45,9 @@ internal static class AppNotifications
     private static TopLevel? MainWindowOrNull()
         => (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
+    /// <summary>主窗口（窗口级 Dialog 的 owner 等）。</summary>
+    public static Window? MainWindow => MainWindowOrNull() as Window;
+
     /// <summary>主窗口剪贴板；无窗口时（无头测试）为 null。</summary>
     public static Avalonia.Input.Platform.IClipboard? ClipboardOrNull()
         => MainWindowOrNull()?.Clipboard;
