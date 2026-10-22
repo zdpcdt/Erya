@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Erya.Core.Settings;
 
@@ -12,12 +13,6 @@ namespace Erya.Core.Settings;
 /// </summary>
 public static class SettingsSchemas
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
 
     /// <summary>Core engine settings — every RIME frontend reads default.yaml.</summary>
     public static SettingsSchema LoadDefault()
@@ -37,7 +32,7 @@ public static class SettingsSchemas
         var resourceName = $"Erya.Core.Settings.settings.{name}.json";
         using var stream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException($"内置设置 schema 缺失：{resourceName}");
-        var schema = JsonSerializer.Deserialize<SettingsSchema>(stream, JsonOptions)
+        var schema = JsonSerializer.Deserialize(stream, SettingsSchemaContext.Default.SettingsSchema)
             ?? throw new InvalidOperationException($"内置设置 schema 无法解析：{resourceName}");
         Validate(schema, resourceName);
         return schema;
@@ -68,3 +63,11 @@ public static class SettingsSchemas
         }
     }
 }
+
+/// <summary>Native AOT 下 System.Text.Json 反射模式不可用，内置 schema 走源生成。</summary>
+[JsonSerializable(typeof(SettingsSchema))]
+[JsonSourceGenerationOptions(
+    PropertyNameCaseInsensitive = true,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true)]
+internal sealed partial class SettingsSchemaContext : JsonSerializerContext;

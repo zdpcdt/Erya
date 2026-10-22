@@ -1,0 +1,44 @@
+<linker>
+  <!--
+    设置 schema JSON 里的图标以 "td:Name"/"ip:Name" 字符串经 IconSpecConverter 的
+    Type.GetType 反射创建，裁剪器无法静态可见。此处按 settings.*.json 实际用到的
+    图标逐一保根；给 schema 增加新图标时需同步此列表（缺了只会图标不显示）。
+  -->
+  <assembly fullname="Irihi.Iconica.TDesign">
+    <type fullname="Irihi.Iconica.TDesign.Icons.Alpha" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.App" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.CheckRectangle" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.ChevronDown" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Cursor" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Frame" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Internet" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Keyboard" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Layout" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.LineHeight" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.LockOn" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.MenuFold" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Moon" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Notification" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.OrderList" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Round" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Save" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Sunny" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Swap" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Text" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Time" />
+    <type fullname="Irihi.Iconica.TDesign.Icons.Vertical" />
+  </assembly>
+  <assembly fullname="Irihi.Iconica.IconPark">
+    <type fullname="Irihi.Iconica.IconPark.Icons.FontSize" />
+    <type fullname="Irihi.Iconica.IconPark.Icons.Format" />
+    <type fullname="Irihi.Iconica.IconPark.Icons.MemoryOne" />
+    <type fullname="Irihi.Iconica.IconPark.Icons.UpOne" />
+  </assembly>
+  <!-- ReorderableItemsControl.MoveItem 反射调用 ObservableCollection`1.Move（缺了退化为 Remove+Insert）；
+       net10 中该类型在 System.ObjectModel 程序集 -->
+  <assembly fullname="System.ObjectModel">
+    <type fullname="System.Collections.ObjectModel.ObservableCollection`1">
+      <method name="Move" />
+    </type>
+  </assembly>
+</linker>

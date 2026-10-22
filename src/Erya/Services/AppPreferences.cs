@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Erya.Services;
 
@@ -10,10 +11,8 @@ namespace Erya.Services;
 /// here today — everything else is state derived from the RIME install. Disk
 /// failures are swallowed: preferences are a convenience, never a blocker.
 /// </summary>
-public sealed class AppPreferences
+public sealed partial class AppPreferences
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-
     private readonly string _path;
 
     private AppPreferences(string path) => _path = path;
@@ -28,7 +27,7 @@ public sealed class AppPreferences
         try
         {
             if (!File.Exists(pathToUse)) return prefs;
-            var data = JsonSerializer.Deserialize<Persisted>(File.ReadAllText(pathToUse));
+            var data = JsonSerializer.Deserialize(File.ReadAllText(pathToUse), PrefsContext.Default.Persisted);
             if (data is not null) prefs.DistributionId = data.DistributionId;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -43,7 +42,7 @@ public sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new Persisted(DistributionId), JsonOptions));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new Persisted(DistributionId), PrefsContext.Default.Persisted));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -56,4 +55,9 @@ public sealed class AppPreferences
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Erya", "preferences.json");
 
     private sealed record Persisted(string? DistributionId);
+
+    /// <summary>Native AOT 下 System.Text.Json 反射模式不可用，偏好持久化走源生成。</summary>
+    [JsonSerializable(typeof(Persisted))]
+    [JsonSourceGenerationOptions(WriteIndented = true)]
+    private sealed partial class PrefsContext : JsonSerializerContext;
 }
