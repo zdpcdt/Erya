@@ -133,10 +133,11 @@
                                                 </Panel>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                                            TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding KindText}" FontSize="11" Opacity="0.5" />
+                                                <TextBlock Text="{Binding DetailText}" FontSize="11" Opacity="0.5"
+                                                           TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Button>
-                                        <!--  角上操作：指派亮 / 指派暗 / 复制(内置)或编辑+复制定义(自定义)  -->
+                                        <!--  角上操作：指派亮 / 指派暗 / 复制(内置)或编辑(自定义) / 复制 YAML / 删除(自定义)  -->
                                         <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
                                             <u:IconButton Icon="{StaticResource SemiIconSun}"
                                                           Classes="Tertiary"
@@ -155,7 +156,7 @@
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
                                                           CommandParameter="{Binding}"
                                                           ToolTip.Tip="复制为自定义皮肤" />
-                                            <!--  自定义皮肤：编辑 + 复制 YAML 定义  -->
+                                            <!--  自定义皮肤：编辑  -->
                                             <u:IconButton Icon="{StaticResource SemiIconEdit}"
                                                           Classes="Tertiary"
                                                           IsVisible="{Binding !IsShipped}"
@@ -164,9 +165,14 @@
                                                           ToolTip.Tip="编辑此皮肤" />
                                             <u:IconButton Icon="{StaticResource SemiIconCode}"
                                                           Classes="Tertiary"
-                                                          IsVisible="{Binding !IsShipped}"
                                                           Command="{Binding CopyYamlCommand}"
                                                           ToolTip.Tip="复制 YAML 定义" />
+                                            <u:IconButton Icon="{StaticResource SemiIconDelete}"
+                                                          Classes="Tertiary"
+                                                          IsVisible="{Binding CanRemove}"
+                                                          Command="{Binding RemoveCommand}"
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="删除此皮肤" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

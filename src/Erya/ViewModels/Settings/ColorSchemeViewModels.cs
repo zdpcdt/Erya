@@ -369,6 +369,16 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
     public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
 
+    /// <summary>卡片第二行：类型 + 原作者（有则带出）。</summary>
+    public string DetailText
+    {
+        get
+        {
+            var author = Author.Trim();
+            return author.Length == 0 ? KindText : $"{KindText} · {author}";
+        }
+    }
+
     /// <summary>当前是 style/color_scheme 选中的皮肤（画廊角标，由皮肤库页维护）。</summary>
     [ObservableProperty]
     private bool _isCurrentLight;
@@ -642,6 +652,7 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     {
         var id = HasValidName ? Name.Trim() : OriginalName;
         var map = ToPatchValue();
+        map.Remove("author"); // 原作者留在皮肤定义里（卡片展示），复制片段不带
         var sb = new StringBuilder("preset_color_schemes:\n  ").Append(Quote(id)).Append(":\n");
         foreach (var key in SnippetOrder.Where(map.ContainsKey))
             AppendEntry(sb, key, map[key]);

@@ -275,7 +275,6 @@ public sealed class SettingsPageRenderTests : IDisposable
             isSquirrel: true, isDraft: true);
         Assert.True(dialog.IsDraft);
         Assert.Equal("新建皮肤", dialog.Title);
-        Assert.False(dialog.CanManage); // 草稿无库身份：删除/以此新增不显示
         dialog.Scheme.BackColor = "1C1C1E";
         dialog.Scheme.Name = "我的浅色改";
         var saved = dialog.Commit();
@@ -300,20 +299,43 @@ public sealed class SettingsPageRenderTests : IDisposable
         // 已有自定义皮肤：确定=保留同一实例，取消=还原开框快照。
         var dialog2 = new SchemeEditDialogViewModel(userDark, fields, editor.SchemeLibrary, isSquirrel: true);
         Assert.False(dialog2.IsDraft);
-        Assert.True(dialog2.CanManage);
         dialog2.Scheme.BackColor = "000000";
         dialog2.Revert();
         Assert.Equal("1C1C1E", userDark.BackColor);
         Assert.Same(userDark, dialog2.Commit());
 
-        // 对话框控件本体：预览 + 取色器 + 鼠须管下显示字体与排版组。
+        // 对话框控件本体：预览 + 8 个颜色块（无 0x 色号文字）+ 鼠须管下显示字体与排版组。
         var control = new SchemeEditDialog { DataContext = dialog2, Width = 600, Height = 700 };
         var host = new Window { Width = 640, Height = 760, Content = control };
         host.Show();
         Dispatcher.UIThread.RunJobs();
-        Assert.True(control.GetVisualDescendants().OfType<ColorPicker>().Count() >= 5);
+        Assert.Equal(8, control.GetVisualDescendants().OfType<ColorSwatch>().Count());
+        Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").StartsWith("0x"));
+        Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("作者"));
         Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
         Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("字体与排版"));
+        // 色块显示当前色（BGR 十六进制 → RGB 画刷），改值实时反映。
+        var swatch = control.GetVisualDescendants().OfType<ColorSwatch>().First();
+        var swatchBorder = swatch.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Name == "PART_Swatch");
+        var swatchColor = Assert.IsAssignableFrom<ISolidColorBrush>(swatchBorder.Background).Color;
+        Assert.Equal(0x1E, swatchColor.R); // user_dark back_color 0x1C1C1E（BGR）→ R=1E
+        dialog2.Scheme.BackColor = "FFFFFF";
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(0xFF, Assert.IsAssignableFrom<ISolidColorBrush>(swatchBorder.Background).Color.R);
+
+        // 真实点击色块弹出完整取色器（Popup 挂在窗口的 OverlayPopupHost 里），
+        // 在取色器里改色实时写回皮肤（BGR 十六进制）。
+        var swatchButton = swatch.GetVisualDescendants().OfType<Button>().First();
+        var at = swatchButton.TranslatePoint(new Point(swatchButton.Bounds.Width / 2, swatchButton.Bounds.Height / 2), host)!.Value;
+        host.MouseDown(at, Avalonia.Input.MouseButton.Left);
+        host.MouseUp(at, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        var picker = host.GetVisualDescendants().OfType<ColorPicker>().FirstOrDefault();
+        Assert.NotNull(picker);
+        picker!.Color = Avalonia.Media.Color.FromRgb(0x11, 0x22, 0x33);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("332211", dialog2.Scheme.BackColor); // RGB(11,22,33) → BGR 十六进制 332211
         host.Close();
 
         // 小狼毫：字体与排版组不显示（皮肤级排版对它是 placebo）。
@@ -334,7 +356,7 @@ public sealed class SettingsPageRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Scheme_delete_button_is_wired_inside_the_edit_dialog()
+    public async Task Scheme_delete_button_is_wired_on_the_gallery_card()
     {
         Write("squirrel.yaml", """
             preset_color_schemes:
@@ -354,31 +376,24 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 编辑对话框里的删除按钮必须携带皮肤作 CommandParameter——否则命令收到
+        // 自定义卡的删除按钮必须携带皮肤作 CommandParameter——否则命令收到
         // null 静默不动（「删除皮肤没有反应」回归）。
+        List<Ursa.Controls.IconButton> DeleteButtons() => page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Where(b => (ToolTip.GetTip(b) as string) == "删除此皮肤").ToList();
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
-        var fields = editor.Sections.SelectMany(s => s.Fields).ToList();
-        var dialogVm = new SchemeEditDialogViewModel(userDark, fields, editor.SchemeLibrary);
-        var control = new SchemeEditDialog { DataContext = dialogVm, Width = 600, Height = 700 };
-        var host = new Window { Width = 640, Height = 760, Content = control };
-        host.Show();
-        Dispatcher.UIThread.RunJobs();
-        var delete = control.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
-            .Single(b => b.Classes.Contains("Danger"));
+        var delete = DeleteButtons().Single(b => b.IsVisible);
         Assert.Same(userDark, delete.CommandParameter);
         delete.Command!.Execute(delete.CommandParameter);
         Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == userDark.Name);
 
-        // 内置皮肤：对话框里删除按钮隐藏。
-        var shipped = editor.SchemeLibrary.Schemes.Single(s => s.Name == "shipped_light");
-        var dialogVm2 = new SchemeEditDialogViewModel(shipped, fields, editor.SchemeLibrary);
-        control.DataContext = dialogVm2;
-        Dispatcher.UIThread.RunJobs();
-        Assert.False(control.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
-            .Single(b => b.Classes.Contains("Danger")).IsVisible);
+        // 内置卡：删除按钮在树上但隐藏；复制 YAML 按钮对所有卡可用
+        //（删除后只剩内置卡，1 个）。
+        Assert.All(DeleteButtons(), b => Assert.False(b.IsVisible));
+        var copyYamlButtons = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+            .Where(b => (ToolTip.GetTip(b) as string) == "复制 YAML 定义").ToList();
+        Assert.Single(copyYamlButtons);
 
-        host.Close();
         window.Close();
     }
 }

@@ -41,9 +41,6 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
 
     public string Title => IsDraft ? "新建皮肤" : $"编辑皮肤：{Scheme.Name.Trim()}";
 
-    /// <summary>删除/以此新增只对已入库的自定义皮肤有意义（草稿没有库身份）。</summary>
-    public bool CanManage => !IsDraft && _library is not null && Scheme.CanRemove;
-
     /// <summary>确定：草稿 → 入库为自定义皮肤（名字撞库自动取唯一名）；已有 → 编辑已在皮肤上。</summary>
     public ColorSchemeViewModel? Commit()
     {
