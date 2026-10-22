@@ -33,7 +33,7 @@
         {
           "id": "hotkeys",
           "label": "快捷键",
-          "description": "触发方案选单的全局快捷键，如 Control+grave 或 F4",
+          "description": "触发方案选单的全局快捷键",
           "type": "hotkeyList",
           "icon": "td:Keyboard",
           "keyPath": "switcher/hotkeys"
