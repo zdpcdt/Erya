@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -217,6 +219,53 @@ public sealed class AppsPageTests : IDisposable
         Assert.Equal(["myapp.exe"], added);
         vm.PickEntryCommand.Execute(vm.PresetEntries.Single(e => e.Id == "putty.exe"));
         Assert.Equal(["myapp.exe", "putty.exe"], added);
+    }
+
+    [AvaloniaFact]
+    public async Task Clicking_add_button_opens_populated_flyout_and_entry_click_adds()
+    {
+        // 真实用户路径端到端：点「＋ 添加应用」→ 弹层带着数据打开 → 点条目 → 收起并添加。
+        // 回归：Button 带 Flyout 时点击不执行 Command，弹层数据必须由 Opened 事件重建
+        // （此前 Picker 无人创建，弹层是空面板，什么都加不了）。
+        Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
+        var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
+        await editor.LoadCommand.ExecuteAsync(null);
+        var vm = new AppsPageViewModel(editor, AppBehaviorPresets.Windows);
+
+        var page = new AppsPage { DataContext = vm, Width = 760, Height = 620 };
+        var window = new Window { Width = 800, Height = 680, Content = page };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // 点按钮（真实指针路径：Button 的 Flyout 开关不走 Click 路由事件的 class handler）。
+        var add = page.GetVisualDescendants().OfType<Button>()
+            .Single(b => b.Content is string s && s.Contains("添加应用"));
+        var center = add.TranslatePoint(new Point(add.Bounds.Width / 2, add.Bounds.Height / 2), window)!.Value;
+        window.MouseMove(center);
+        window.MouseDown(center, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseUp(center, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var flyout = Assert.IsType<Flyout>(add.Flyout);
+        Assert.True(flyout.IsOpen);
+        Assert.NotNull(vm.Picker); // Opened 里重建了弹层数据
+
+        // 弹层内容有可点条目（Popup 内容不在主窗口视觉树，从 Flyout.Content 找）。
+        var flyoutView = Assert.IsType<AddAppFlyout>(flyout.Content);
+        var entry = flyoutView.GetVisualDescendants().OfType<Button>()
+            .First(b => b.DataContext is AddAppEntry { IsAdded: false });
+        var entryId = ((AddAppEntry)entry.DataContext!).Id;
+
+        entry.Command.Execute(entry.CommandParameter);
+        Dispatcher.UIThread.RunJobs();
+
+        // 添加完成：弹层收起，卡片出现且默认英文开。
+        Assert.False(flyout.IsOpen);
+        var row = vm.Field!.Rows.Single(r => r.AppId == entryId);
+        Assert.True(row.Options.Single(o => o.Key == "ascii_mode").IsChecked);
+        Assert.True(vm.HasAnyApp);
+        window.Close();
     }
 
     [AvaloniaFact]
