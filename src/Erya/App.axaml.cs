@@ -36,7 +36,10 @@ public partial class App : Application
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new ShellViewModel(new DistributionManager([.. locators])),
+                // Linux 前端（fcitx5/ibus）的候选面板由输入法框架自己绘制，
+                // 没有 squirrel/weasel 那份外观 YAML → 外观设置整组不显示。
+                DataContext = new ShellViewModel(new DistributionManager([.. locators]),
+                    showAppearance: !OperatingSystem.IsLinux()),
             };
         }
 
