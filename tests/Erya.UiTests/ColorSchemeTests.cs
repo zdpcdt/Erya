@@ -297,7 +297,8 @@ public sealed class ColorSchemeTests : IDisposable
         // 0x 颜色必须带引号：YAML 1.1 会把裸 0xECECEC 读成整数。
         Assert.Contains("    back_color: \"0xECECEC\"", yaml);
         Assert.Contains("    name: \"浅色\"", yaml);
-        Assert.Contains("    author: \"ssnhd\"", yaml);
+        // 原作者留在皮肤定义里（卡片展示），复制片段不带。
+        Assert.DoesNotContain("author", yaml);
         Assert.Contains("    label_color: \"0x888888\"", yaml); // 未建模键原样带上
         // 无头环境没有主窗口剪贴板——命令不应抛错（静默跳过复制，只出提示）。
         light.CopyYamlCommand.Execute(null);
