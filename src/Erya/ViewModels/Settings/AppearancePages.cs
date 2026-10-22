@@ -261,9 +261,9 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
 /// <summary>
 /// 应用行为页：app_options 的专用卡片列表（不走通用分节渲染）——每应用一张卡，
 /// 右侧按 schema choices 渲染该前端的选项开关（鼠须管含 Vim/内嵌编码，小狼毫
-/// 内嵌编码）+ 删除；添加走对话框（常用预设 / 正在运行的应用 / 手填校验），
-/// 空态给常用应用一键添加。数据仍在共享编辑器的 appOptions 字段上，保存走
-/// 同一条「保存并部署」管线。
+/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（常用预设 + 正在运行的应用
+/// 点一下即加，手输回车即加，见 AddAppPickerViewModel），空态另有常用应用
+/// 一键添加。数据仍在共享编辑器的 appOptions 字段上，保存走同一条管线。
 /// </summary>
 public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
@@ -281,6 +281,12 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
 
     /// <summary>app_options 字段（重新加载后是新实例，经 <see cref="HookField"/> 重挂）。</summary>
     public AppOptionsFieldViewModel? Field => _field;
+
+    /// <summary>添加弹层的当前实例；每次点开按钮重建（已添加状态要最新）。</summary>
+    public AddAppPickerViewModel? Picker { get; private set; }
+
+    /// <summary>弹层里点选/回车添加完成后由视图收起 Flyout。</summary>
+    public event EventHandler? RequestClosePicker;
 
     [ObservableProperty]
     private string _searchText = "";
@@ -308,26 +314,23 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
     /// <summary>有规则但全被搜索过滤掉——提示「没有匹配」（区别于空态与加载中）。</summary>
     public bool SearchMiss => HasAnyApp && !HasVisibleRows;
 
+    /// <summary>打开添加弹层：条目点选/手输回车 → <see cref="AddPicked"/>（默认英文）→ 关闭。</summary>
     [RelayCommand]
-    private async Task AddAppAsync()
+    private void OpenPicker()
     {
         if (Field is null) return;
-        var vm = new AddAppDialogViewModel(Field.Rows.Select(r => r.AppId.Trim()).ToList());
-        var result = await Dialog.ShowStandardAsync<AddAppDialog, AddAppDialogViewModel>(
-            vm, AppNotifications.MainWindow,
-            new DialogOptions
-            {
-                Title = "添加应用",
-                Mode = DialogMode.None,
-                Button = DialogButton.OKCancel,
-                CanResize = false,
-            });
-        // Ursa 对话框的确定按钮不参与校验：无效输入在这里拦下（对话框内已有红字提示）。
-        if (result == DialogResult.OK && vm.IsValid)
-            Field.AddApp(vm.ConfirmId, vm.StartAscii);
+        Picker = new AddAppPickerViewModel(
+            Field.Rows.Select(r => r.AppId.Trim()).ToList(), AddPicked, _presets);
+        OnPropertyChanged(nameof(Picker));
     }
 
-    /// <summary>空态快捷添加：一键为常用应用建「默认英文」规则，跳过对话框。</summary>
+    private void AddPicked(string appId)
+    {
+        Field?.AddApp(appId, asciiMode: true);
+        RequestClosePicker?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>空态快捷添加：一键为常用应用建「默认英文」规则，跳过弹层。</summary>
     [RelayCommand]
     private void QuickAdd(AppPresetItem? preset)
     {
