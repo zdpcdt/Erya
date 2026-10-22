@@ -483,19 +483,27 @@ public sealed partial class CheckOptionViewModel(string value) : ObservableObjec
     private bool _isChecked;
 }
 
-/// <summary>app_options: per-app input behavior rows (bundle ID / exe name).</summary>
+/// <summary>
+/// app_options: per-app input behavior rows (bundle ID / exe name). The
+/// editable option set comes from the schema's choices — the two frontends
+/// read different keys (Squirrel: inline/no_inline, Weasel: inline_preedit) —
+/// and any key this editor has no checkbox for is carried through on save,
+/// so editing one app never strips options it does not know about.
+/// </summary>
 public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
 {
-    public AppOptionsFieldViewModel(SettingsField field) : base(field) { }
+    private readonly IReadOnlyList<string> _editableKeys;
+
+    public AppOptionsFieldViewModel(SettingsField field) : base(field)
+    {
+        _editableKeys = field.Choices is { Count: > 0 } choices ? choices : ["ascii_mode", "vim_mode"];
+    }
 
     public ObservableCollection<AppOptionsRowViewModel> Rows { get; } = [];
 
-    private IReadOnlyDictionary<string, object?> _loadedMap = new Dictionary<string, object?>();
-
     public override void Load(object? mergedValue)
     {
-        _loadedMap = mergedValue as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>();
-        BuildRows(_loadedMap);
+        BuildRows(mergedValue as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>());
         HasPendingEdits = false;
     }
 
@@ -504,16 +512,8 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
         foreach (var row in Rows) row.Changed -= MarkDirty;
         Rows.Clear();
         foreach (var (app, options) in map)
-        {
-            var dict = options as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>();
-            var row = new AppOptionsRowViewModel(app)
-            {
-                AsciiMode = dict.TryGetValue("ascii_mode", out var ascii) && ascii is true,
-                VimMode = dict.TryGetValue("vim_mode", out var vim) && vim is true,
-            };
-            row.Changed += MarkDirty;
-            Rows.Add(row);
-        }
+            Attach(new AppOptionsRowViewModel(app, _editableKeys,
+                options as IReadOnlyDictionary<string, object?> ?? new Dictionary<string, object?>()));
     }
 
     public override object? PendingValue()
@@ -523,25 +523,21 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
             .Select(r => r.AppId.Trim())
             .Where(id => id.Length > 0)
             .Distinct(StringComparer.Ordinal)
-            .Select(id => new { Id = id, Row = Rows.First(r => r.AppId.Trim() == id) })
-            .ToDictionary(
-                app => app.Id,
-                app => (object?)new Dictionary<string, object?>
-                {
-                    ["ascii_mode"] = app.Row.AsciiMode,
-                    ["vim_mode"] = app.Row.VimMode,
-                });
+            .Select(id => (Id: id, Value: Rows.First(r => r.AppId.Trim() == id).BuildValue()))
+            .Where(app => app.Value.Count > 0)
+            .ToDictionary(app => app.Id, app => (object?)app.Value);
         return apps.Count == 0 ? null : apps;
+    }
+
+    private void Attach(AppOptionsRowViewModel row)
+    {
+        row.Changed += MarkDirty;
+        Rows.Add(row);
     }
 
     [RelayCommand]
     private void AddRow()
-    {
-        var row = new AppOptionsRowViewModel("");
-        row.Changed += MarkDirty;
-        Rows.Add(row);
-        MarkDirty();
-    }
+        => Attach(new AppOptionsRowViewModel("", _editableKeys, new Dictionary<string, object?>()));
 
     [RelayCommand]
     private void RemoveRow(AppOptionsRowViewModel row)
@@ -556,7 +552,33 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
 
 public sealed partial class AppOptionsRowViewModel : ObservableObject
 {
-    public AppOptionsRowViewModel(string appId) => _appId = appId;
+    /// <summary>Checkbox text per option key — schema keys are stable frontend identifiers.</summary>
+    private static readonly IReadOnlyDictionary<string, string> OptionLabels = new Dictionary<string, string>
+    {
+        ["ascii_mode"] = "默认英文",
+        ["vim_mode"] = "Vim 模式",
+        ["inline_preedit"] = "内嵌编码",
+        ["inline"] = "强制内嵌编码",
+        ["no_inline"] = "禁用内嵌编码",
+    };
+
+    private readonly IReadOnlyDictionary<string, object?> _unmodeled;
+    private readonly HashSet<string> _loadedTrues;
+
+    public AppOptionsRowViewModel(string appId, IReadOnlyList<string> editableKeys,
+        IReadOnlyDictionary<string, object?> loaded)
+    {
+        _appId = appId;
+        _unmodeled = loaded.Where(kv => !editableKeys.Contains(kv.Key))
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+        _loadedTrues = [.. editableKeys.Where(k => loaded.TryGetValue(k, out var v) && v is true)];
+        foreach (var key in editableKeys)
+        {
+            var option = new AppOptionViewModel(key, OptionLabels.GetValueOrDefault(key, key), _loadedTrues.Contains(key));
+            option.PropertyChanged += OnOptionChanged;
+            Options.Add(option);
+        }
+    }
 
     /// <summary>Fires on any edit (including the id text) — saving collapses rows anyway.</summary>
     public event Action? Changed;
@@ -564,13 +586,47 @@ public sealed partial class AppOptionsRowViewModel : ObservableObject
     [ObservableProperty]
     private string _appId;
 
-    [ObservableProperty]
-    private bool _asciiMode;
-
-    [ObservableProperty]
-    private bool _vimMode;
+    public ObservableCollection<AppOptionViewModel> Options { get; } = [];
 
     partial void OnAppIdChanged(string value) => Changed?.Invoke();
-    partial void OnAsciiModeChanged(bool value) => Changed?.Invoke();
-    partial void OnVimModeChanged(bool value) => Changed?.Invoke();
+
+    private void OnOptionChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppOptionViewModel.IsChecked)) Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// This app's options as they should be written: unmodeled keys carried
+    /// as-is, a checkbox written when checked, and written as an explicit
+    /// false only when it used to be true (that false is what overrides a
+    /// base-file default).
+    /// </summary>
+    public Dictionary<string, object?> BuildValue()
+    {
+        var map = new Dictionary<string, object?>(_unmodeled);
+        foreach (var option in Options)
+        {
+            if (option.IsChecked) map[option.Key] = true;
+            else if (_loadedTrues.Contains(option.Key)) map[option.Key] = false;
+        }
+        return map;
+    }
+}
+
+/// <summary>One editable option checkbox inside an app row.</summary>
+public sealed partial class AppOptionViewModel : ObservableObject
+{
+    public AppOptionViewModel(string key, string label, bool isChecked)
+    {
+        Key = key;
+        Label = label;
+        _isChecked = isChecked;
+    }
+
+    public string Key { get; }
+
+    public string Label { get; }
+
+    [ObservableProperty]
+    private bool _isChecked;
 }

@@ -58,6 +58,7 @@
         {
           "id": "candidateFormat",
           "label": "候选格式",
+          "description": "候选行模板：[label] 序号、[candidate] 候选、[comment] 注释，默认 \"[label]. [candidate] [comment]\"",
           "type": "text",
           "icon": "ip:Format",
           "keyPath": "style/candidate_format"
@@ -86,7 +87,8 @@
         },
         {
           "id": "memorizeSize",
-          "label": "记忆窗口尺寸",
+          "label": "贴靠屏幕边缘",
+          "description": "候选窗贴近屏幕边缘显示，减少输入时的窗口跳动",
           "type": "toggle",
           "icon": "ip:MemoryOne",
           "keyPath": "style/memorize_size"
@@ -94,12 +96,14 @@
         {
           "id": "mutualExclusive",
           "label": "色彩不叠加",
+          "description": "多个透明色块不相互叠加（背景/高亮各自独立着色）",
           "type": "toggle",
           "keyPath": "style/mutual_exclusive"
         },
         {
           "id": "translucency",
           "label": "磨砂效果",
+          "description": "使用系统磨砂半透明背景；仅当皮肤背景色带透明度时可见",
           "type": "toggle",
           "keyPath": "style/translucency"
         }
@@ -137,11 +141,61 @@
           "keyPath": "style/label_font_face"
         },
         {
+          "id": "labelFontPoint",
+          "label": "序号字号",
+          "description": "未设置时跟随候选字号",
+          "type": "stepper",
+          "icon": "ip:FontSize",
+          "keyPath": "style/label_font_point",
+          "min": 8,
+          "max": 32,
+          "step": 1
+        },
+        {
           "id": "commentFontFace",
           "label": "注释字体",
           "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/comment_font_face"
+        },
+        {
+          "id": "commentFontPoint",
+          "label": "注释字号",
+          "description": "未设置时跟随候选字号",
+          "type": "stepper",
+          "icon": "ip:FontSize",
+          "keyPath": "style/comment_font_point",
+          "min": 8,
+          "max": 32,
+          "step": 1
+        },
+        {
+          "id": "preeditFontFace",
+          "label": "编码字体",
+          "type": "font",
+          "icon": "semi:SemiIconFont",
+          "keyPath": "style/preedit_font_face"
+        },
+        {
+          "id": "preeditFontPoint",
+          "label": "编码字号",
+          "description": "未设置时跟随候选字号",
+          "type": "stepper",
+          "icon": "ip:FontSize",
+          "keyPath": "style/preedit_font_point",
+          "min": 8,
+          "max": 32,
+          "step": 1
+        },
+        {
+          "id": "baseOffset",
+          "label": "基线偏移",
+          "description": "文字相对基线的上下微调（像素），序号/注释与候选对齐不齐时可调",
+          "type": "stepper",
+          "keyPath": "style/base_offset",
+          "min": -10,
+          "max": 10,
+          "step": 1
         }
       ]
     },
@@ -152,7 +206,8 @@
       "fields": [
         {
           "id": "spacing",
-          "label": "拼音间距",
+          "label": "编码-候选间距",
+          "description": "非内嵌模式下编码行与候选区的间距",
           "type": "stepper",
           "keyPath": "style/spacing",
           "min": 0,
@@ -160,41 +215,24 @@
           "step": 1
         },
         {
-          "id": "candidateSpacing",
-          "label": "候选间距",
-          "type": "stepper",
-          "keyPath": "style/candidate_spacing",
-          "min": 0,
-          "max": 40,
-          "step": 1
-        },
-        {
-          "id": "hiliteSpacing",
-          "label": "序号-候选间距",
-          "type": "stepper",
-          "keyPath": "style/hilite_spacing",
-          "min": 0,
-          "max": 40,
-          "step": 1
-        },
-        {
-          "id": "hilitePadding",
-          "label": "高亮扩张",
-          "description": "高亮候选背景向四周扩张的像素",
-          "type": "stepper",
-          "keyPath": "style/hilite_padding",
-          "min": 0,
-          "max": 20,
-          "step": 1
-        },
-        {
           "id": "lineSpacing",
           "label": "候选行距",
+          "description": "竖排时候选行之间的间距",
           "type": "stepper",
           "icon": "td:LineHeight",
           "keyPath": "style/line_spacing",
           "min": 0,
           "max": 12,
+          "step": 1
+        },
+        {
+          "id": "surroundingExtraExpansion",
+          "label": "非高亮背景扩张",
+          "description": "非高亮候选背景块向四周扩张的像素",
+          "type": "stepper",
+          "keyPath": "style/surrounding_extra_expansion",
+          "min": 0,
+          "max": 20,
           "step": 1
         }
       ]
@@ -225,7 +263,8 @@
         },
         {
           "id": "borderHeight",
-          "label": "边框高度",
+          "label": "纵向留白",
+          "description": "内容与窗口边缘的垂直留白；与横向留白中较小者兼作描边宽度（默认 -2，可为负）",
           "type": "stepper",
           "keyPath": "style/border_height",
           "min": -5,
@@ -234,34 +273,13 @@
         },
         {
           "id": "borderWidth",
-          "label": "边框宽度",
+          "label": "横向留白",
+          "description": "内容与窗口边缘的水平留白；与纵向留白中较小者兼作描边宽度（默认 -2，可为负）",
           "type": "stepper",
           "icon": "td:Frame",
           "keyPath": "style/border_width",
           "min": -5,
           "max": 10,
-          "step": 1
-        },
-        {
-          "id": "marginX",
-          "label": "横向边距",
-          "description": "候选窗内容与窗口边缘的左右留白",
-          "type": "stepper",
-          "icon": "td:Frame",
-          "keyPath": "style/margin_x",
-          "min": 0,
-          "max": 30,
-          "step": 1
-        },
-        {
-          "id": "marginY",
-          "label": "纵向边距",
-          "description": "候选窗内容与窗口边缘的上下留白",
-          "type": "stepper",
-          "icon": "td:Frame",
-          "keyPath": "style/margin_y",
-          "min": 0,
-          "max": 30,
           "step": 1
         }
       ]
@@ -274,6 +292,7 @@
         {
           "id": "alpha",
           "label": "透明度",
+          "description": "整窗不透明度，1 为完全不透明",
           "type": "slider",
           "icon": "td:Alpha",
           "keyPath": "style/alpha",
@@ -284,7 +303,8 @@
         },
         {
           "id": "shadowSize",
-          "label": "阴影",
+          "label": "高亮阴影",
+          "description": "高亮候选块周围的阴影模糊半径（0 为无阴影）",
           "type": "stepper",
           "keyPath": "style/shadow_size",
           "min": 0,
@@ -330,6 +350,13 @@
             "never",
             "appropriate"
           ]
+        },
+        {
+          "id": "statusIcon",
+          "label": "菜单栏图标",
+          "description": "在菜单栏显示输入法状态图标",
+          "type": "toggle",
+          "keyPath": "status_icon/show"
         }
       ]
     },
@@ -344,7 +371,13 @@
           "label": "应用列表",
           "type": "appOptions",
           "icon": "td:App",
-          "keyPath": "app_options"
+          "keyPath": "app_options",
+          "choices": [
+            "ascii_mode",
+            "vim_mode",
+            "inline",
+            "no_inline"
+          ]
         }
       ]
     }

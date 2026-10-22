@@ -173,11 +173,14 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
             Num("style/hilited_corner_radius", Num("style/layout/round_corner", corner)));
         WindowCorner = new(corner);
 
-        double marginX = Num("style/layout/margin_x", "style/margin_x", 12);
-        double marginY = Num("style/layout/margin_y", "style/margin_y", 12);
-        WindowPadding = new(marginX, marginY);
-        double border = Num("style/layout/border_width", "style/border_width", 0);
-        FrameThickness = new(border);
+        // 鼠须管 border_* 本身就是留白（edgeInset = border + corner），两者中较小者
+        // 兼作描边宽度；小狼毫 border_width 是描边、留白走 margin_*。按存在的键落位。
+        double borderW = Num("style/layout/border_width", "style/border_width", 0);
+        double borderH = Num("style/layout/border_height", borderW);
+        FrameThickness = new(Math.Max(0, Math.Min(borderW, borderH)));
+        WindowPadding = new(
+            Num("style/layout/margin_x", "style/margin_x", Math.Max(0, borderW + corner)),
+            Num("style/layout/margin_y", "style/margin_y", Math.Max(0, borderH + corner)));
 
         MinWidth = Math.Max(0, Num("style/layout/min_width", 0));
         MinHeight = Math.Max(0, Num("style/layout/min_height", 0));

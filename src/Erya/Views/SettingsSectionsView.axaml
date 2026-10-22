@@ -213,16 +213,26 @@
                                                     <ItemsControl ItemsSource="{Binding Rows}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
-                                                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,4">
+                                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
                                                                     <TextBox Grid.Column="0" Text="{Binding AppId, Mode=TwoWay}"
                                                                              PlaceholderText="应用标识（macOS Bundle ID / Windows exe 名）" />
-                                                                    <CheckBox Grid.Column="1" Content="默认英文"
-                                                                              IsChecked="{Binding AsciiMode}"
-                                                                              Margin="14,0,0,0" VerticalAlignment="Center" />
-                                                                    <CheckBox Grid.Column="2" Content="Vim 模式"
-                                                                              IsChecked="{Binding VimMode}"
-                                                                              Margin="14,0,0,0" VerticalAlignment="Center" />
-                                                                    <u:IconButton Grid.Column="3" Classes="Danger"
+                                                                    <!--  逐应用选项按 schema 分流：鼠须管 inline/no_inline，小狼毫 inline_preedit  -->
+                                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Options}"
+                                                                                  VerticalAlignment="Center">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ItemsPanelTemplate>
+                                                                                <StackPanel Orientation="Horizontal" />
+                                                                            </ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate x:DataType="sf:AppOptionViewModel">
+                                                                                <CheckBox Content="{Binding Label}"
+                                                                                          IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                                          Margin="14,0,0,0" VerticalAlignment="Center" />
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                    <u:IconButton Grid.Column="2" Classes="Danger"
                                                                                   Theme="{DynamicResource SolidIconButton}"
                                                                                   Icon="{StaticResource SemiIconDelete}"
                                                                                   Margin="14,0,0,0" VerticalAlignment="Center"

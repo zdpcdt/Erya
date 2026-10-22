@@ -1,3 +1,4 @@
+using System;
 using Erya.Core.Settings;
 
 namespace Erya.Core.Tests;
@@ -45,6 +46,10 @@ public sealed class SettingsSchemaTests
 
         // Per-app behavior is part of the looks schema (bundle IDs).
         Assert.Contains(schema.Sections, s => s.Id == "appOptions");
+        // 逐应用可编辑选项按前端分流：鼠须管认 inline/no_inline（Squirrel 源码里
+        // 经 set_option 转发、InputController 消费），没有 inline_preedit。
+        var apps = schema.Sections.Single(s => s.Id == "appOptions").Fields.Single(f => f.Type == "appOptions");
+        Assert.Equal(["ascii_mode", "vim_mode", "inline", "no_inline"], apps.Choices);
         // 外观目标按页面分组：皮肤库 / 候选窗排版 / 应用行为，一个不多一个不少。
         Assert.Equal(["apps", "layout", "skin"],
             schema.Sections.Select(s => s.Group).Distinct().Order().ToList());
@@ -52,21 +57,42 @@ public sealed class SettingsSchemaTests
     }
 
     [Fact]
-    public void Squirrel_schema_carries_the_layout_keys_squirrel_style_reads()
+    public void Squirrel_schema_key_paths_are_all_read_by_squirrel_theme()
     {
-        // 鼠须管把这些排版参数平铺在 style 下（没有 layout 一层）；
-        // 与小狼毫同名不同路径，预览与 schema 都要两套键各认各的。
+        // 键集对照 rime/squirrel master 的 SquirrelTheme.swift（config.get*
+        // 实际读取的每个键）与自带默认 squirrel.yaml 逐一核实。小狼毫
+        // layout/* 一层的键鼠须管一概不读——抄进来就是有去无回的 placebo。
         var schema = SettingsSchemas.LoadForUiConfig("squirrel.yaml");
-        var keyPaths = schema.Sections.SelectMany(s => s.Fields).Select(f => f.KeyPath).ToHashSet();
 
-        Assert.Superset(
-            new HashSet<string>
-            {
-                "style/margin_x", "style/margin_y", "style/candidate_spacing",
-                "style/hilite_spacing", "style/hilite_padding",
-                "style/label_font_face", "style/comment_font_face",
-            },
-            keyPaths);
+        var squirrelReadKeys = new HashSet<string>
+        {
+            "style/color_scheme", "style/color_scheme_dark",
+            "style/candidate_list_layout", "style/text_orientation",
+            "style/candidate_format", "style/inline_preedit", "style/inline_candidate",
+            "style/translucency", "style/mutual_exclusive", "style/memorize_size",
+            "style/show_paging", "style/alpha",
+            "style/corner_radius", "style/hilited_corner_radius",
+            "style/surrounding_extra_expansion",
+            "style/border_height", "style/border_width",
+            "style/line_spacing", "style/spacing", "style/base_offset", "style/shadow_size",
+            "style/font_face", "style/font_point",
+            "style/label_font_face", "style/label_font_point",
+            "style/comment_font_face", "style/comment_font_point",
+            "style/preedit_font_face", "style/preedit_font_point",
+            "keyboard_layout", "chord_duration", "show_notifications_when", "status_icon/show",
+        };
+        foreach (var field in schema.Sections.SelectMany(s => s.Fields))
+        {
+            if (field.Type == "appOptions") continue; // app_options is read by every frontend
+            Assert.True(
+                squirrelReadKeys.Contains(field.KeyPath),
+                $"鼠须管不读取 {field.KeyPath}（字段 {field.Id}）——别把小狼毫的键抄进 squirrel schema。");
+        }
+        // 小狼毫专属键（margin_*/hilite_* 等）曾混进 schema，控件调了没有任何效果。
+        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields),
+            f => f.KeyPath.StartsWith("style/layout/", StringComparison.Ordinal)
+                 || f.KeyPath is "style/margin_x" or "style/margin_y" or "style/candidate_spacing"
+                     or "style/hilite_spacing" or "style/hilite_padding");
     }
 
     [Fact]
@@ -82,11 +108,15 @@ public sealed class SettingsSchemaTests
         {
             "style/color_scheme", "style/color_scheme_dark",
             "style/layout/type", // read LAST by weasel — beats horizontal/vertical_text/text_orientation
-            "style/inline_preedit", "style/display_tray_icon",
+            "style/inline_preedit", "style/preedit_type",
+            "style/display_tray_icon",
             "style/paging_on_scroll", "style/font_face", "style/font_point",
             "style/label_font_face", "style/label_font_point", "style/label_format",
             "style/mark_text", "style/comment_font_face", "style/comment_font_point",
             "style/hover_type", "style/candidate_abbreviate_length",
+            "style/antialias_mode", "style/ascii_tip_follow_cursor", "style/fullscreen",
+            "style/vertical_text_left_to_right", "style/vertical_text_with_wrap",
+            "style/vertical_auto_reverse",
             "style/layout/corner_radius", "style/layout/hilited_corner_radius",
             "style/layout/linespacing", "style/layout/spacing",
             "style/layout/candidate_spacing", "style/layout/hilite_spacing",
@@ -95,6 +125,7 @@ public sealed class SettingsSchemaTests
             "style/layout/shadow_offset_x", "style/layout/shadow_offset_y",
             "style/layout/min_width", "style/layout/min_height",
             "style/layout/max_width", "style/layout/max_height",
+            "style/layout/align_type", "style/layout/baseline",
         };
         foreach (var field in schema.Sections.SelectMany(s => s.Fields))
         {
@@ -112,6 +143,10 @@ public sealed class SettingsSchemaTests
                  or "style/horizontal" or "style/text_orientation" or "style/vertical_text");
         // 排列方式 must map onto the highest-precedence key weasel reads.
         Assert.Contains(schema.Sections.SelectMany(s => s.Fields), f => f.KeyPath == "style/layout/type");
+        // 逐应用可编辑选项按前端分流：小狼毫经 set_option 消费 inline_preedit
+        // （RimeWithWeasel._LoadAppOptions），没有鼠须管的 inline/no_inline。
+        var apps = schema.Sections.Single(s => s.Id == "appOptions").Fields.Single(f => f.Type == "appOptions");
+        Assert.Equal(["ascii_mode", "vim_mode", "inline_preedit"], apps.Choices);
     }
 
     [Fact]
