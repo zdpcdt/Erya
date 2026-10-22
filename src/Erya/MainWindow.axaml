@@ -89,6 +89,9 @@
                             <DataTemplate DataType="vm:BackupRestoreViewModel">
                                 <views:BackupRestorePage />
                             </DataTemplate>
+                            <DataTemplate DataType="vm:AboutViewModel">
+                                <views:AboutPage />
+                            </DataTemplate>
                         </ContentControl.DataTemplates>
                     </ContentControl>
                 </Grid>

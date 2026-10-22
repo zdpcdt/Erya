@@ -79,6 +79,12 @@ public sealed class DocsScreenshotGenerator
         Dispatcher.UIThread.RunJobs();
         Capture(vm, window, "backup.png", ThemeVariant.Light);
 
+        // 关于页内容较长（品牌头 + 产品卡 + 致谢表），单独放大窗口高度拍全。
+        window.Height = 1100;
+        vm.SelectedNav = vm.NavItems[6]; // 关于（IRIHI / Semi / Ursa 品牌页 + RIME 生态致谢）
+        Dispatcher.UIThread.RunJobs();
+        Capture(vm, window, "about.png", ThemeVariant.Light);
+
         window.Close();
     }
 
