@@ -10,7 +10,16 @@ public partial class AppsPage : UserControl
 {
     private AppsPageViewModel? _subscribed;
 
-    public AppsPage() => InitializeComponent();
+    public AppsPage()
+    {
+        InitializeComponent();
+        // Button 带 Flyout 时点击只开弹层、不执行 Command——弹层数据（Picker，
+        // 含最新「已添加」状态）在打开瞬间同步重建，DataContext={Binding Picker} 随之更新。
+        AddButton.Flyout!.Opened += (_, _) =>
+        {
+            if (DataContext is AppsPageViewModel vm) vm.OpenPickerCommand.Execute(null);
+        };
+    }
 
     /// <summary>弹层里点选/回车添加完成（AddPicked → RequestClosePicker）→ 收起 Flyout。</summary>
     protected override void OnDataContextChanged(EventArgs e)
