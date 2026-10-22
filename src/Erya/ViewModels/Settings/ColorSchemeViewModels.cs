@@ -377,6 +377,14 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
     public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
 
+    /// <summary>当前是 style/color_scheme 选中的皮肤（画廊角标，由皮肤库页维护）。</summary>
+    [ObservableProperty]
+    private bool _isCurrentLight;
+
+    /// <summary>当前是 style/color_scheme_dark 选中的皮肤（画廊角标）。</summary>
+    [ObservableProperty]
+    private bool _isCurrentDark;
+
     private CandidatePreviewViewModel? _detailPreview;
 
     /// <summary>
