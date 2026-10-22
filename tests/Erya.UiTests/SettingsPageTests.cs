@@ -120,7 +120,47 @@ public sealed class SettingsEditorTests : IDisposable
         // app_options rows load from merged config.
         var apps = vm.Sections.SelectMany(s => s.Fields).OfType<AppOptionsFieldViewModel>().Single();
         var terminal = Assert.Single(apps.Rows, r => r.AppId == "com.apple.Terminal");
-        Assert.True(terminal.AsciiMode);
+        Assert.True(terminal.Options.Single(o => o.Key == "ascii_mode").IsChecked);
+    }
+
+    [AvaloniaFact]
+    public void AppOptions_save_carries_keys_beyond_the_checkboxes()
+    {
+        // 鼠须管逐应用选项按 schema 分流（inline/no_inline）；编辑器没有复选框的键
+        // （如下面这个鼠须管不认识的 inline_preedit）保存时必须原样带回，
+        // 且「由开改关」要写出显式 false 才能盖过基座默认值。
+        var field = new Erya.Core.Settings.SettingsField
+        {
+            Id = "appsTable",
+            Label = "应用列表",
+            Type = "appOptions",
+            KeyPath = "app_options",
+            Choices = ["ascii_mode", "vim_mode", "inline", "no_inline"],
+        };
+        var vm = new AppOptionsFieldViewModel(field);
+        vm.Load(new Dictionary<string, object?>
+        {
+            ["com.apple.Terminal"] = new Dictionary<string, object?>
+            {
+                ["ascii_mode"] = true,
+                ["inline_preedit"] = true, // 鼠须管 schema 未建模 → 原样保留
+            },
+        });
+
+        var row = Assert.Single(vm.Rows);
+        Assert.Equal(["默认英文", "Vim 模式", "强制内嵌编码", "禁用内嵌编码"],
+            row.Options.Select(o => o.Label));
+
+        row.Options.Single(o => o.Key == "no_inline").IsChecked = true; // 开 → 写 true
+        row.Options.Single(o => o.Key == "ascii_mode").IsChecked = false; // 开 → 关：显式 false
+        Assert.True(vm.HasPendingEdits);
+
+        var written = (IReadOnlyDictionary<string, object?>)vm.PendingValue()!;
+        var terminal = (IReadOnlyDictionary<string, object?>)written["com.apple.Terminal"]!;
+        Assert.Equal(false, terminal["ascii_mode"]);
+        Assert.Equal(true, terminal["no_inline"]);
+        Assert.Equal(true, terminal["inline_preedit"]); // 未建模键不丢
+        Assert.False(terminal.ContainsKey("vim_mode")); // 未勾选且原本就没设 → 不写
     }
 
     /// <summary>Squirrel-like distribution over temp dirs (the real one owns ~/Library/Rime).</summary>

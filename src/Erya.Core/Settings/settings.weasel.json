@@ -54,6 +54,19 @@
           "keyPath": "style/inline_preedit"
         },
         {
+          "id": "preeditType",
+          "label": "编码区内容",
+          "description": "composition 显示输入编码；preview 在光标处显示首选候选（相当于鼠须管的内嵌候选）；preview_all 内嵌显示全部候选",
+          "type": "enum",
+          "icon": "td:Text",
+          "keyPath": "style/preedit_type",
+          "choices": [
+            "composition",
+            "preview",
+            "preview_all"
+          ]
+        },
+        {
           "id": "labelFormat",
           "label": "序号格式",
           "description": "如 \"%s.\"；%s 代表数字",
@@ -99,6 +112,73 @@
           "min": 0,
           "max": 20,
           "step": 1
+        }
+      ]
+    },
+    {
+      "id": "verticalText",
+      "group": "layout",
+      "title": "竖排细节",
+      "description": "排列方式为 vertical / vertical_text 时生效。",
+      "fields": [
+        {
+          "id": "verticalTextLeftToRight",
+          "label": "竖排从左到右",
+          "description": "竖排文本（vertical_text）的列序改为从左到右，默认从右到左",
+          "type": "toggle",
+          "icon": "td:Vertical",
+          "keyPath": "style/vertical_text_left_to_right"
+        },
+        {
+          "id": "verticalTextWithWrap",
+          "label": "竖排自动换列",
+          "description": "竖排文本（vertical_text）超出一列时自动换列",
+          "type": "toggle",
+          "icon": "td:Vertical",
+          "keyPath": "style/vertical_text_with_wrap"
+        },
+        {
+          "id": "verticalAutoReverse",
+          "label": "竖排自动换向",
+          "description": "根据候选窗在屏幕上的位置自动反转竖排方向",
+          "type": "toggle",
+          "icon": "td:Vertical",
+          "keyPath": "style/vertical_auto_reverse"
+        }
+      ]
+    },
+    {
+      "id": "rendering",
+      "group": "layout",
+      "title": "渲染与提示",
+      "fields": [
+        {
+          "id": "antialiasMode",
+          "label": "字体抗锯齿",
+          "description": "DirectWrite 文字渲染的抗锯齿方式：default 跟随系统、cleartype、grayscale 灰度、aliased 关闭",
+          "type": "enum",
+          "keyPath": "style/antialias_mode",
+          "choices": [
+            "default",
+            "cleartype",
+            "grayscale",
+            "aliased"
+          ]
+        },
+        {
+          "id": "asciiTipFollowCursor",
+          "label": "提示跟随光标",
+          "description": "中西文切换提示显示在应用光标处",
+          "type": "toggle",
+          "icon": "td:Cursor",
+          "keyPath": "style/ascii_tip_follow_cursor"
+        },
+        {
+          "id": "fullscreen",
+          "label": "全屏应用",
+          "description": "在全屏应用（游戏、播放器）中显示候选窗；开启后自动关闭内嵌编码并解除最大宽度限制",
+          "type": "toggle",
+          "keyPath": "style/fullscreen"
         },
         {
           "id": "displayTrayIcon",
@@ -362,6 +442,35 @@
       ]
     },
     {
+      "id": "layoutAlign",
+      "group": "layout",
+      "title": "对齐与基线",
+      "fields": [
+        {
+          "id": "alignType",
+          "label": "垂直对齐",
+          "description": "候选行内文字的对齐基准（上 / 中 / 下）",
+          "type": "segmented",
+          "keyPath": "style/layout/align_type",
+          "choices": [
+            "top",
+            "center",
+            "bottom"
+          ]
+        },
+        {
+          "id": "baseline",
+          "label": "基线微调",
+          "description": "以候选字号的百分比微调文字基线，0 为不调整",
+          "type": "stepper",
+          "keyPath": "style/layout/baseline",
+          "min": -50,
+          "max": 50,
+          "step": 5
+        }
+      ]
+    },
+    {
       "id": "appOptions",
       "group": "apps",
       "title": "应用程序",
@@ -372,7 +481,12 @@
           "label": "应用列表",
           "type": "appOptions",
           "icon": "td:App",
-          "keyPath": "app_options"
+          "keyPath": "app_options",
+          "choices": [
+            "ascii_mode",
+            "vim_mode",
+            "inline_preedit"
+          ]
         }
       ]
     }

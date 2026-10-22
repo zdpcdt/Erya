@@ -160,14 +160,16 @@ public sealed class CandidatePreviewTests : IDisposable
     [AvaloniaFact]
     public void Squirrel_style_keys_drive_the_same_preview()
     {
+        // margin_*/hilite_padding 是小狼毫的键，鼠须管不读；它的留白由
+        // border_* 提供（edgeInset = border + corner），描边取两者较小值。
         Write("squirrel.yaml", """
             style:
               color_scheme: macos_light
               candidate_list_layout: linear
               font_point: 21
-              margin_x: 14
+              border_width: 10
+              corner_radius: 4
               alpha: 0.8
-              hilite_padding: 3
             preset_color_schemes:
               macos_light:
                 name: 浅色
@@ -181,9 +183,10 @@ public sealed class CandidatePreviewTests : IDisposable
         var preview = vm.CandidatePreview!;
         Assert.Equal(Orientation.Horizontal, preview.PanelOrientation); // linear 横排
         Assert.Equal(21, preview.FontSize);
-        Assert.Equal(14, preview.WindowPadding.Left);
+        Assert.Equal(4, preview.WindowCorner.TopLeft);
+        Assert.Equal(14, preview.WindowPadding.Left);   // 留白 = border_width 10 + corner 4
+        Assert.Equal(10, preview.FrameThickness.Left);  // 描边取 border 较小者（未设 border_height 时同 border_width）
         Assert.Equal(0.8, preview.WindowOpacity, 2);
-        Assert.Equal(3, preview.Items[0].RowPadding.Left); // 高亮扩张
     }
 
     [AvaloniaFact]
