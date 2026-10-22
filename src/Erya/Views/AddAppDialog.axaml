@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
+             xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="620"
+             Width="500" MaxHeight="620"
+             x:Class="Erya.Views.AddAppDialog"
+             x:DataType="sf:AddAppDialogViewModel">
+
+    <!--  窗口级 Dialog 自带标题与「确定/取消」；此处三选一挑一个应用标识。  -->
+    <ScrollViewer>
+        <StackPanel Spacing="14" Margin="16,12,16,16">
+
+            <TextBlock Text="为哪个应用设置输入行为？可以从常用列表或正在运行的应用中挑一个，也可以手动填写标识（Windows 为程序 exe 名，macOS 为应用 Bundle ID）。"
+                       Opacity="0.6" TextWrapping="Wrap" />
+
+            <!--  常用应用：两列卡片按钮，点击填入下方输入框  -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="常用应用" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Presets}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <u:ElasticWrapPanel IsFillHorizontal="True" ItemWidth="228" ItemSpacing="8" LineSpacing="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="sf:AppPresetItem">
+                            <Button Classes="Tertiary" Padding="10,8" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding $parent[ItemsControl].((sf:AddAppDialogViewModel)DataContext).PickCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="点击填入下方输入框">
+                                <StackPanel Spacing="1">
+                                    <TextBlock Text="{Binding Title}" />
+                                    <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
+                                               FontFamily="Consolas, Menlo, monospace"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!--  正在运行的应用（仅 Windows）：exe 名即 app_options 的键  -->
+            <StackPanel Spacing="8" IsVisible="{Binding ShowRunningApps}">
+                <TextBlock Text="正在运行的应用" FontWeight="SemiBold" />
+                <ScrollViewer MaxHeight="150">
+                    <ItemsControl ItemsSource="{Binding RunningApps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Button Classes="Tertiary" Padding="10,6" Margin="0,0,8,6"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding $parent[ItemsControl].((sf:AddAppDialogViewModel)DataContext).PickRunningCommand}"
+                                        CommandParameter="{Binding}">
+                                    <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, monospace" FontSize="12" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!--  手填 + 初始规则  -->
+            <c:CellGroup Header="应用标识">
+                <c:Cell Content="标识" Description="Windows 填 exe 名（如 gvim.exe），macOS 填 Bundle ID">
+                    <c:Cell.RightContent>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox Text="{Binding AppId, Mode=TwoWay}" Width="250"
+                                     FontFamily="Consolas, Menlo, monospace"
+                                     PlaceholderText="应用标识" />
+                        </StackPanel>
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Content="默认使用英文" Description="添加后立即开启该应用的「默认英文」开关">
+                    <c:Cell.RightContent>
+                        <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
+                                      IsChecked="{Binding StartAscii, Mode=TwoWay}" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
+
+            <u:Banner Type="Error" Content="{Binding ErrorText}" ShowIcon="True"
+                      IsVisible="{Binding ErrorText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

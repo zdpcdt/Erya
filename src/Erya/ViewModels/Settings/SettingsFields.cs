@@ -484,11 +484,12 @@ public sealed partial class CheckOptionViewModel(string value) : ObservableObjec
 }
 
 /// <summary>
-/// app_options: per-app input behavior rows (bundle ID / exe name). The
-/// editable option set comes from the schema's choices — the two frontends
-/// read different keys (Squirrel: inline/no_inline, Weasel: inline_preedit) —
-/// and any key this editor has no checkbox for is carried through on save,
-/// so editing one app never strips options it does not know about.
+/// <summary>
+/// app_options：每应用一条输入规则（Windows 为 exe 名，macOS 为 Bundle ID）。
+/// 可编辑选项集来自 schema 的 choices——两个前端读的键不同（鼠须管
+/// inline/no_inline，小狼毫 inline_preedit）；复选框没覆盖的键保存时原样带回，
+/// 「由开改关」写出显式 false 才能盖过基座默认值。没有任何键的应用不写入，
+/// 删光所有应用则整个键从 patch 移除。应用行为页以专用卡片列表渲染本字段。
 /// </summary>
 public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
 {
@@ -526,6 +527,7 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
             .Select(id => (Id: id, Value: Rows.First(r => r.AppId.Trim() == id).BuildValue()))
             .Where(app => app.Value.Count > 0)
             .ToDictionary(app => app.Id, app => (object?)app.Value);
+        // 全部删光（或都无键）→ null：基类 PendingRemoval 会把整段键从 patch 移除。
         return apps.Count == 0 ? null : apps;
     }
 
@@ -535,9 +537,20 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
         Rows.Add(row);
     }
 
-    [RelayCommand]
-    private void AddRow()
-        => Attach(new AppOptionsRowViewModel("", _editableKeys, new Dictionary<string, object?>()));
+    /// <summary>添加应用（空/重复标识返回错误文案，null = 已添加）；对话框确定后调用。</summary>
+    public string? AddApp(string appId, bool asciiMode)
+    {
+        var id = appId.Trim();
+        if (id.Length == 0) return "请填写应用标识。";
+        if (Rows.Any(r => string.Equals(r.AppId.Trim(), id, StringComparison.OrdinalIgnoreCase)))
+            return $"已有 {id} 的规则。";
+        var row = new AppOptionsRowViewModel(id, _editableKeys, new Dictionary<string, object?>());
+        if (asciiMode)
+            row.Options.FirstOrDefault(o => o.Key == "ascii_mode")?.IsChecked = true;
+        Attach(row);
+        MarkDirty();
+        return null;
+    }
 
     [RelayCommand]
     private void RemoveRow(AppOptionsRowViewModel row)
@@ -550,6 +563,10 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
     private void MarkDirty() => HasPendingEdits = true;
 }
 
+/// <summary>
+/// 一条应用规则；ID 不再提供行内编辑（改需求罕见，删了重加）。摘要文案随
+/// 选项勾选联动，卡片说明行直接绑定。
+/// </summary>
 public sealed partial class AppOptionsRowViewModel : ObservableObject
 {
     /// <summary>Checkbox text per option key — schema keys are stable frontend identifiers.</summary>
@@ -590,9 +607,21 @@ public sealed partial class AppOptionsRowViewModel : ObservableObject
 
     partial void OnAppIdChanged(string value) => Changed?.Invoke();
 
+    /// <summary>卡片说明行：已开启选项的摘要（无勾选时「未设置输入规则」）。</summary>
+    public string SummaryText
+    {
+        get
+        {
+            var on = Options.Where(o => o.IsChecked).Select(o => o.Label).ToList();
+            return on.Count == 0 ? "未设置输入规则" : string.Join(" · ", on);
+        }
+    }
+
     private void OnOptionChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(AppOptionViewModel.IsChecked)) Changed?.Invoke();
+        if (e.PropertyName != nameof(AppOptionViewModel.IsChecked)) return;
+        OnPropertyChanged(nameof(SummaryText));
+        Changed?.Invoke();
     }
 
     /// <summary>

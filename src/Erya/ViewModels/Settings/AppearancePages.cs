@@ -258,10 +258,111 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
     }
 }
 
-/// <summary>应用行为页：按应用设置输入行为（app_options）。</summary>
-public sealed class AppsPageViewModel : AppearancePageViewModel
+/// <summary>
+/// 应用行为页：app_options 的专用卡片列表（不走通用分节渲染）——每应用一张卡，
+/// 右侧按 schema choices 渲染该前端的选项开关（鼠须管含 Vim/内嵌编码，小狼毫
+/// 内嵌编码）+ 删除；添加走对话框（常用预设 / 正在运行的应用 / 手填校验），
+/// 空态给常用应用一键添加。数据仍在共享编辑器的 appOptions 字段上，保存走
+/// 同一条「保存并部署」管线。
+/// </summary>
+public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
+    private AppOptionsFieldViewModel? _field;
+
     public AppsPageViewModel(SettingsEditorViewModel editor) : base(editor, "apps")
     {
+        editor.PropertyChanged += OnEditorChangedForApps;
+        HookField();
     }
+
+    /// <summary>app_options 字段（重新加载后是新实例，经 <see cref="HookField"/> 重挂）。</summary>
+    public AppOptionsFieldViewModel? Field => _field;
+
+    [ObservableProperty]
+    private string _searchText = "";
+
+    partial void OnSearchTextChanged(string value) => RefreshList();
+
+    /// <summary>卡片列表：按标识过滤（大小写不敏感），保持加载顺序。</summary>
+    public IEnumerable<AppOptionsRowViewModel> FilteredRows
+    {
+        get
+        {
+            var query = SearchText.Trim();
+            return (Field?.Rows ?? Enumerable.Empty<AppOptionsRowViewModel>())
+                .Where(r => query.Length == 0
+                            || r.AppId.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    public bool HasAnyApp => Field is { Rows.Count: > 0 };
+
+    /// <summary>过滤后仍有卡片。</summary>
+    public bool HasVisibleRows => FilteredRows.Any();
+
+    /// <summary>有规则但全被搜索过滤掉——提示「没有匹配」（区别于空态与加载中）。</summary>
+    public bool SearchMiss => HasAnyApp && !HasVisibleRows;
+
+    [RelayCommand]
+    private async Task AddAppAsync()
+    {
+        if (Field is null) return;
+        var vm = new AddAppDialogViewModel(Field.Rows.Select(r => r.AppId.Trim()).ToList());
+        var result = await Dialog.ShowStandardAsync<AddAppDialog, AddAppDialogViewModel>(
+            vm, AppNotifications.MainWindow,
+            new DialogOptions
+            {
+                Title = "添加应用",
+                Mode = DialogMode.None,
+                Button = DialogButton.OKCancel,
+                CanResize = false,
+            });
+        // Ursa 对话框的确定按钮不参与校验：无效输入在这里拦下（对话框内已有红字提示）。
+        if (result == DialogResult.OK && vm.IsValid)
+            Field.AddApp(vm.ConfirmId, vm.StartAscii);
+    }
+
+    /// <summary>空态快捷添加：一键为常用应用建「默认英文」规则，跳过对话框。</summary>
+    [RelayCommand]
+    private void QuickAdd(AppPresetItem? preset)
+    {
+        if (preset is not null) Field?.AddApp(preset.Id, asciiMode: true);
+    }
+
+    /// <summary>卡片上的删除（转发到字段，简化行模板绑定）。</summary>
+    [RelayCommand]
+    private void RemoveApp(AppOptionsRowViewModel? row)
+    {
+        if (row is not null) Field?.RemoveRowCommand.Execute(row);
+    }
+
+    /// <summary>空态里放的常用应用快捷入口（平台相关）。</summary>
+    public IReadOnlyList<AppPresetItem> EmptyStatePresets => AppBehaviorPresets.ForCurrentOs();
+
+    private void OnEditorChangedForApps(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsEditorViewModel.Sections)) HookField();
+    }
+
+    /// <summary>（重）挂 appOptions 字段：订阅行集合变化刷新过滤列表与空态。</summary>
+    private void HookField()
+    {
+        if (_field is { } old) old.Rows.CollectionChanged -= OnRowsChanged;
+        _field = Sections.SelectMany(s => s.Fields).OfType<AppOptionsFieldViewModel>().FirstOrDefault();
+        if (_field is { } neu) neu.Rows.CollectionChanged += OnRowsChanged;
+        OnPropertyChanged(nameof(Field));
+        RefreshList();
+    }
+
+    private void RefreshList()
+    {
+        OnPropertyChanged(nameof(FilteredRows));
+        OnPropertyChanged(nameof(HasVisibleRows));
+        OnPropertyChanged(nameof(SearchMiss));
+        OnPropertyChanged(nameof(HasAnyApp));
+    }
+
+    private void OnRowsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        => RefreshList();
 }

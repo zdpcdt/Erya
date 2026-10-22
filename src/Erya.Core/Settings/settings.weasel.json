@@ -474,7 +474,7 @@
       "id": "appOptions",
       "group": "apps",
       "title": "应用程序",
-      "description": "为特定应用设置输入行为（按程序 exe 名，如在 gvim.exe 中默认使用英文）。这是 RIME 引擎层功能，重新部署后生效。",
+      "description": "为指定应用设置输入行为（按程序 exe 名，如在终端中默认使用英文）。应用行为页以卡片列表编辑本节；修改保存到补丁后重新部署生效。",
       "fields": [
         {
           "id": "appsTable",
