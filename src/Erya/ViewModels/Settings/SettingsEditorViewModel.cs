@@ -44,6 +44,8 @@ public sealed partial class SettingsSectionViewModel : ObservableObject
                 return new NumberFieldViewModel(field);
             case "text":
                 return new TextFieldViewModel(field);
+            case "hotkey":
+                return new HotkeyFieldViewModel(field);
             case "font":
                 return new FontFieldViewModel(field);
             case "enum" or "segmented":

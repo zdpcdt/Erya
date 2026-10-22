@@ -74,6 +74,39 @@ public sealed class SettingsEditorTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task Select_character_hotkeys_write_scalar_scheme_script_keys()
+    {
+        // 以词定字两键由方案脚本（如雾凇拼音 lua/select_character.lua）经
+        // config:get_string 读取——必须是标量单键。曾写不存在的
+        // key_binder/select_pair 列表，librime 不读、脚本也不认，纯 placebo。
+        Write("default.yaml", """
+            key_binder:
+              select_first_character: bracketleft
+              select_last_character: bracketright
+            """);
+        var distribution = new Fcitx5RimeDistribution(_dir, _sharedDir, null);
+        var vm = new SettingsEditorViewModel(distribution, "default");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        HotkeyFieldViewModel First() => Assert.IsType<HotkeyFieldViewModel>(
+            vm.Sections.SelectMany(s => s.Fields).Single(f => f.KeyPath == "key_binder/select_first_character"));
+        Assert.Equal("bracketleft", First().Text); // merged base value
+
+        First().Text = "semicolon";
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var custom = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
+        Assert.DoesNotContain("select_pair", custom);
+        Assert.Matches(@"key_binder/select_first_character:\s*semicolon", custom);
+
+        // 清空 = 移除补丁键，回落方案自带的默认键位（保存会重建字段，重取）。
+        First().Text = "";
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+        Assert.False(new Erya.Core.Configuration.RimeConfigStore(_dir)
+            .ReadPatchValues("default.yaml").ContainsKey("key_binder/select_first_character"));
+    }
+
+    [AvaloniaFact]
     public async Task Linux_frontend_has_no_appearance_schema_and_says_why()
     {
         var distribution = new Fcitx5RimeDistribution(_dir, _sharedDir, null);

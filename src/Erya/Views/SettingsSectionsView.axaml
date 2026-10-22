@@ -83,6 +83,21 @@
                                         </c:Cell>
                                     </DataTemplate>
 
+                                    <!--  hotkey：单键标量字段（以词定字等）。派生自 TextField，
+                                          必须排在基类模板之前，否则先被文本框模板吃掉  -->
+                                    <DataTemplate x:DataType="sf:HotkeyFieldViewModel">
+                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.RightContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <u:KeyGestureInput Width="280"
+                                                                       Gesture="{Binding Text, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                       ToolTip.Tip="{Binding Text}" />
+                                                </StackPanel>
+                                            </c:Cell.RightContent>
+                                        </c:Cell>
+                                    </DataTemplate>
+
                                     <DataTemplate x:DataType="sf:TextFieldViewModel">
                                         <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
                                                 Content="{Binding Label}" Description="{Binding Description}">

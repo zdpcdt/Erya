@@ -19,7 +19,7 @@ public sealed class SettingsSchema
     public static readonly IReadOnlySet<string> KnownFieldTypes = new HashSet<string>
     {
         "toggle", "stepper", "slider", "segmented", "enum", "text", "font",
-        "hotkeyList", "hotkeyPairList", "keyMapping", "checkList", "appOptions",
+        "hotkey", "hotkeyList", "hotkeyPairList", "keyMapping", "checkList", "appOptions",
     };
 }
 
