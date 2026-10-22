@@ -5,6 +5,7 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:dist="clr-namespace:Erya.Core.Distributions;assembly=Erya.Core"
+             xmlns:views="clr-namespace:Erya.Views"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="520"
              x:Class="Erya.Views.OverviewPage"
@@ -20,21 +21,15 @@
                 CornerRadius="{DynamicResource SemiBorderRadiusMedium}"
                 Padding="20,16">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Border Width="44" Height="44" CornerRadius="22"
-                        Background="{DynamicResource SemiColorFill0}">
-                    <Panel>
-                        <PathIcon Width="24" Height="24"
-                                  Theme="{DynamicResource InnerPathIcon}"
-                                  Data="{StaticResource SemiIconMonitorStroked}"
-                                  Foreground="{DynamicResource SemiColorPrimary}"
-                                  IsVisible="{Binding !IsMissing}" />
-                        <PathIcon Width="24" Height="24"
-                                  Theme="{DynamicResource InnerPathIcon}"
-                                  Data="{StaticResource SemiIconMonitorStroked}"
-                                  Foreground="{DynamicResource SemiColorText3}"
-                                  IsVisible="{Binding IsMissing}" />
-                    </Panel>
-                </Border>
+                <!--  RIME 官方 logo：亮/暗主题自动换墨蓝/近白变体；未检测到时灰态压暗  -->
+                <Panel Width="44" Height="44">
+                    <views:RimeLogoIcon Width="40" Height="40"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        IsVisible="{Binding !IsMissing}" />
+                    <views:RimeLogoIcon Width="40" Height="40" Opacity="0.35"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        IsVisible="{Binding IsMissing}" />
+                </Panel>
 
                 <StackPanel Grid.Column="1" Margin="16,0,12,0" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Text="{Binding HeroTitle}" FontSize="16" FontWeight="SemiBold" />

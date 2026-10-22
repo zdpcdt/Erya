@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
+             xmlns:views="clr-namespace:Erya.Views"
              xmlns:vm="clr-namespace:Erya.ViewModels"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.BackupRestorePage"
@@ -71,10 +72,8 @@
                 CornerRadius="{DynamicResource SemiBorderRadiusMedium}"
                 Padding="20,36" IsVisible="{Binding !HasUserDir}">
             <StackPanel HorizontalAlignment="Center" Spacing="10">
-                <PathIcon Width="28" Height="28" HorizontalAlignment="Center"
-                          Theme="{DynamicResource InnerPathIcon}"
-                          Data="{StaticResource SemiIconMonitorStroked}"
-                          Foreground="{DynamicResource SemiColorText3}" />
+                <views:RimeLogoIcon Width="32" Height="32" Opacity="0.45"
+                                    HorizontalAlignment="Center" />
                 <TextBlock Text="未检测到 RIME 发行版" FontWeight="SemiBold"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="安装鼠须管、小狼毫等 RIME 前端后，可在此备份与恢复用户目录配置。"

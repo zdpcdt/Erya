@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- RIME logo（英雄卡/空态，双主题两份），RimeLogoIcon 加载 -->
+    <AvaloniaResource Include="Assets/*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Erya.UiTests" />
   </ItemGroup>
 
