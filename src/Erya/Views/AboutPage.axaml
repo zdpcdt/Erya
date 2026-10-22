@@ -119,12 +119,12 @@
                 <TextBlock HorizontalAlignment="Center" FontSize="18" FontWeight="Bold" Text="致谢" />
                 <TextBlock HorizontalAlignment="Center" FontSize="14" TextAlignment="Center" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                           Text="尔雅构建于 RIME 生态之上，功能设计移植自前辈工具，感谢以下项目与作者" />
+                           Text="尔雅构建于 RIME 生态之上，感谢以下项目与作者" />
                 <!--  单个 Grid 五行四列：列宽全表共享，天然对齐（Avalonia 无 SharedSizeGroup）  -->
                 <Border Margin="0,8,0,0" Padding="20,6" Theme="{DynamicResource CardBorder}">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                         <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" Text="RIME 中州韵" />
+                                   VerticalAlignment="Center" Text="中州韵 RIME" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
                                    Text="开源跨平台输入法引擎" />
@@ -157,7 +157,7 @@
                                    VerticalAlignment="Center" Text="中州韵助手 rimetool" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="Qt 版 RIME 配置工具，尔雅功能设计的原型" />
+                                   Text="Qt 版 RIME 配置工具" />
                         <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="yanhuacuo" />
                         <HyperlinkButton Grid.Row="3" Grid.Column="3" Margin="0,8" Content="GitHub"
@@ -167,7 +167,7 @@
                                    VerticalAlignment="Center" Text="RimeControl" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="WPF 版 RIME 配置工具，备份恢复思路的来源" />
+                                   Text="WPF 版 RIME 配置工具" />
                         <TextBlock Grid.Row="4" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="qzly" />
                         <HyperlinkButton Grid.Row="4" Grid.Column="3" Margin="0,8" Content="GitHub"
