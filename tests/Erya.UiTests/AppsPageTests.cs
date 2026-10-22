@@ -325,14 +325,14 @@ public sealed class AppsPageTests : IDisposable
         Assert.True(flyout.GetVisualDescendants().OfType<TextBlock>()
             .Single(t => t.Text == "正在运行").IsVisible);
 
-        // 全量列表：条目渲染为按钮；已有规则的那条禁用 + 「已添加」标签。
+        // 全量列表：条目渲染为按钮；已有规则的那条禁用 + 「已添加」Badge。
         var entries = flyout.GetVisualDescendants().OfType<Button>()
             .Where(b => b.DataContext is AddAppEntry).ToList();
         var disabled = entries.Single(b => !b.IsEnabled);
         Assert.Equal("cmd.exe", ((AddAppEntry)disabled.DataContext!).Id);
-        // 「已添加」标签只在那条禁用条目里可见（模板里每条都带、只是折叠）。
-        Assert.Contains(disabled.GetVisualDescendants().OfType<TextBlock>(),
-            t => t.Text == "已添加" && t.IsVisible);
+        // Badge 只在那条禁用条目里可见（模板里每条都带、只是折叠）。
+        Assert.Contains(disabled.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
+            b => b.Content as string == "已添加" && b.IsVisible);
 
         // 点未添加的条目直接触发回调。
         var pickable = entries.First(b => b.IsEnabled);
