@@ -49,14 +49,9 @@
                             <tdicon:Sunny Width="20" Height="20" />
                         </c:Cell.Icon>
                         <c:Cell.RightContent>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <ComboBox ItemsSource="{Binding LightSchemeField.Options}"
-                                          SelectedItem="{Binding LightSchemeField.SelectedOption, Mode=TwoWay}"
-                                          MinWidth="200" />
-                                <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                              Command="{Binding EditLightSchemeCommand}"
-                                              ToolTip.Tip="编辑此皮肤（对话框）" />
-                            </StackPanel>
+                            <ComboBox ItemsSource="{Binding LightSchemeField.Options}"
+                                      SelectedItem="{Binding LightSchemeField.SelectedOption, Mode=TwoWay}"
+                                      MinWidth="220" />
                         </c:Cell.RightContent>
                     </c:Cell>
                     <c:Cell Content="暗色主题" Description="系统深色模式使用的皮肤；未设置时跟随亮色">
@@ -64,14 +59,9 @@
                             <tdicon:Moon Width="20" Height="20" />
                         </c:Cell.Icon>
                         <c:Cell.RightContent>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <ComboBox ItemsSource="{Binding DarkSchemeField.Options}"
-                                          SelectedItem="{Binding DarkSchemeField.SelectedOption, Mode=TwoWay}"
-                                          MinWidth="200" />
-                                <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                              Command="{Binding EditDarkSchemeCommand}"
-                                              ToolTip.Tip="编辑此皮肤（对话框）" />
-                            </StackPanel>
+                            <ComboBox ItemsSource="{Binding DarkSchemeField.Options}"
+                                      SelectedItem="{Binding DarkSchemeField.SelectedOption, Mode=TwoWay}"
+                                      MinWidth="220" />
                         </c:Cell.RightContent>
                     </c:Cell>
                 </c:CellGroup>
@@ -146,7 +136,7 @@
                                                 <TextBlock Text="{Binding KindText}" FontSize="11" Opacity="0.5" />
                                             </StackPanel>
                                         </Button>
-                                        <!--  角上操作：指派亮 / 指派暗 / 编辑  -->
+                                        <!--  角上操作：指派亮 / 指派暗 / 复制(内置)或编辑+复制定义(自定义)  -->
                                         <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
                                             <u:IconButton Icon="{StaticResource SemiIconSun}"
                                                           Classes="Tertiary"
@@ -158,11 +148,25 @@
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsDarkSchemeCommand}"
                                                           CommandParameter="{Binding}"
                                                           ToolTip.Tip="设为暗色主题" />
-                                            <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                                            <!--  内置皮肤：复制一份为自定义皮肤（打开即副本的编辑窗口）  -->
+                                            <u:IconButton Icon="{StaticResource SemiIconCopy}"
                                                           Classes="Tertiary"
+                                                          IsVisible="{Binding IsShipped}"
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="编辑此皮肤（内置皮肤确定时另存为）" />
+                                                          ToolTip.Tip="复制为自定义皮肤" />
+                                            <!--  自定义皮肤：编辑 + 复制 YAML 定义  -->
+                                            <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                                                          Classes="Tertiary"
+                                                          IsVisible="{Binding !IsShipped}"
+                                                          Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="编辑此皮肤" />
+                                            <u:IconButton Icon="{StaticResource SemiIconCode}"
+                                                          Classes="Tertiary"
+                                                          IsVisible="{Binding !IsShipped}"
+                                                          Command="{Binding CopyYamlCommand}"
+                                                          ToolTip.Tip="复制 YAML 定义" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Erya.Services;
 using Erya.Views;
 using Ursa.Controls;
 
@@ -142,31 +143,21 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
 
     /// <summary>画廊「＋新建皮肤」：以当前亮色皮肤为底开草稿（无则空白默认）。</summary>
     [RelayCommand]
-    private Task CreateSchemeAsync()
-    {
-        var seed = Find(LightSchemeField?.Selected);
-        return EditDialogAsync(CreateDraft(seed), isDraft: true, baseName: seed?.Name);
-    }
+    private Task CreateSchemeAsync() => EditDialogAsync(CreateDraft(Find(LightSchemeField?.Selected)), isDraft: true);
 
     [RelayCommand]
     private Task EditSchemeAsync(ColorSchemeViewModel? scheme) => EditAsync(scheme);
-
-    [RelayCommand]
-    private Task EditLightSchemeAsync() => EditAsync(Find(LightSchemeField?.Selected));
-
-    [RelayCommand]
-    private Task EditDarkSchemeAsync() => EditAsync(Find(DarkSchemeField?.Selected));
 
     private ColorSchemeViewModel? Find(string? name)
         => Editor.SchemeLibrary?.Schemes.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// 草稿：以 seed 为底的未入库副本（名字预填「X 副本」），或空白默认皮肤。
+    /// 草稿：以 seed 配色为底的未入库副本（名字默认「我的皮肤」，撞库入库时自动唯一）。
     /// 编辑对话框里从头到尾改的都是这个副本——内置皮肤永远不被碰。
     /// </summary>
     internal static ColorSchemeViewModel CreateDraft(ColorSchemeViewModel? seed)
         => ColorSchemeViewModel.FromState(seed?.CloneableState is { } state
-            ? state with { Name = $"{seed.Name} 副本" }
+            ? state with { Name = "我的皮肤" }
             : new SchemeState("我的皮肤", "",
                 "FFFFFF", "000000", "D3E3F6", "000000", "333333", "333333", "000000", "000000"));
 
@@ -175,29 +166,30 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
         if (scheme is null) return;
         if (scheme.IsShipped)
         {
-            // 打开即副本：内置皮肤的「编辑」从第一下起改的就是你的新皮肤。
-            await EditDialogAsync(CreateDraft(scheme), isDraft: true, baseName: scheme.Name);
+            // 打开即副本：内置皮肤的「复制」从第一下起改的就是你的新皮肤。
+            await EditDialogAsync(CreateDraft(scheme), isDraft: true);
             return;
         }
         await EditDialogAsync(scheme);
     }
 
     /// <summary>
-    /// 编辑对话框：确定 = 保留/创建，取消 = 还原/丢弃。
+    /// 编辑对话框（窗口级模态）：确定 = 保留/创建，取消 = 还原/丢弃。
     /// 对话框里的删除按钮可能在等待期间把皮肤从库中移走——返回后按存在性分流。
     /// </summary>
-    private async Task EditDialogAsync(ColorSchemeViewModel scheme, bool isDraft = false, string? baseName = null)
+    private async Task EditDialogAsync(ColorSchemeViewModel scheme, bool isDraft = false)
     {
         if (SchemeLibrary is null) return;
         var fields = Sections.SelectMany(s => s.Fields).ToList();
-        var vm = new SchemeEditDialogViewModel(scheme, fields, SchemeLibrary, IsSquirrel, isDraft, baseName);
-        var result = await OverlayDialog.ShowStandardAsync(
-            new SchemeEditDialog(), vm, "main",
-            new OverlayDialogOptions
+        var vm = new SchemeEditDialogViewModel(scheme, fields, SchemeLibrary, IsSquirrel, isDraft);
+        var result = await Dialog.ShowStandardAsync<SchemeEditDialog, SchemeEditDialogViewModel>(
+            vm, AppNotifications.MainWindow,
+            new DialogOptions
             {
                 Title = vm.Title,
                 Mode = DialogMode.None,
-                Buttons = DialogButton.OKCancel,
+                Button = DialogButton.OKCancel,
+                CanResize = false,
             });
         vm.Detach(); // 解开预览对字段的订阅
         if (!isDraft && !SchemeLibrary.Schemes.Contains(scheme)) return; // 已在对话框里删除
