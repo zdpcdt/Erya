@@ -83,7 +83,7 @@
           "label": "保持 Caps Lock 原功能",
           "description": "开启后 Caps Lock 用于切换大写锁定；关闭则用于切换中英文输入状态",
           "type": "toggle",
-          "icon": "td:Lock",
+          "icon": "td:LockOn",
           "keyPath": "ascii_composer/good_old_caps_lock"
         },
         {

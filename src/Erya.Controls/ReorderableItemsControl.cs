@@ -186,6 +186,7 @@ public class ReorderableItemsControl : ItemsControl
     /// <summary>
     /// ItemsSource 是 ObservableCollection 时走其原生 Move（容器随项保留）；
     /// 否则退化为 Remove+Insert。未绑定 ItemsSource 时调整控件自身的 Items。
+    /// Move 经反射调用，在 aot-roots.xml 中保根。
     /// </summary>
     private void MoveItem(int from, int to)
     {

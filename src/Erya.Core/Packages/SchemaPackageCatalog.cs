@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Erya.Core.Packages;
 
@@ -9,12 +10,6 @@ namespace Erya.Core.Packages;
 /// </summary>
 public static class SchemaPackageCatalog
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
 
     public static IReadOnlyList<SchemaPackage> Load()
     {
@@ -22,7 +17,7 @@ public static class SchemaPackageCatalog
         const string resourceName = "Erya.Core.Packages.packages.catalog.json";
         using var stream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException($"内置方案包目录缺失：{resourceName}");
-        var packages = JsonSerializer.Deserialize<SchemaPackage[]>(stream, JsonOptions)
+        var packages = JsonSerializer.Deserialize(stream, SchemaCatalogContext.Default.SchemaPackageArray)
             ?? throw new InvalidOperationException($"内置方案包目录无法解析：{resourceName}");
         Validate(packages, resourceName);
         return packages;
@@ -53,3 +48,11 @@ public static class SchemaPackageCatalog
         }
     }
 }
+
+/// <summary>Native AOT 下 System.Text.Json 反射模式不可用，内置目录走源生成。</summary>
+[JsonSerializable(typeof(SchemaPackage[]))]
+[JsonSourceGenerationOptions(
+    PropertyNameCaseInsensitive = true,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true)]
+internal sealed partial class SchemaCatalogContext : JsonSerializerContext;
