@@ -36,6 +36,7 @@ public partial class ShellViewModel : ObservableObject
     private AppsPageViewModel _apps = null!;
     private AdvancedSettingsViewModel _advanced = null!;
     private BackupRestoreViewModel _backup = null!;
+    private AboutViewModel _about = null!;
     private Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
     private IRimeDistribution? _distribution;
 
@@ -81,6 +82,7 @@ public partial class ShellViewModel : ObservableObject
         }
         items.Add(new NavItem("advanced", "高级设置", Icon("SemiIconCode")));
         items.Add(new NavItem("backup", "备份恢复", Icon("SemiIconRestore")));
+        items.Add(new NavItem("about", "关于", Icon("SemiIconInfoCircle")));
         NavItems = items;
         InitializeLazyPages();
 
@@ -105,6 +107,7 @@ public partial class ShellViewModel : ObservableObject
         }
         _advanced = new AdvancedSettingsViewModel(_distribution);
         _backup = new BackupRestoreViewModel(_distribution);
+        _about = new AboutViewModel();
     }
 
     private void InitializeLazyPages()
@@ -120,6 +123,7 @@ public partial class ShellViewModel : ObservableObject
         }
         _lazyPages["advanced"] = (false, _advanced);
         _lazyPages["backup"] = (false, _backup);
+        _lazyPages["about"] = (false, _about);
     }
 
     partial void OnSelectedNavChanged(NavItem? value)

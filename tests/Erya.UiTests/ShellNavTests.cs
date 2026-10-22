@@ -50,6 +50,7 @@ public class ShellNavTests
     [
         "SemiIconHome", "SemiIconCheckList", "SemiIconSetting",
         "SemiIconColorPalette", "SemiIconCode", "SemiIconRestore", "SemiIconDesktop",
+        "SemiIconInfoCircle",
     ];
 
     [AvaloniaFact]
@@ -129,7 +130,7 @@ public class ShellNavTests
         // Linux 运行时由 App.axaml.cs 传入 false：外观三页编辑的 UI YAML
         // （squirrel/weasel）在 fcitx5/ibus 前端上不存在。
         var vm = new ShellViewModel(new DistributionManager(), showAppearance: false);
-        Assert.Equal(["overview", "schemas", "inputSettings", "advanced", "backup"],
+        Assert.Equal(["overview", "schemas", "inputSettings", "advanced", "backup", "about"],
             vm.NavItems.Select(n => n.Key).ToList());
 
         var window = new MainWindow { DataContext = vm };
