@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Styling;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -82,6 +84,17 @@ public sealed class OverviewBackupRenderTests : IDisposable
 
         // 就绪徽标可见；环境 + 维护两组共三行（输入前端行仅在多前端时出现）。
         Assert.Contains(VisibleTexts(page), t => t.Text == "就绪");
+        var logo = Assert.Single(page.GetVisualDescendants().OfType<Views.RimeLogoIcon>()
+            .Where(l => IsEffectivelyVisible(l)));
+        Assert.NotNull(logo.Source); // RIME logo 资源已加载（亮色主题取墨蓝版）
+
+        // 暗色主题自动切换到近白变体（参考 AboutPageTests 的双变体遍历）。
+        var lightSource = logo.Source;
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        Dispatcher.UIThread.RunJobs();
+        Assert.NotSame(lightSource, logo.Source);
+        Application.Current.RequestedThemeVariant = ThemeVariant.Default;
+        Dispatcher.UIThread.RunJobs();
         var groups = page.GetVisualDescendants().OfType<CellGroup>().Where(IsEffectivelyVisible).ToList();
         Assert.Equal(2, groups.Count);
         var cells = page.GetVisualDescendants().OfType<Cell>().Where(IsEffectivelyVisible).ToList();
