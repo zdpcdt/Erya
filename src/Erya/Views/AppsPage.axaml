@@ -32,8 +32,7 @@
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
                 <TextBlock Grid.Column="0" Text="加入列表的应用会在启动输入时自动切到右侧设置的状态——终端、SSH、控制台编辑器这类直接敲英文的程序最常用。"
                            Opacity="0.55" TextWrapping="Wrap" VerticalAlignment="Center" />
-                <Button x:Name="AddButton" Grid.Column="1" Content="＋ 添加应用" Classes="Primary" Margin="0,0,12,0"
-                        ToolTip.Tip="点选常用或正在运行的应用，或输入标识回车；添加即默认英文，卡片上可关">
+                <Button x:Name="AddButton" Grid.Column="1" Content="＋ 添加应用" Classes="Primary" Margin="0,0,12,0">
                     <Button.Flyout>
                         <Flyout Placement="Bottom">
                             <views:AddAppFlyout DataContext="{Binding Picker}" />

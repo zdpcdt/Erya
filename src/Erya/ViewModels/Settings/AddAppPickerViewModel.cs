@@ -6,16 +6,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Erya.ViewModels.Settings;
 
-/// <summary>弹层里的一条可添加应用：预设条目带友好名（副行显示标识），运行中条目标识即标题。</summary>
-public sealed record AddAppEntry(string Id, string Title, bool IsAdded)
-{
-    /// <summary>副行是否显示标识（预设 Title≠Id 才显示，运行中的单行）。</summary>
-    public bool ShowId => !string.Equals(Title, Id, StringComparison.Ordinal);
-}
+/// <summary>弹层里的一条可添加应用（正在运行的进程，exe 名即标识）。</summary>
+public sealed record AddAppEntry(string Id, bool IsAdded);
 
 /// <summary>
-/// 添加应用弹层（点选即添加）：常用应用 + 正在运行的应用合并为一个可搜索列表，
-/// 点任意条目立即回调添加（默认英文）并关闭；输入无匹配时首行变「添加 “xxx”」，
+/// 添加应用弹层（点选即添加）：正在运行的应用一个可搜索列表，点任意条目
+/// 立即回调添加（默认英文）并关闭；输入无匹配时首行变「添加 “xxx”」，
 /// 回车即加。已存在的条目灰显「已添加」，手输重复给行内提示——不再事后报错。
 /// </summary>
 public sealed partial class AddAppPickerViewModel : ObservableObject
@@ -24,44 +20,30 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
     private readonly Action<string> _add;
 
     public AddAppPickerViewModel(IReadOnlyCollection<string> existingIds, Action<string> add,
-        IReadOnlyList<AppPresetItem>? presets = null)
+        IReadOnlyList<string>? runningApps = null)
     {
         _existing = new HashSet<string>(existingIds.Where(id => id.Length > 0),
             StringComparer.OrdinalIgnoreCase);
         _add = add;
-        // 预设按平台给出（Linux 上外观页整组不出现）；可注入供测试在任何平台跑。
-        var presetList = presets ?? AppBehaviorPresets.ForCurrentOs();
-        PresetEntries = presetList
-            .Select(p => new AddAppEntry(p.Id, p.Title, IsAdded: _existing.Contains(p.Id)))
+        // 运行中（仅 Windows 有意义：进程 exe 名才是 app_options 的键；
+        // macOS 进程名≠Bundle ID，为空——那里弹层就是纯手输）。可注入供测试。
+        Entries = (runningApps ?? AppBehaviorPresets.RunningWindowsApps())
+            .Select(id => new AddAppEntry(id, IsAdded: _existing.Contains(id)))
             .ToList();
-        // 运行中（仅 Windows）：与常用区重合的不重复列出；进程 exe 名即标识。
-        RunningEntries = OperatingSystem.IsWindows()
-            ? AppBehaviorPresets.RunningWindowsApps()
-                .Where(id => !presetList.Any(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase)))
-                .Select(id => new AddAppEntry(id, id, IsAdded: _existing.Contains(id)))
-                .ToList()
-            : [];
     }
 
-    public IReadOnlyList<AddAppEntry> PresetEntries { get; }
+    public IReadOnlyList<AddAppEntry> Entries { get; }
 
-    public IReadOnlyList<AddAppEntry> RunningEntries { get; }
-
-    /// <summary>运行中分组仅在 Windows 有意义（macOS 进程名不是 Bundle ID）。</summary>
-    public bool HasRunning => RunningEntries.Count > 0;
+    public bool HasEntries => Entries.Count > 0;
 
     [ObservableProperty]
     private string _searchText = "";
 
     partial void OnSearchTextChanged(string value) => Refresh();
 
-    public IEnumerable<AddAppEntry> FilteredPresets => Filter(PresetEntries);
+    public IEnumerable<AddAppEntry> FilteredEntries => Filter(Entries);
 
-    public IEnumerable<AddAppEntry> FilteredRunning => Filter(RunningEntries);
-
-    public bool HasFilteredPresets => FilteredPresets.Any();
-
-    public bool HasFilteredRunning => FilteredRunning.Any();
+    public bool HasFilteredEntries => FilteredEntries.Any();
 
     /// <summary>手输的标识恰好是列表里的某个条目——点那条即可，不出「添加」行。</summary>
     public bool ExactMatchExists
@@ -70,8 +52,7 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
         {
             var query = SearchText.Trim();
             return query.Length > 0
-                   && Filter(PresetEntries).Concat(Filter(RunningEntries))
-                       .Any(e => string.Equals(e.Id, query, StringComparison.OrdinalIgnoreCase));
+                   && Filter(Entries).Any(e => string.Equals(e.Id, query, StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -110,16 +91,13 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
     {
         var query = SearchText.Trim();
         if (query.Length == 0) return entries;
-        return entries.Where(e => e.Id.Contains(query, StringComparison.OrdinalIgnoreCase)
-                                  || e.Title.Contains(query, StringComparison.OrdinalIgnoreCase));
+        return entries.Where(e => e.Id.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
     private void Refresh()
     {
-        OnPropertyChanged(nameof(FilteredPresets));
-        OnPropertyChanged(nameof(FilteredRunning));
-        OnPropertyChanged(nameof(HasFilteredPresets));
-        OnPropertyChanged(nameof(HasFilteredRunning));
+        OnPropertyChanged(nameof(FilteredEntries));
+        OnPropertyChanged(nameof(HasFilteredEntries));
         OnPropertyChanged(nameof(ExactMatchExists));
         OnPropertyChanged(nameof(HintText));
         OnPropertyChanged(nameof(CanAddCustom));
