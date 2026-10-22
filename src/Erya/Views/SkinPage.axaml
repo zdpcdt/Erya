@@ -24,11 +24,11 @@
             </StackPanel>
         </Grid>
 
-        <!-- Body -->
-        <ScrollViewer Grid.Row="1" Margin="0,12" IsVisible="{Binding IsSupported}">
-            <StackPanel Spacing="20">
+        <!-- Body：顶部锚点固定（亮/暗预览 + 槽位行不随滚动），下方整块是皮肤画廊 -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,12" IsVisible="{Binding IsSupported}">
 
-                <!--  亮/暗候选窗预览  -->
+            <!--  固定区：亮/暗候选窗预览 + 亮/暗主题槽位行  -->
+            <StackPanel Grid.Row="0" Spacing="16">
                 <StackPanel IsVisible="{Binding HasCandidatePreview}"
                             Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40">
                     <StackPanel Spacing="2">
@@ -43,129 +43,135 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!--  画廊：网格卡片（点击卡片=应用为亮色；角上 ☀/☾ 指派槽位、✎ 编辑）+ 亮/暗槽位 Cell  -->
-                <StackPanel Spacing="20" IsVisible="{Binding HasSchemeLibrary}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="皮肤画廊" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="1" Text="{Binding SearchText, Mode=TwoWay}"
-                                     PlaceholderText="搜索皮肤…" Width="220" VerticalAlignment="Center">
-                                <TextBox.InnerLeftContent>
-                                    <PathIcon Data="{StaticResource SemiIconSearch}" Width="14" Height="14"
-                                              Opacity="0.5" Margin="6,0,4,0" />
-                                </TextBox.InnerLeftContent>
-                            </TextBox>
-                        </Grid>
-                        <TextBlock Text="点击卡片应用为亮色主题；角上按钮可指派为亮色/暗色或打开编辑。自定义皮肤置顶。"
-                                   Opacity="0.55" TextWrapping="Wrap" />
-                        <ItemsControl ItemsSource="{Binding FilteredSchemes}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="sf:ColorSchemeViewModel">
-                                    <Border Width="190" Margin="0,0,12,12" Padding="10" CornerRadius="6"
-                                            BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1">
-                                        <StackPanel Spacing="8">
-                                            <!--  卡片主体：点击 = 应用为亮色主题  -->
-                                            <Button Padding="0" HorizontalAlignment="Stretch"
-                                                    HorizontalContentAlignment="Stretch"
-                                                    Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip.Tip="应用为亮色主题">
-                                                <StackPanel Spacing="8">
-                                                    <Grid>
-                                                        <Border Background="{Binding BackPreview}" CornerRadius="4" Padding="8,5">
-                                                            <StackPanel Spacing="3">
-                                                                <TextBlock Text="ni hao" FontSize="11"
-                                                                           Foreground="{Binding CandidateTextPreview}" />
-                                                                <Border Background="{Binding HilitedBackPreview}" CornerRadius="3"
-                                                                        Padding="5,2" HorizontalAlignment="Left">
-                                                                    <TextBlock Text="1. 你好" FontSize="12"
-                                                                               Foreground="{Binding HilitedTextPreview}" />
-                                                                </Border>
-                                                                <TextBlock Text="2. 拟好  3. 尼奥" FontSize="11"
-                                                                           Foreground="{Binding CandidateTextPreview}" />
-                                                            </StackPanel>
-                                                        </Border>
-                                                        <!--  当前角色角标  -->
-                                                        <StackPanel Orientation="Horizontal" Spacing="4"
-                                                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0">
-                                                            <Border Background="#CC0064FA" CornerRadius="3" Padding="4,1"
-                                                                    IsVisible="{Binding IsCurrentLight}">
-                                                                <TextBlock Text="亮色" FontSize="10" Foreground="White" />
-                                                            </Border>
-                                                            <Border Background="#CC5B5F6E" CornerRadius="3" Padding="4,1"
-                                                                    IsVisible="{Binding IsCurrentDark}">
-                                                                <TextBlock Text="暗色" FontSize="10" Foreground="White" />
-                                                            </Border>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding KindText}" FontSize="11" Opacity="0.5" />
-                                                </StackPanel>
-                                            </Button>
-                                            <!--  角上操作：指派亮 / 指派暗 / 编辑  -->
-                                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                                <u:IconButton Icon="{StaticResource SemiIconSun}"
-                                                              Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
-                                                              CommandParameter="{Binding}"
-                                                              ToolTip.Tip="设为亮色主题" />
-                                                <u:IconButton Icon="{StaticResource SemiIconMoon}"
-                                                              Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsDarkSchemeCommand}"
-                                                              CommandParameter="{Binding}"
-                                                              ToolTip.Tip="设为暗色主题" />
-                                                <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                                              Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
-                                                              CommandParameter="{Binding}"
-                                                              ToolTip.Tip="编辑此皮肤（内置皮肤确定时另存为）" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-
-                    <c:CellGroup>
-                        <c:Cell Content="亮色主题" Description="系统浅色模式使用的皮肤">
-                            <c:Cell.Icon>
-                                <tdicon:Sunny Width="20" Height="20" />
-                            </c:Cell.Icon>
-                            <c:Cell.RightContent>
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <ComboBox ItemsSource="{Binding LightSchemeField.Options}"
-                                              SelectedItem="{Binding LightSchemeField.SelectedOption, Mode=TwoWay}"
-                                              MinWidth="200" />
-                                    <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                                  Command="{Binding EditLightSchemeCommand}"
-                                                  ToolTip.Tip="编辑此皮肤（对话框）" />
-                                </StackPanel>
-                            </c:Cell.RightContent>
-                        </c:Cell>
-                        <c:Cell Content="暗色主题" Description="系统深色模式使用的皮肤；未设置时跟随亮色">
-                            <c:Cell.Icon>
-                                <tdicon:Moon Width="20" Height="20" />
-                            </c:Cell.Icon>
-                            <c:Cell.RightContent>
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <ComboBox ItemsSource="{Binding DarkSchemeField.Options}"
-                                              SelectedItem="{Binding DarkSchemeField.SelectedOption, Mode=TwoWay}"
-                                              MinWidth="200" />
-                                    <u:IconButton Icon="{StaticResource SemiIconEdit}"
-                                                  Command="{Binding EditDarkSchemeCommand}"
-                                                  ToolTip.Tip="编辑此皮肤（对话框）" />
-                                </StackPanel>
-                            </c:Cell.RightContent>
-                        </c:Cell>
-                    </c:CellGroup>
-                </StackPanel>
-
+                <c:CellGroup IsVisible="{Binding HasSchemeLibrary}">
+                    <c:Cell Content="亮色主题" Description="系统浅色模式使用的皮肤">
+                        <c:Cell.Icon>
+                            <tdicon:Sunny Width="20" Height="20" />
+                        </c:Cell.Icon>
+                        <c:Cell.RightContent>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ComboBox ItemsSource="{Binding LightSchemeField.Options}"
+                                          SelectedItem="{Binding LightSchemeField.SelectedOption, Mode=TwoWay}"
+                                          MinWidth="200" />
+                                <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                                              Command="{Binding EditLightSchemeCommand}"
+                                              ToolTip.Tip="编辑此皮肤（对话框）" />
+                            </StackPanel>
+                        </c:Cell.RightContent>
+                    </c:Cell>
+                    <c:Cell Content="暗色主题" Description="系统深色模式使用的皮肤；未设置时跟随亮色">
+                        <c:Cell.Icon>
+                            <tdicon:Moon Width="20" Height="20" />
+                        </c:Cell.Icon>
+                        <c:Cell.RightContent>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ComboBox ItemsSource="{Binding DarkSchemeField.Options}"
+                                          SelectedItem="{Binding DarkSchemeField.SelectedOption, Mode=TwoWay}"
+                                          MinWidth="200" />
+                                <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                                              Command="{Binding EditDarkSchemeCommand}"
+                                              ToolTip.Tip="编辑此皮肤（对话框）" />
+                            </StackPanel>
+                        </c:Cell.RightContent>
+                    </c:Cell>
+                </c:CellGroup>
             </StackPanel>
-        </ScrollViewer>
+
+            <!--  滚动区：皮肤画廊整块  -->
+            <ScrollViewer Grid.Row="1" Margin="0,16,0,0">
+                <StackPanel Spacing="8" IsVisible="{Binding HasSchemeLibrary}">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock Text="皮肤画廊" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="＋ 新建皮肤" Classes="Tertiary"
+                                Command="{Binding CreateSchemeCommand}" Margin="0,0,12,0"
+                                ToolTip.Tip="以当前亮色皮肤为底新建自定义皮肤（无则空白默认）" />
+                        <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}"
+                                 Classes="ClearButton"
+                                 PlaceholderText="搜索皮肤…" Width="220" VerticalAlignment="Center">
+                            <TextBox.InnerLeftContent>
+                                <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
+                            </TextBox.InnerLeftContent>
+                        </TextBox>
+                    </Grid>
+                    <TextBlock Text="点击卡片应用为亮色主题；角上按钮可指派为亮色/暗色或新建/编辑（内置皮肤的编辑打开的就是你的副本）。自定义皮肤置顶。"
+                               Opacity="0.55" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding FilteredSchemes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <u:ElasticWrapPanel IsFillHorizontal="True" ItemWidth="190" ItemSpacing="12" LineSpacing="12"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="sf:ColorSchemeViewModel">
+                                <Border HorizontalAlignment="Left" Width="190" Padding="10" CornerRadius="6"
+                                        BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1">
+                                    <StackPanel Spacing="8">
+                                        <!--  卡片主体：点击 = 应用为亮色主题  -->
+                                        <Button Padding="0" HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch"
+                                                Classes="Tertiary"
+                                                Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="应用为亮色主题">
+                                            <StackPanel Spacing="8">
+                                                <Panel>
+                                                    <Border Background="{Binding BackPreview}" CornerRadius="4" Padding="8,5">
+                                                        <StackPanel Spacing="3">
+                                                            <TextBlock Text="ni hao" FontSize="11"
+                                                                       Foreground="{Binding CandidateTextPreview}" />
+                                                            <Border Background="{Binding HilitedBackPreview}" CornerRadius="3"
+                                                                    Padding="5,2" HorizontalAlignment="Left">
+                                                                <TextBlock Text="1. 你好" FontSize="12"
+                                                                           Foreground="{Binding HilitedTextPreview}" />
+                                                            </Border>
+                                                            <TextBlock Text="2. 拟好  3. 尼奥" FontSize="11"
+                                                                       Foreground="{Binding CandidateTextPreview}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <!--  当前角色角标  -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="4"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0">
+                                                        <Border Background="#CC0064FA" CornerRadius="3" Padding="4,1"
+                                                                IsVisible="{Binding IsCurrentLight}">
+                                                            <TextBlock Text="亮色" FontSize="10" Foreground="White" />
+                                                        </Border>
+                                                        <Border Background="#CC5B5F6E" CornerRadius="3" Padding="4,1"
+                                                                IsVisible="{Binding IsCurrentDark}">
+                                                            <TextBlock Text="暗色" FontSize="10" Foreground="White" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Panel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding KindText}" FontSize="11" Opacity="0.5" />
+                                            </StackPanel>
+                                        </Button>
+                                        <!--  角上操作：指派亮 / 指派暗 / 编辑  -->
+                                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                            <u:IconButton Icon="{StaticResource SemiIconSun}"
+                                                          Classes="Tertiary"
+                                                          Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="设为亮色主题" />
+                                            <u:IconButton Icon="{StaticResource SemiIconMoon}"
+                                                          Classes="Tertiary"
+                                                          Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsDarkSchemeCommand}"
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="设为暗色主题" />
+                                            <u:IconButton Icon="{StaticResource SemiIconEdit}"
+                                                          Classes="Tertiary"
+                                                          Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
+                                                          CommandParameter="{Binding}"
+                                                          ToolTip.Tip="编辑此皮肤（内置皮肤确定时另存为）" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
 
         <!-- States -->
         <StackPanel Grid.Row="1" Margin="0,14" Spacing="10" IsVisible="{Binding !IsSupported}">

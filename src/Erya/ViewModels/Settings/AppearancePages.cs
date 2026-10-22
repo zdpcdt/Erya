@@ -140,6 +140,14 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
             field.Selected = scheme.Name.Trim();
     }
 
+    /// <summary>画廊「＋新建皮肤」：以当前亮色皮肤为底开草稿（无则空白默认）。</summary>
+    [RelayCommand]
+    private Task CreateSchemeAsync()
+    {
+        var seed = Find(LightSchemeField?.Selected);
+        return EditDialogAsync(CreateDraft(seed), isDraft: true, baseName: seed?.Name);
+    }
+
     [RelayCommand]
     private Task EditSchemeAsync(ColorSchemeViewModel? scheme) => EditAsync(scheme);
 
@@ -153,14 +161,36 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
         => Editor.SchemeLibrary?.Schemes.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// 编辑对话框：确定 = 保留（内置皮肤 = 另存为新的自定义皮肤），取消 = 还原。
-    /// 对话框里的删除按钮可能在等待期间把皮肤从库中移走——返回后按存在性分流。
+    /// 草稿：以 seed 为底的未入库副本（名字预填「X 副本」），或空白默认皮肤。
+    /// 编辑对话框里从头到尾改的都是这个副本——内置皮肤永远不被碰。
     /// </summary>
+    internal static ColorSchemeViewModel CreateDraft(ColorSchemeViewModel? seed)
+        => ColorSchemeViewModel.FromState(seed?.CloneableState is { } state
+            ? state with { Name = $"{seed.Name} 副本" }
+            : new SchemeState("我的皮肤", "",
+                "FFFFFF", "000000", "D3E3F6", "000000", "333333", "333333", "000000", "000000"));
+
     private async Task EditAsync(ColorSchemeViewModel? scheme)
     {
-        if (scheme is null || SchemeLibrary is null) return;
+        if (scheme is null) return;
+        if (scheme.IsShipped)
+        {
+            // 打开即副本：内置皮肤的「编辑」从第一下起改的就是你的新皮肤。
+            await EditDialogAsync(CreateDraft(scheme), isDraft: true, baseName: scheme.Name);
+            return;
+        }
+        await EditDialogAsync(scheme);
+    }
+
+    /// <summary>
+    /// 编辑对话框：确定 = 保留/创建，取消 = 还原/丢弃。
+    /// 对话框里的删除按钮可能在等待期间把皮肤从库中移走——返回后按存在性分流。
+    /// </summary>
+    private async Task EditDialogAsync(ColorSchemeViewModel scheme, bool isDraft = false, string? baseName = null)
+    {
+        if (SchemeLibrary is null) return;
         var fields = Sections.SelectMany(s => s.Fields).ToList();
-        var vm = new SchemeEditDialogViewModel(scheme, fields, SchemeLibrary, IsSquirrel);
+        var vm = new SchemeEditDialogViewModel(scheme, fields, SchemeLibrary, IsSquirrel, isDraft, baseName);
         var result = await OverlayDialog.ShowStandardAsync(
             new SchemeEditDialog(), vm, "main",
             new OverlayDialogOptions
@@ -170,7 +200,7 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
                 Buttons = DialogButton.OKCancel,
             });
         vm.Detach(); // 解开预览对字段的订阅
-        if (!SchemeLibrary.Schemes.Contains(scheme)) return; // 已在对话框里删除
+        if (!isDraft && !SchemeLibrary.Schemes.Contains(scheme)) return; // 已在对话框里删除
         if (result == DialogResult.OK) vm.Commit();
         else vm.Revert();
     }

@@ -4,10 +4,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Erya.ViewModels.Settings;
 
 /// <summary>
-/// 皮肤编辑对话框：编辑直接落在皮肤 VM 上（预览实时联动）。内置皮肤同样可调，
-/// 但「确定」时经 <see cref="Commit"/> 另存为新的自定义皮肤（原内置皮肤还原
-/// 快照）；自定义皮肤「确定」保留编辑，「取消」一律还原快照。字体与排版组只在
-/// 鼠须管下显示（它支持皮肤级字体/排版覆盖全局；小狼毫皮肤只认颜色）。
+/// 皮肤编辑对话框，两种模式：
+/// <para><b>草稿</b>（新建/内置派生）——编辑一个未入库的副本，从第一下起改的就是
+/// 自己的新皮肤：确定 = 入库为自定义皮肤，取消 = 丢弃（无还原动作）。</para>
+/// <para><b>已有</b>（自定义皮肤）——编辑直接落在库中实例上：确定 = 保留，取消 =
+/// 还原开框快照。</para>
+/// 字体与排版组只在鼠须管下显示（它支持皮肤级字体/排版覆盖全局；小狼毫皮肤只认颜色）。
 /// </summary>
 public sealed class SchemeEditDialogViewModel : ObservableObject
 {
@@ -16,12 +18,15 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
 
     public SchemeEditDialogViewModel(ColorSchemeViewModel scheme,
         IReadOnlyCollection<SettingsFieldViewModel> fields,
-        ColorSchemeLibraryViewModel? library = null, bool isSquirrel = false)
+        ColorSchemeLibraryViewModel? library = null, bool isSquirrel = false,
+        bool isDraft = false, string? baseName = null)
     {
         Scheme = scheme;
         _snapshot = scheme.CloneableState;
         _library = library;
         IsSquirrel = isSquirrel;
+        IsDraft = isDraft;
+        BaseName = baseName;
         Preview = new CandidatePreviewViewModel();
         Preview.AttachToScheme(fields, scheme);
     }
@@ -33,26 +38,36 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
     /// <summary>鼠须管才显示皮肤级字体/排版组。</summary>
     public bool IsSquirrel { get; }
 
-    /// <summary>内置皮肤：改完只能另存为新的自定义皮肤。</summary>
-    public bool SavesAsCopy => Scheme.IsShipped && _library is not null;
+    /// <summary>草稿模式：编辑未入库的副本，确定=创建，取消=丢弃。</summary>
+    public bool IsDraft { get; }
 
-    public string Title => SavesAsCopy
-        ? $"调整皮肤：{Scheme.Name.Trim()}"
-        : $"编辑皮肤：{Scheme.Name.Trim()}";
+    /// <summary>草稿来源皮肤名（内置派生/当前亮色皮肤）；从零新建为 null。</summary>
+    public string? BaseName { get; }
 
-    public string Tip => SavesAsCopy
-        ? "这是内置皮肤：调整效果后点「确定」将另存为一个新的自定义皮肤（内置皮肤保持原样）。"
+    public string Title => IsDraft ? "新建皮肤" : $"编辑皮肤：{Scheme.Name.Trim()}";
+
+    public string Tip => IsDraft
+        ? BaseName is { Length: > 0 } baseName
+            ? $"基于「{baseName}」的副本：改好名字和配色后点「确定」，保存为你的自定义皮肤。"
+            : "从零开始配一套自己的皮肤：点「确定」保存为自定义皮肤。"
         : "修改实时预览；「确定」保留，「取消」还原。";
 
-    /// <summary>确定：内置 → 另存为副本并还原原皮肤；自定义 → 编辑已在皮肤上。</summary>
+    /// <summary>删除/以此新增只对已入库的自定义皮肤有意义（草稿没有库身份）。</summary>
+    public bool CanManage => !IsDraft && _library is not null && Scheme.CanRemove;
+
+    /// <summary>确定：草稿 → 入库为自定义皮肤（名字撞库自动取唯一名）；已有 → 编辑已在皮肤上。</summary>
     public ColorSchemeViewModel? Commit()
     {
-        if (!SavesAsCopy) return Scheme;
-        return _library!.SaveEditedAsCustom(Scheme, _snapshot);
+        if (!IsDraft) return Scheme;
+        if (!Scheme.HasValidName) return null;
+        return _library?.AddCustom(Scheme.CloneableState);
     }
 
-    /// <summary>取消/关闭：全部还原开框快照（不换实例，绑定不断）。</summary>
-    public void Revert() => Scheme.Restore(_snapshot);
+    /// <summary>取消：已有模式还原开框快照；草稿模式直接丢弃（无操作）。</summary>
+    public void Revert()
+    {
+        if (!IsDraft) Scheme.Restore(_snapshot);
+    }
 
     /// <summary>对话框关闭后解开预览对外观字段的订阅。</summary>
     public void Detach() => Preview.Detach();
