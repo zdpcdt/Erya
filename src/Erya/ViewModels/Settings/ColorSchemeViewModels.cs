@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
@@ -379,13 +380,37 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         }
     }
 
-    /// <summary>当前是 style/color_scheme 选中的皮肤（画廊角标，由皮肤库页维护）。</summary>
+    /// <summary>当前是 style/color_scheme 选中的皮肤（画廊高亮，由皮肤库页维护）。</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CardBorderBrush))]
+    [NotifyPropertyChangedFor(nameof(CardBorderThickness))]
     private bool _isCurrentLight;
 
-    /// <summary>当前是 style/color_scheme_dark 选中的皮肤（画廊角标）。</summary>
+    /// <summary>当前是 style/color_scheme_dark 选中的皮肤（画廊高亮）。</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CardBorderBrush))]
+    [NotifyPropertyChangedFor(nameof(CardBorderThickness))]
     private bool _isCurrentDark;
+
+    /// <summary>画廊卡片描边：当前亮色=主色、当前暗色=紫、普通=边框色（Win11 主题页式高亮）。</summary>
+    public IBrush CardBorderBrush
+    {
+        get
+        {
+            if (IsCurrentLight) return AppBrush("SemiColorPrimary") ?? new SolidColorBrush(Color.FromRgb(0x00, 0x64, 0xFA));
+            if (IsCurrentDark) return new SolidColorBrush(Color.FromRgb(0x7C, 0x5C, 0xFF));
+            return AppBrush("SemiColorBorder") ?? new SolidColorBrush(Color.FromRgb(0xD9, 0xD9, 0xD9));
+        }
+    }
+
+    public Thickness CardBorderThickness => IsCurrentLight || IsCurrentDark ? new Thickness(2) : new Thickness(1);
+
+    private static IBrush? AppBrush(string key)
+        => Avalonia.Application.Current is { } app
+           && app.TryGetResource(key, app.ActualThemeVariant, out var value)
+           && value is IBrush brush
+            ? brush
+            : null;
 
     private CandidatePreviewViewModel? _detailPreview;
 
