@@ -187,6 +187,65 @@ public sealed class CandidatePreviewTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void Squirrel_candidate_format_tokens_expand_instead_of_showing_literally()
+    {
+        Write("squirrel.yaml", """
+            style:
+              color_scheme: macos_light
+              candidate_list_layout: linear
+              candidate_format: '[label]. [candidate] [comment]'
+            preset_color_schemes:
+              macos_light:
+                name: 浅色
+                back_color: 0xECECEC
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0xD3E3F6
+                hilited_candidate_text_color: 0x000000
+            """);
+        var vm = LoadUi("squirrel.yaml");
+
+        // token 模板按段展开：粘合文本跟着各自段落走，而不是把模板串当序号原样显示。
+        var first = vm.CandidatePreview!.Items[0];
+        Assert.Equal("1. ", first.Label);
+        Assert.Equal("你好", first.Text);
+        Assert.Equal(" ní hǎo", first.Comment);
+        Assert.True(first.HasComment);
+        var second = vm.CandidatePreview.Items[1];
+        Assert.Equal("2. ", second.Label);
+        Assert.Null(second.Comment);                       // 无注释的行摘掉 [comment] 与紧邻空白
+        Assert.Equal(default, second.LabelMargin);         // 间距由粘合文本表达，不叠 hilite_spacing
+        Assert.Equal(default, second.CommentMargin);
+
+        // 未保存的编辑立即反映：换成 1.0 前的弃用写法 %c/%@。
+        Field<TextFieldViewModel>(vm, "style/candidate_format").Text = "%c %@";
+        Assert.Equal("1 ", vm.CandidatePreview.Items[0].Label);
+        Assert.Equal(" ní hǎo", vm.CandidatePreview.Items[0].Comment);
+    }
+
+    [AvaloniaFact]
+    public void Squirrel_scheme_level_candidate_format_wins_over_style_level()
+    {
+        Write("squirrel.yaml", """
+            style:
+              color_scheme: clean
+              candidate_format: '[label]. [candidate] [comment]'
+            preset_color_schemes:
+              clean:
+                name: 简约
+                back_color: 0xFFFFFF
+                candidate_text_color: 0x000000
+                hilited_candidate_back_color: 0xD3E3F6
+                hilited_candidate_text_color: 0x000000
+                candidate_format: '%c %@'
+            """);
+        var vm = LoadUi("squirrel.yaml");
+
+        // 皮肤级 candidate_format（如内置简约白）盖过 style 级，与小狼毫皮肤级字号同序。
+        Assert.Equal("1 ", vm.CandidatePreview!.Items[0].Label);
+        Assert.Equal("2 ", vm.CandidatePreview.Items[1].Label);
+    }
+
+    [AvaloniaFact]
     public void ParseRime_handles_hex_decimal_and_alpha_forms()
     {
         // 0xBBGGRR；8 位带高字节 alpha；十进制 long；坏值 → null。

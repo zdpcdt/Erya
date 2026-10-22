@@ -27,7 +27,9 @@ public sealed record CandidatePreviewItem(
 /// 合成一个小狼毫/鼠须管样子的候选窗。任一字段或皮肤变化都整体重算（属性少，
 /// 整刷最稳）；未保存的编辑通过 <see cref="SettingsFieldViewModel.CurrentValue"/>
 /// 立即反映。排版键在小狼毫（style/layout/*）与鼠须管（style/*）两套路径里取
-/// 第一个存在的，同一份预览逻辑通吃两个前端；竖排文本为近似预览（逐行竖排）。
+/// 第一个存在的，序号/候选格式也是两套语义（label_format 的 %s 序号模板与
+/// candidate_format 的 [label]/[candidate]/[comment] 整行 token 模板），
+/// 同一份预览逻辑通吃两个前端；竖排文本为近似预览（逐行竖排）。
 /// 外观页放亮/暗两个实例并排显示；皮肤编辑对话框用 <see cref="AttachToScheme"/>
 /// 固定渲染正在编辑的那个皮肤。
 /// </summary>
@@ -186,7 +188,16 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
 
         Shadow = BuildShadow(scheme);
 
-        var format = Str("style/label_format") ?? Str("style/candidate_format") ?? "%s.";
+        // 序号/整行格式两套语义：小狼毫 label_format 是 "%s." 式序号模板；鼠须管
+        // candidate_format 是 "[label]. [candidate] [comment]" 式整行模板，皮肤级可带
+        // （如简约白 "%c %@"，%c/%@ 为 1.0 前写法）；schema 有此字段却无值时用鼠须管
+        // 预置默认，而不是误落小狼毫的 "%s."。
+        var format = Str("style/label_format")
+                     ?? SchemeText(scheme, s => s.RawEntry("candidate_format")?.ToString() ?? "")
+                     ?? Str("style/candidate_format")
+                     ?? (_fields.ContainsKey("style/candidate_format") ? "[label]. [candidate] [comment]" : "%s.");
+        bool tokenFormat = format.Contains("[label]") || format.Contains("[candidate]")
+                           || format.Contains("[comment]") || format.Contains("%c") || format.Contains("%@");
         var mark = Str("style/mark_text");
         var labelBrush = BrushOr(SchemeColor("label_color"),
             BrushOr(SchemeColor("candidate_text_color"), Brushes.Black));
@@ -202,16 +213,34 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
         Items = Sample.Select((candidate, i) =>
         {
             bool hilited = i == 0;
+            string label;
+            string? comment;
+            // 小狼毫序号模板：序号-候选间距 hilite_spacing、注释固定左边距；
+            // 鼠须管整行模板：粘合文本自带间距，两边距归零照模板渲染。
+            Thickness labelMargin = new(0, 0, hiliteSpacing, 0);
+            Thickness commentMargin = new(8, 0, 0, 0);
+            if (tokenFormat)
+            {
+                var (labelText, commentText) = ExpandCandidateFormat(format, (i + 1).ToString(), candidate.Comment);
+                label = (hilited ? mark : "") + labelText;
+                comment = commentText.Length > 0 ? commentText : null;
+                labelMargin = commentMargin = default;
+            }
+            else
+            {
+                label = (hilited ? mark : "") + LabelOf(format, i + 1);
+                comment = candidate.Comment;
+            }
             return new CandidatePreviewItem(
-                (hilited ? mark : "") + LabelOf(format, i + 1), candidate.Text, candidate.Comment,
+                label, candidate.Text, comment,
                 hilited ? hiliteBack : Brushes.Transparent,
                 hilited ? new CornerRadius(hiliteCorner) : new CornerRadius(0),
                 hilited ? new Thickness(hilitePadding) : default,
                 hilited ? hilitedLabelBrush : labelBrush, LabelFont, LabelFontSize,
-                new Thickness(0, 0, hiliteSpacing, 0),
+                labelMargin,
                 hilited ? hilitedBrush : candidateBrush, PreviewFont, FontSize,
                 hilited ? hilitedCommentBrush : commentBrush, CommentFont, CommentFontSize,
-                new Thickness(8, 0, 0, 0), candidate.Comment is not null);
+                commentMargin, comment is not null);
         }).ToList();
 
         Caption = $"皮肤：{scheme?.Name ?? "（默认）"}";
@@ -276,6 +305,23 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
     };
 
     private static string LabelOf(string format, int index) => format.Replace("%s", index.ToString());
+
+    /// <summary>
+    /// 展开鼠须管 candidate_format 整行模板：先把弃用的 "%c"/"%@" 翻成 token，再以
+    /// [candidate] 为界拆两段——前段连同粘合文本归序号，后段连同注释词归注释。
+    /// 无注释的行先摘掉 [comment]（连同紧邻其前的空格）再展开，不留分隔空白。
+    /// </summary>
+    private static (string Label, string Comment) ExpandCandidateFormat(string format, string label, string? comment)
+    {
+        var template = format.Replace("%c", "[label]").Replace("%@", "[candidate] [comment]");
+        if (comment is null)
+            template = template.Replace(" [comment]", "").Replace("[comment]", "");
+        var split = template.IndexOf("[candidate]", StringComparison.Ordinal);
+        var head = split < 0 ? template : template[..split];
+        var tail = split < 0 ? "" : template[(split + "[candidate]".Length)..];
+        return (head.Replace("[label]", label).Replace("[comment]", comment ?? ""),
+                tail.Replace("[label]", label).Replace("[comment]", comment ?? ""));
+    }
 
     // ---------- 皮肤：编辑中的值优先，其次选中方案，再是内置兜底 ----------
 
