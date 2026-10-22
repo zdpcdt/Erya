@@ -267,10 +267,14 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
 /// </summary>
 public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
+    private readonly IReadOnlyList<AppPresetItem> _presets;
     private AppOptionsFieldViewModel? _field;
 
-    public AppsPageViewModel(SettingsEditorViewModel editor) : base(editor, "apps")
+    public AppsPageViewModel(SettingsEditorViewModel editor,
+        IReadOnlyList<AppPresetItem>? presets = null) : base(editor, "apps")
     {
+        // 预设按平台给出（Linux 生产上整页不出现）；可注入供测试在任何平台跑。
+        _presets = presets ?? AppBehaviorPresets.ForCurrentOs();
         editor.PropertyChanged += OnEditorChangedForApps;
         HookField();
     }
@@ -337,8 +341,8 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
         if (row is not null) Field?.RemoveRowCommand.Execute(row);
     }
 
-    /// <summary>空态里放的常用应用快捷入口（平台相关）。</summary>
-    public IReadOnlyList<AppPresetItem> EmptyStatePresets => AppBehaviorPresets.ForCurrentOs();
+    /// <summary>空态里放的常用应用快捷入口（平台相关，构造时定死）。</summary>
+    public IReadOnlyList<AppPresetItem> EmptyStatePresets => _presets;
 
     private void OnEditorChangedForApps(object? sender, PropertyChangedEventArgs e)
     {

@@ -15,11 +15,16 @@ public sealed partial class AddAppDialogViewModel : ObservableObject
 {
     private readonly HashSet<string> _existingIds;
 
-    public AddAppDialogViewModel(IReadOnlyCollection<string> existingIds)
-        => _existingIds = new HashSet<string>(existingIds.Where(id => id.Length > 0),
+    public AddAppDialogViewModel(IReadOnlyCollection<string> existingIds,
+        IReadOnlyList<AppPresetItem>? presets = null)
+    {
+        _existingIds = new HashSet<string>(existingIds.Where(id => id.Length > 0),
             StringComparer.OrdinalIgnoreCase);
+        // 预设按平台给出（Linux 无外观页、无预设）；可注入供测试在任何平台跑。
+        Presets = presets ?? AppBehaviorPresets.ForCurrentOs();
+    }
 
-    public IReadOnlyList<AppPresetItem> Presets { get; } = AppBehaviorPresets.ForCurrentOs();
+    public IReadOnlyList<AppPresetItem> Presets { get; }
 
     /// <summary>「正在运行的应用」区仅 Windows：进程 exe 名才对得上 app_options 的键。</summary>
     public bool ShowRunningApps => OperatingSystem.IsWindows();
