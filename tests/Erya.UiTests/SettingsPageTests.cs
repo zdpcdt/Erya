@@ -187,6 +187,80 @@ public sealed class SettingsEditorTests : IDisposable
 
 
     [AvaloniaFact]
+    public async Task App_options_round_trip_and_add_validation_end_to_end()
+    {
+        // gvim 带一个 UI 不管的键（full_shape）和一个显式 false（ascii_punct）：
+        // 保存必须原样带回；由开改关要写出显式 false 盖过基座默认值。
+        Write("squirrel.yaml", """
+            style:
+              color_scheme: macos_light
+            app_options:
+              gvim.exe:
+                ascii_mode: true
+                full_shape: true
+                ascii_punct: false
+            """);
+        var vm = new SettingsEditorViewModel(new FakeSquirrelDistribution(_dir, _sharedDir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        var field = Assert.IsType<AppOptionsFieldViewModel>(Field(vm, "app_options"));
+        var gvim = Assert.Single(field.Rows);
+        Assert.True(gvim.Options.Single(o => o.Key == "ascii_mode").IsChecked);
+        Assert.Equal("默认英文", gvim.SummaryText);
+
+        // 新增 cmd.exe（默认英文）+ 添加校验（重复 / 空标识）。
+        Assert.Null(field.AddApp("cmd.exe", asciiMode: true));
+        Assert.NotNull(field.AddApp("  ", asciiMode: true));
+        Assert.NotNull(field.AddApp("CMD.EXE", asciiMode: true)); // 重复（大小写不敏感）
+        Assert.True(field.HasPendingEdits);
+
+        var pending = Assert.IsType<Dictionary<string, object?>>(field.PendingValue());
+        var cmd = Assert.IsType<Dictionary<string, object?>>(pending["cmd.exe"]);
+        Assert.Equal(true, cmd["ascii_mode"]);
+        Assert.DoesNotContain("vim_mode", cmd.Keys); // 未勾选且原本没设 → 不写
+        var gvimOut = Assert.IsType<Dictionary<string, object?>>(pending["gvim.exe"]);
+        Assert.Equal(true, gvimOut["full_shape"]); // 未建模键 round-trip 保留
+        Assert.Equal(false, gvimOut["ascii_punct"]);
+
+        // 由开改关：显式 false（盖过基座的 true），未建模键保留。
+        gvim.Options.Single(o => o.Key == "ascii_mode").IsChecked = false;
+        var again = Assert.IsType<Dictionary<string, object?>>(field.PendingValue());
+        gvimOut = Assert.IsType<Dictionary<string, object?>>(again["gvim.exe"]!);
+        Assert.Equal(false, gvimOut["ascii_mode"]);
+        Assert.Equal(true, gvimOut["full_shape"]);
+
+        // 删光所有应用 → 整段从 patch 移除（PendingRemoval）。
+        foreach (var row in field.Rows.ToList()) field.RemoveRowCommand.Execute(row);
+        Assert.Null(field.PendingValue());
+        Assert.True(field.PendingRemoval());
+    }
+
+    [AvaloniaFact]
+    public async Task App_options_add_and_save_writes_patch_then_reloads()
+    {
+        Write("squirrel.yaml", """
+            style:
+              color_scheme: macos_light
+            """);
+        var vm = new SettingsEditorViewModel(new FakeSquirrelDistribution(_dir, _sharedDir), "ui");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        var field = Assert.IsType<AppOptionsFieldViewModel>(Field(vm, "app_options"));
+        Assert.Empty(field.Rows);
+        Assert.Null(field.AddApp("com.apple.Terminal", asciiMode: true));
+
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+
+        var patch = new Erya.Core.Configuration.RimeConfigStore(_dir).ReadPatchValues("squirrel.yaml");
+        var apps = Assert.IsType<Dictionary<string, object?>>(patch["app_options"]);
+        var terminal = Assert.IsType<Dictionary<string, object?>>(apps["com.apple.Terminal"]!);
+        Assert.Equal(true, terminal["ascii_mode"]);
+        // 保存后重载：行从合并值重建，选项勾选回放。
+        field = Assert.IsType<AppOptionsFieldViewModel>(Field(vm, "app_options"));
+        Assert.True(Assert.Single(field.Rows).Options.Single(o => o.Key == "ascii_mode").IsChecked);
+    }
+
+    [AvaloniaFact]
     public async Task Weasel_layout_field_writes_highest_precedence_key()
     {
         // Mirrors a rimetool-managed dir: base carries BOTH horizontal: true

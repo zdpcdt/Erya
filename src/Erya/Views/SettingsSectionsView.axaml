@@ -203,55 +203,8 @@
                                         </c:Cell>
                                     </DataTemplate>
 
-                                    <!--  appOptions：每应用一行  -->
-                                    <DataTemplate x:DataType="sf:AppOptionsFieldViewModel">
-                                        <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}"
-                                                Note="{Binding Rows.Count, StringFormat={}{0} 个应用}">
-                                            <c:Cell.Detail>
-                                                <StackPanel Spacing="12">
-                                                    <ItemsControl ItemsSource="{Binding Rows}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
-                                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
-                                                                    <TextBox Grid.Column="0" Text="{Binding AppId, Mode=TwoWay}"
-                                                                             PlaceholderText="应用标识（macOS Bundle ID / Windows exe 名）" />
-                                                                    <!--  逐应用选项按 schema 分流：鼠须管 inline/no_inline，小狼毫 inline_preedit  -->
-                                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Options}"
-                                                                                  VerticalAlignment="Center">
-                                                                        <ItemsControl.ItemsPanel>
-                                                                            <ItemsPanelTemplate>
-                                                                                <StackPanel Orientation="Horizontal" />
-                                                                            </ItemsPanelTemplate>
-                                                                        </ItemsControl.ItemsPanel>
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate x:DataType="sf:AppOptionViewModel">
-                                                                                <CheckBox Content="{Binding Label}"
-                                                                                          IsChecked="{Binding IsChecked, Mode=TwoWay}"
-                                                                                          Margin="14,0,0,0" VerticalAlignment="Center" />
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
-                                                                    <u:IconButton Grid.Column="2" Classes="Danger"
-                                                                                  Theme="{DynamicResource SolidIconButton}"
-                                                                                  Icon="{StaticResource SemiIconDelete}"
-                                                                                  Margin="14,0,0,0" VerticalAlignment="Center"
-                                                                                  Command="{Binding $parent[ContentControl].((sf:AppOptionsFieldViewModel)DataContext).RemoveRowCommand}"
-                                                                                  CommandParameter="{Binding}"
-                                                                                  ToolTip.Tip="删除此应用" />
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <u:IconButton Theme="{DynamicResource SolidIconButton}"
-                                                                  Icon="{StaticResource SemiIconPlus}"
-                                                                  HorizontalAlignment="Right"
-                                                                  Command="{Binding AddRowCommand}"
-                                                                  ToolTip.Tip="添加应用" />
-                                                </StackPanel>
-                                            </c:Cell.Detail>
-                                        </c:Cell>
-                                    </DataTemplate>
+                                    <!--  appOptions 不在此渲染：应用行为页有专用卡片列表
+                                          （Views/AppsPage.axaml + AppsPageViewModel）  -->
 
                                 </ContentControl.DataTemplates>
                             </ContentControl>
