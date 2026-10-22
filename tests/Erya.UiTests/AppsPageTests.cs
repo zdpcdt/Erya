@@ -114,8 +114,9 @@ public sealed class AppsPageTests : IDisposable
         Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
 
         // 真实组装顺序：页面 VM 先构造（此时还没有字段），编辑器加载后补挂。
+        // 预设注入 Windows 列表：生产按平台取，Linux 上为空，测试须与平台无关。
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
-        var vm = new AppsPageViewModel(editor);
+        var vm = new AppsPageViewModel(editor, AppBehaviorPresets.Windows);
         Assert.Null(vm.Field);
         await editor.LoadCommand.ExecuteAsync(null);
         Assert.NotNull(vm.Field);
@@ -171,7 +172,8 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_dialog_validates_and_fills_from_presets()
     {
-        var vm = new AddAppDialogViewModel(["cmd.exe", "gvim.exe"]);
+        // 预设注入 Windows 列表（生产按平台取，Linux 为空，测试须与平台无关）。
+        var vm = new AddAppDialogViewModel(["cmd.exe", "gvim.exe"], AppBehaviorPresets.Windows);
 
         Assert.NotEmpty(vm.Presets);
         Assert.Contains(vm.Presets, p => p.Id == "cmd.exe");
@@ -198,7 +200,7 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_dialog_renders_presets_running_apps_and_error_banner()
     {
-        var vm = new AddAppDialogViewModel(["cmd.exe"]) { AppId = "cmd.exe" };
+        var vm = new AddAppDialogViewModel(["cmd.exe"], AppBehaviorPresets.Windows) { AppId = "cmd.exe" };
         var dialog = new AddAppDialog { DataContext = vm, Width = 500, Height = 620 };
         var window = new Window { Width = 540, Height = 680, Content = dialog };
         window.Show();
