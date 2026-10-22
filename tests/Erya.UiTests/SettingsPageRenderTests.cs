@@ -249,19 +249,30 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.True(vm.IsDirty);
         Assert.True(userDark.IsCurrentLight);
         Assert.False(userDark.IsCurrentDark);
-        // 当前角色用 Ursa Badge 角标显示在卡片上。
-        Assert.Contains(page.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
-            b => b.Content as string == "亮色" && b.IsVisible);
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
-            b => b.Content as string == "暗色" && b.IsVisible);
-        vm.UseAsDarkSchemeCommand.Execute(userDark);
-        Dispatcher.UIThread.RunJobs();
-        Assert.Equal("user_dark", vm.DarkSchemeField!.Selected);
-        Assert.True(userDark.IsCurrentDark);
+        // 当前角色用卡片描边高亮：当前亮色=主色 2px、暗色=紫 2px、普通=1px。
+        var cardBorders = page.GetVisualDescendants().OfType<Border>()
+            .Where(b => b.Classes.Contains("skin-card")).ToList();
+        Assert.Equal(2, cardBorders.Count);
+        var userCard = cardBorders.Single(b => ReferenceEquals(b.DataContext, userDark));
+        Assert.Equal(new Thickness(2), userCard.BorderThickness);
+        Assert.Equal(0x00, Assert.IsAssignableFrom<ISolidColorBrush>(userCard.BorderBrush).Color.R); // SemiColorPrimary
+        var plainCard = cardBorders.Single(b => !ReferenceEquals(b.DataContext, userDark));
+        Assert.Equal(new Thickness(1), plainCard.BorderThickness);
         vm.LightSchemeField.Selected = "macos_light"; // 还原，后续断言用
         Dispatcher.UIThread.RunJobs();
         Assert.True(editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light").IsCurrentLight);
         Assert.False(userDark.IsCurrentLight);
+
+        // 仅作暗色时：紫色 2px 描边（亮色优先级更高，同挂两角色时显示主色）。
+        // 断言时重新取容器——列表若重建，早前捕获的引用是脱挂的旧 Border。
+        vm.UseAsDarkSchemeCommand.Execute(userDark);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("user_dark", vm.DarkSchemeField!.Selected);
+        Assert.True(userDark.IsCurrentDark);
+        var liveCard = page.GetVisualDescendants().OfType<Border>()
+            .Single(b => b.Classes.Contains("skin-card") && ReferenceEquals(b.DataContext, userDark));
+        Assert.Equal(new Thickness(2), liveCard.BorderThickness);
+        Assert.Equal(0x7C, Assert.IsAssignableFrom<ISolidColorBrush>(liveCard.BorderBrush).Color.R); // 暗色紫描边
 
         // 画廊：自定义置顶 + 搜索过滤。
         Assert.Equal(["user_dark", "macos_light"], vm.FilteredSchemes.Select(s => s.Name).ToList());
