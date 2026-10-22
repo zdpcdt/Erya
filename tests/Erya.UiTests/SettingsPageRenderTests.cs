@@ -249,6 +249,11 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.True(vm.IsDirty);
         Assert.True(userDark.IsCurrentLight);
         Assert.False(userDark.IsCurrentDark);
+        // 当前角色用 Ursa Badge 角标显示在卡片上。
+        Assert.Contains(page.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
+            b => b.Content as string == "亮色" && b.IsVisible);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
+            b => b.Content as string == "暗色" && b.IsVisible);
         vm.UseAsDarkSchemeCommand.Execute(userDark);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal("user_dark", vm.DarkSchemeField!.Selected);
@@ -324,14 +329,14 @@ public sealed class SettingsPageRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(0xFF, Assert.IsAssignableFrom<ISolidColorBrush>(swatchBorder.Background).Color.R);
 
-        // 真实点击色块弹出完整取色器（Popup 挂在窗口的 OverlayPopupHost 里），
-        // 在取色器里改色实时写回皮肤（BGR 十六进制）。
+        // 真实点击色块弹出扁平取色面板（ColorView，Popup 挂在窗口 OverlayPopupHost），
+        // 在面板里改色实时写回皮肤（BGR 十六进制）。
         var swatchButton = swatch.GetVisualDescendants().OfType<Button>().First();
         var at = swatchButton.TranslatePoint(new Point(swatchButton.Bounds.Width / 2, swatchButton.Bounds.Height / 2), host)!.Value;
         host.MouseDown(at, Avalonia.Input.MouseButton.Left);
         host.MouseUp(at, Avalonia.Input.MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
-        var picker = host.GetVisualDescendants().OfType<ColorPicker>().FirstOrDefault();
+        var picker = host.GetVisualDescendants().OfType<ColorView>().FirstOrDefault();
         Assert.NotNull(picker);
         picker!.Color = Avalonia.Media.Color.FromRgb(0x11, 0x22, 0x33);
         Dispatcher.UIThread.RunJobs();

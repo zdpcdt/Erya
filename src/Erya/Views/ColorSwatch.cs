@@ -7,16 +7,19 @@ using Avalonia.Media;
 namespace Erya.Views;
 
 /// <summary>
-/// 颜色色块（对比度主题式）：圆角矩形显示当前色，点击弹出完整取色器。
-/// 值为皮肤编辑器惯用的 RIME 0xBBGGRR 十六进制字符串（无 0x 前缀）。
+/// 颜色色块（对比度主题式）：圆角矩形显示当前色，点击弹出扁平取色面板
+/// （ColorView 直出，无嵌套弹层）。值为皮肤编辑器惯用的 RIME 0xBBGGRR
+/// 十六进制字符串（无 0x 前缀），经 <see cref="SwatchColor"/> 桥接双向同步。
 /// </summary>
 public class ColorSwatch : TemplatedControl
 {
     public static readonly StyledProperty<string?> RimeHexProperty =
         AvaloniaProperty.Register<ColorSwatch, string?>(nameof(RimeHex));
 
+    public static readonly StyledProperty<Color> SwatchColorProperty =
+        AvaloniaProperty.Register<ColorSwatch, Color>(nameof(SwatchColor), Colors.White);
+
     private Border? _swatch;
-    private ColorPicker? _picker;
     private bool _syncing;
 
     public ColorSwatch()
@@ -32,52 +35,45 @@ public class ColorSwatch : TemplatedControl
         set => SetValue(RimeHexProperty, value);
     }
 
+    /// <summary>取色面板双向绑定的桥：与 RimeHex 同步。</summary>
+    public Color SwatchColor
+    {
+        get => GetValue(SwatchColorProperty);
+        set => SetValue(SwatchColorProperty, value);
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
         _swatch = e.NameScope.Find("PART_Swatch") as Border;
-        _picker = e.NameScope.Find("PART_Picker") as ColorPicker;
-        if (_picker is not null)
-            _picker.ColorChanged += (_, args) => SyncFromPicker(args.NewColor);
         SyncSwatch();
-        SyncPicker();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+        if (_syncing) return;
         if (change.Property == RimeHexProperty)
         {
+            _syncing = true;
+            if (RimeHex is { } hex && TryParseBgr(hex, out var color)) SwatchColor = color;
             SyncSwatch();
-            SyncPicker();
+            _syncing = false;
+        }
+        else if (change.Property == SwatchColorProperty)
+        {
+            _syncing = true;
+            var c = SwatchColor;
+            SetCurrentValue(RimeHexProperty, $"{c.B:X2}{c.G:X2}{c.R:X2}");
+            SyncSwatch();
+            _syncing = false;
         }
     }
 
     private void SyncSwatch()
     {
         if (_swatch is null) return;
-        _swatch.Background = RimeHex is { } hex && TryParseBgr(hex, out var color)
-            ? new SolidColorBrush(color)
-            : Brushes.Transparent;
-    }
-
-    private void SyncPicker()
-    {
-        if (_picker is null || _syncing) return;
-        if (RimeHex is { } hex && TryParseBgr(hex, out var color))
-        {
-            _syncing = true;
-            _picker.Color = color;
-            _syncing = false;
-        }
-    }
-
-    private void SyncFromPicker(Color color)
-    {
-        if (_syncing) return;
-        _syncing = true;
-        SetCurrentValue(RimeHexProperty, $"{color.B:X2}{color.G:X2}{color.R:X2}");
-        _syncing = false;
+        _swatch.Background = new SolidColorBrush(SwatchColor);
     }
 
     private static bool TryParseBgr(string hex, out Color color)
