@@ -81,12 +81,20 @@ public abstract partial class AppearancePageViewModel : ObservableObject
 /// </summary>
 public sealed partial class SkinPageViewModel : AppearancePageViewModel
 {
+    private ChoiceFieldViewModel? _watchedLight;
+    private ChoiceFieldViewModel? _watchedDark;
+
     public SkinPageViewModel(SettingsEditorViewModel editor) : base(editor, "skin")
     {
         editor.PropertyChanged += OnEditorChangedForScheme;
+        if (editor.SchemeLibrary is { } library)
+        {
+            library.EditsPending += OnLibraryEdited;
+            HookFields();
+        }
     }
 
-    /// <summary>style/color_scheme 字段（schema skinChoice 节加载，画廊点击与 Cell 下拉都写它）。</summary>
+    /// <summary>style/color_scheme 字段（画廊点击与 Cell 下拉都写它）。</summary>
     public ChoiceFieldViewModel? LightSchemeField => FieldOf("style/color_scheme");
 
     public ChoiceFieldViewModel? DarkSchemeField => FieldOf("style/color_scheme_dark");
@@ -95,13 +103,45 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
         => Sections.FirstOrDefault(s => s.Group == "skin")?.Fields
             .OfType<ChoiceFieldViewModel>().FirstOrDefault(f => f.KeyPath == keyPath);
 
-    /// <summary>画廊卡片点击：应用为亮色主题（待保存编辑，随本页「保存并部署」落盘）。</summary>
+    [ObservableProperty]
+    private string _searchText = "";
+
+    partial void OnSearchTextChanged(string value) => OnPropertyChanged(nameof(FilteredSchemes));
+
+    /// <summary>画廊列表：按名/类型过滤（大小写不敏感），自定义置顶、内置按名排序。</summary>
+    public IEnumerable<ColorSchemeViewModel> FilteredSchemes
+    {
+        get
+        {
+            var query = SearchText.Trim();
+            return (Editor.SchemeLibrary?.Schemes ?? Enumerable.Empty<ColorSchemeViewModel>())
+                .Where(s => query.Length == 0
+                            || s.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                            || s.KindText.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => !s.IsShipped)
+                .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
+
+    /// <summary>卡片主体点击 / 角上 ☀：应用为亮色主题（待保存编辑，随「保存并部署」落盘）。</summary>
     [RelayCommand]
     private void UseAsLightScheme(ColorSchemeViewModel? scheme)
     {
         if (scheme?.HasValidName == true && LightSchemeField is { } field)
             field.Selected = scheme.Name.Trim();
     }
+
+    /// <summary>角上 ☾：应用为暗色主题。</summary>
+    [RelayCommand]
+    private void UseAsDarkScheme(ColorSchemeViewModel? scheme)
+    {
+        if (scheme?.HasValidName == true && DarkSchemeField is { } field)
+            field.Selected = scheme.Name.Trim();
+    }
+
+    [RelayCommand]
+    private Task EditSchemeAsync(ColorSchemeViewModel? scheme) => EditAsync(scheme);
 
     [RelayCommand]
     private Task EditLightSchemeAsync() => EditAsync(Find(LightSchemeField?.Selected));
@@ -135,12 +175,56 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
         else vm.Revert();
     }
 
-    /// <summary>重新加载后刷新字段引用。</summary>
+    /// <summary>重新加载：字段/皮肤库都是新实例——重新挂钩并刷新角标与过滤列表。</summary>
     private void OnEditorChangedForScheme(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(SettingsEditorViewModel.Sections)) return;
-        OnPropertyChanged(nameof(LightSchemeField));
-        OnPropertyChanged(nameof(DarkSchemeField));
+        if (e.PropertyName == nameof(SettingsEditorViewModel.Sections))
+        {
+            OnPropertyChanged(nameof(LightSchemeField));
+            OnPropertyChanged(nameof(DarkSchemeField));
+            HookFields();
+        }
+        if (e.PropertyName == nameof(SettingsEditorViewModel.HasSchemeLibrary)
+            && Editor.SchemeLibrary is { } library)
+        {
+            library.EditsPending += OnLibraryEdited;
+        }
+        RefreshCurrentFlags();
+        OnPropertyChanged(nameof(FilteredSchemes));
+    }
+
+    private void OnLibraryEdited(object? sender, EventArgs e)
+    {
+        RefreshCurrentFlags();
+        OnPropertyChanged(nameof(FilteredSchemes));
+    }
+
+    /// <summary>亮/暗槽位字段变化 → 重算每张卡的当前角色角标。</summary>
+    private void HookFields()
+    {
+        if (_watchedLight is { } oldLight) oldLight.PropertyChanged -= OnSlotChanged;
+        if (_watchedDark is { } oldDark) oldDark.PropertyChanged -= OnSlotChanged;
+        _watchedLight = LightSchemeField;
+        _watchedDark = DarkSchemeField;
+        if (_watchedLight is { } light) light.PropertyChanged += OnSlotChanged;
+        if (_watchedDark is { } dark) dark.PropertyChanged += OnSlotChanged;
+        RefreshCurrentFlags();
+    }
+
+    private void OnSlotChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChoiceFieldViewModel.Selected)) RefreshCurrentFlags();
+    }
+
+    private void RefreshCurrentFlags()
+    {
+        var light = LightSchemeField?.Selected;
+        var dark = DarkSchemeField?.Selected;
+        foreach (var scheme in Editor.SchemeLibrary?.Schemes ?? Enumerable.Empty<ColorSchemeViewModel>())
+        {
+            scheme.IsCurrentLight = string.Equals(scheme.Name, light, StringComparison.OrdinalIgnoreCase);
+            scheme.IsCurrentDark = string.Equals(scheme.Name, dark, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
 

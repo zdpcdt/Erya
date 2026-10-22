@@ -234,13 +234,28 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.Null(lightCell.Note); // Note 不再重复显示皮肤名（下拉里已有）
         Assert.Null(darkCell.Note);
 
-        // 点卡片 = 应用为亮色主题（待保存编辑）。
+        // 点卡片 = 应用为亮色主题（待保存编辑）；角上 ☾ = 应用为暗色；角色角标联动。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
         vm.UseAsLightSchemeCommand.Execute(userDark);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal("user_dark", vm.LightSchemeField!.Selected);
         Assert.True(vm.IsDirty);
+        Assert.True(userDark.IsCurrentLight);
+        Assert.False(userDark.IsCurrentDark);
+        vm.UseAsDarkSchemeCommand.Execute(userDark);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("user_dark", vm.DarkSchemeField!.Selected);
+        Assert.True(userDark.IsCurrentDark);
         vm.LightSchemeField.Selected = "macos_light"; // 还原，后续断言用
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light").IsCurrentLight);
+        Assert.False(userDark.IsCurrentLight);
+
+        // 画廊：自定义置顶 + 搜索过滤。
+        Assert.Equal(["user_dark", "macos_light"], vm.FilteredSchemes.Select(s => s.Name).ToList());
+        vm.SearchText = "macos";
+        Assert.Equal(["macos_light"], vm.FilteredSchemes.Select(s => s.Name).ToList());
+        vm.SearchText = "";
 
         // 编辑语义（不经 OverlayDialog，直接构造对话框 VM）：
         // 内置皮肤可编辑，「确定」另存为新的自定义皮肤、原内置还原。
