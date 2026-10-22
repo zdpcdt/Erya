@@ -261,20 +261,23 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
 /// <summary>
 /// 应用行为页：app_options 的专用卡片列表（不走通用分节渲染）——每应用一张卡，
 /// 右侧按 schema choices 渲染该前端的选项开关（鼠须管含 Vim/内嵌编码，小狼毫
-/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（常用预设 + 正在运行的应用
-/// 点一下即加，手输回车即加，见 AddAppPickerViewModel），空态另有常用应用
-/// 一键添加。数据仍在共享编辑器的 appOptions 字段上，保存走同一条管线。
+/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（正在运行的应用点一下即加，
+/// 手输回车即加，见 AddAppPickerViewModel），空态另有常用应用一键添加。
+/// 数据仍在共享编辑器的 appOptions 字段上，保存走同一条管线。
 /// </summary>
 public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
     private readonly IReadOnlyList<AppPresetItem> _presets;
+    private readonly IReadOnlyList<string>? _runningApps;
     private AppOptionsFieldViewModel? _field;
 
     public AppsPageViewModel(SettingsEditorViewModel editor,
-        IReadOnlyList<AppPresetItem>? presets = null) : base(editor, "apps")
+        IReadOnlyList<AppPresetItem>? presets = null,
+        IReadOnlyList<string>? runningApps = null) : base(editor, "apps")
     {
         // 预设按平台给出（Linux 生产上整页不出现）；可注入供测试在任何平台跑。
         _presets = presets ?? AppBehaviorPresets.ForCurrentOs();
+        _runningApps = runningApps;
         editor.PropertyChanged += OnEditorChangedForApps;
         HookField();
     }
@@ -320,7 +323,7 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
     {
         if (Field is null) return;
         Picker = new AddAppPickerViewModel(
-            Field.Rows.Select(r => r.AppId.Trim()).ToList(), AddPicked, _presets);
+            Field.Rows.Select(r => r.AppId.Trim()).ToList(), AddPicked, _runningApps);
         OnPropertyChanged(nameof(Picker));
     }
 

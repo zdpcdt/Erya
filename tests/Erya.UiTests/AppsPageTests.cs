@@ -176,23 +176,22 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_picker_filters_shows_states_and_adds_in_one_click()
     {
-        // 预设注入 Windows 列表（生产按平台取，Linux 为空，测试须与平台无关）。
+        // 运行中列表注入固定值（生产取本机进程，Windows-only，测试须与平台无关）。
         var added = new List<string>();
-        var vm = new AddAppPickerViewModel(["cmd.exe"], added.Add, AppBehaviorPresets.Windows);
+        var vm = new AddAppPickerViewModel(["cmd.exe"], added.Add,
+            ["cmd.exe", "chrome.exe", "rider64.exe"]);
 
-        // 常用条目在列；已有规则的那条标「已添加」（不可点，不再事后报错）。
-        var cmd = vm.PresetEntries.Single(e => e.Id == "cmd.exe");
-        Assert.True(cmd.IsAdded);
-        Assert.True(cmd.ShowId); // 预设条目带友好名（副行显示标识）
-        Assert.Contains(vm.PresetEntries, e => e is { Id: "putty.exe", IsAdded: false });
+        // 条目在列；已有规则的那条标「已添加」（不可点，不再事后报错）。
+        Assert.Equal(["cmd.exe", "chrome.exe", "rider64.exe"], vm.Entries.Select(e => e.Id));
+        Assert.True(vm.Entries.Single(e => e.Id == "cmd.exe").IsAdded);
+        Assert.Contains(vm.Entries, e => e is { Id: "chrome.exe", IsAdded: false });
 
-        // 搜索按 标识/友好名 过滤（「终端」命中 Windows 终端/终端（Terminal））。
-        vm.SearchText = "终端";
-        Assert.Contains(vm.FilteredPresets, e => e.Title.Contains("终端"));
-        Assert.DoesNotContain(vm.FilteredPresets, e => e.Id == "putty.exe");
+        // 搜索按标识过滤。
+        vm.SearchText = "chrome";
+        Assert.Equal(["chrome.exe"], vm.FilteredEntries.Select(e => e.Id));
 
         // 输入恰好等于某条目标识 → 点那条即可，不出「添加」行（前缀不算完全匹配）。
-        vm.SearchText = "putty.exe";
+        vm.SearchText = "chrome.exe";
         Assert.True(vm.ExactMatchExists);
         Assert.False(vm.CanAddCustom);
 
@@ -215,10 +214,10 @@ public sealed class AppsPageTests : IDisposable
         Assert.Equal(["myapp.exe"], added); // 无新增
 
         // 点选即加：已添加的条目点了没反应，未添加的直接回调。
-        vm.PickEntryCommand.Execute(vm.PresetEntries.Single(e => e.Id == "cmd.exe"));
+        vm.PickEntryCommand.Execute(vm.Entries.Single(e => e.Id == "cmd.exe"));
         Assert.Equal(["myapp.exe"], added);
-        vm.PickEntryCommand.Execute(vm.PresetEntries.Single(e => e.Id == "putty.exe"));
-        Assert.Equal(["myapp.exe", "putty.exe"], added);
+        vm.PickEntryCommand.Execute(vm.Entries.Single(e => e.Id == "rider64.exe"));
+        Assert.Equal(["myapp.exe", "rider64.exe"], added);
     }
 
     [AvaloniaFact]
@@ -230,7 +229,7 @@ public sealed class AppsPageTests : IDisposable
         Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
         await editor.LoadCommand.ExecuteAsync(null);
-        var vm = new AppsPageViewModel(editor, AppBehaviorPresets.Windows);
+        var vm = new AppsPageViewModel(editor, runningApps: ["mockapp.exe"]);
 
         var page = new AppsPage { DataContext = vm, Width = 760, Height = 620 };
         var window = new Window { Width = 800, Height = 680, Content = page };
@@ -280,14 +279,14 @@ public sealed class AppsPageTests : IDisposable
             """);
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
         await editor.LoadCommand.ExecuteAsync(null);
-        // 预设注入 Windows 列表：fixture 的 cmd.exe 要命中预设才能测「已添加」标记。
-        var vm = new AppsPageViewModel(editor, AppBehaviorPresets.Windows);
+        // 注入固定运行中列表：fixture 的 cmd.exe 要在列表里才能测「已添加」标记。
+        var vm = new AppsPageViewModel(editor, runningApps: ["cmd.exe", "mockapp.exe"]);
 
         // 已有的应用在弹层里带「已添加」标记。
         vm.OpenPickerCommand.Execute(null);
         Assert.NotNull(vm.Picker);
-        Assert.True(vm.Picker!.PresetEntries.Single(e => e.Id == "cmd.exe").IsAdded);
-        var target = vm.Picker.PresetEntries.First(e => !e.IsAdded);
+        Assert.True(vm.Picker!.Entries.Single(e => e.Id == "cmd.exe").IsAdded);
+        var target = vm.Picker.Entries.First(e => !e.IsAdded);
 
         // 点选条目 = 添加（默认英文）+ 请求视图收起弹层。
         var closeRequested = false;
@@ -311,21 +310,26 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_flyout_renders_groups_states_and_enter_key()
     {
-        // existing 取 Windows 预设第一条——测试与当前平台无关（Linux 预设为空）。
-        var addedId = AppBehaviorPresets.Windows[0].Id;
-
+        // 注入固定运行中列表——测试与平台无关（生产取本机进程，非 Windows 为空）。
         var added = new List<string>();
-        var picker = new AddAppPickerViewModel([addedId], added.Add, AppBehaviorPresets.Windows);
+        var picker = new AddAppPickerViewModel(["cmd.exe"], added.Add,
+            ["cmd.exe", "chrome.exe"]);
         var flyout = new AddAppFlyout { DataContext = picker, Width = 340 };
         var window = new Window { Width = 380, Height = 560, Content = flyout };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 全量列表：预设条目渲染为按钮；已有规则的那条禁用 + 「已添加」标签。
+        // 搜索框带 ClearButton；「正在运行」组头可见。
+        var search = flyout.GetVisualDescendants().OfType<TextBox>().Single();
+        Assert.Contains(search.Classes, c => c == "ClearButton");
+        Assert.True(flyout.GetVisualDescendants().OfType<TextBlock>()
+            .Single(t => t.Text == "正在运行").IsVisible);
+
+        // 全量列表：条目渲染为按钮；已有规则的那条禁用 + 「已添加」标签。
         var entries = flyout.GetVisualDescendants().OfType<Button>()
             .Where(b => b.DataContext is AddAppEntry).ToList();
         var disabled = entries.Single(b => !b.IsEnabled);
-        Assert.Equal(addedId, ((AddAppEntry)disabled.DataContext!).Id);
+        Assert.Equal("cmd.exe", ((AddAppEntry)disabled.DataContext!).Id);
         // 「已添加」标签只在那条禁用条目里可见（模板里每条都带、只是折叠）。
         Assert.Contains(disabled.GetVisualDescendants().OfType<TextBlock>(),
             t => t.Text == "已添加" && t.IsVisible);
@@ -336,10 +340,10 @@ public sealed class AppsPageTests : IDisposable
         pickable.Command.Execute(pickable.CommandParameter);
         Assert.Equal([pickableId], added);
 
-        // 过滤：全新标识无匹配 → 预设组头隐藏，「添加 “xxx”」行出现；回车=添加。
+        // 过滤：全新标识无匹配 → 组头隐藏，「添加 “xxx”」行出现；回车=添加。
         picker.SearchText = "myapp.exe";
         Dispatcher.UIThread.RunJobs();
-        Assert.False(picker.HasFilteredPresets);
+        Assert.False(picker.HasFilteredEntries);
         Assert.True(picker.CanAddCustom);
         // 「添加 “xxx”」行出现（按命令身份找——TextBox 内建清除按钮同 DataContext）。
         var customRow = flyout.GetVisualDescendants().OfType<Button>()
@@ -348,7 +352,7 @@ public sealed class AppsPageTests : IDisposable
         Assert.Equal("添加 “myapp.exe”",
             customRow.GetVisualDescendants().OfType<TextBlock>().Single().Text);
 
-        flyout.GetVisualDescendants().OfType<TextBox>().Single().RaiseEvent(new KeyEventArgs
+        search.RaiseEvent(new KeyEventArgs
         {
             RoutedEvent = InputElement.KeyDownEvent,
             Key = Key.Enter,
