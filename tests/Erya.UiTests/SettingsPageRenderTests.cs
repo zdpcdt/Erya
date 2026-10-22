@@ -234,6 +234,13 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.Null(lightCell.Note); // Note 不再重复显示皮肤名（下拉里已有）
         Assert.Null(darkCell.Note);
 
+        // 固定区：预览宿主与槽位行不在滚动区里——滚画廊不动锚点。
+        Assert.All(page.GetVisualDescendants().OfType<ContentControl>()
+            .Where(cc => cc.Content is CandidatePreviewViewModel),
+            h => Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
+        Assert.DoesNotContain(lightCell.GetVisualAncestors(), a => a is ScrollViewer);
+        Assert.DoesNotContain(darkCell.GetVisualAncestors(), a => a is ScrollViewer);
+
         // 点卡片 = 应用为亮色主题（待保存编辑）；角上 ☾ = 应用为暗色；角色角标联动。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");
         vm.UseAsLightSchemeCommand.Execute(userDark);
@@ -258,27 +265,45 @@ public sealed class SettingsPageRenderTests : IDisposable
         vm.SearchText = "";
 
         // 编辑语义（不经 OverlayDialog，直接构造对话框 VM）：
-        // 内置皮肤可编辑，「确定」另存为新的自定义皮肤、原内置还原。
+        // 内置皮肤「打开即副本」——对话框编辑的是未入库草稿，确定=入库，原内置从未被碰。
         var fields = editor.Sections.SelectMany(s => s.Fields).ToList();
-        var dialog = new SchemeEditDialogViewModel(
-            editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light"), fields, editor.SchemeLibrary, isSquirrel: true);
-        Assert.True(dialog.SavesAsCopy);
-        Assert.Contains("另存为", dialog.Tip);
+        var original = editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light");
+        var draft = SkinPageViewModel.CreateDraft(original);
+        Assert.Equal("macos_light 副本", draft.Name);
+        var dialog = new SchemeEditDialogViewModel(draft, fields, editor.SchemeLibrary,
+            isSquirrel: true, isDraft: true, baseName: original.Name);
+        Assert.True(dialog.IsDraft);
+        Assert.False(dialog.CanManage); // 草稿无库身份：删除/以此新增不显示
+        Assert.Contains("副本", dialog.Tip);
         dialog.Scheme.BackColor = "1C1C1E";
         dialog.Scheme.Name = "我的浅色改";
         var saved = dialog.Commit();
-        Assert.Equal("我的浅色改1", saved!.Name); // 唯一名
+        Assert.Equal("我的浅色改", saved!.Name);
         Assert.False(saved.IsShipped);
-        Assert.Equal("1C1C1E", saved.BackColor); // 编辑结果进副本
-        var original = editor.SchemeLibrary.Schemes.Single(s => s.Name == "macos_light");
-        Assert.Equal("ECECEC", original.BackColor); // 原内置还原快照
+        Assert.Equal("1C1C1E", saved.BackColor);
+        Assert.Equal("ECECEC", original.BackColor); // 内置皮肤从未被修改
+        Assert.Contains(editor.SchemeLibrary.Schemes, s => s.Name == "我的浅色改");
         Assert.True(vm.IsDirty);
 
-        // 取消：全部还原。
-        var dialog2 = new SchemeEditDialogViewModel(original, fields, editor.SchemeLibrary, isSquirrel: true);
+        // 草稿取消 = 丢弃（无还原动作、不进库）。
+        var draftDrop = SkinPageViewModel.CreateDraft(original);
+        var dialogDrop = new SchemeEditDialogViewModel(draftDrop, fields, editor.SchemeLibrary,
+            isSquirrel: true, isDraft: true, baseName: original.Name);
+        dialogDrop.Scheme.BackColor = "000000";
+        dialogDrop.Revert();
+        Assert.DoesNotContain(editor.SchemeLibrary.Schemes, s => s.Name == draftDrop.Name);
+
+        // 空白新建草稿：默认浅色。
+        Assert.Equal("我的皮肤", SkinPageViewModel.CreateDraft(null).Name);
+
+        // 已有自定义皮肤：确定=保留同一实例，取消=还原开框快照。
+        var dialog2 = new SchemeEditDialogViewModel(userDark, fields, editor.SchemeLibrary, isSquirrel: true);
+        Assert.False(dialog2.IsDraft);
+        Assert.True(dialog2.CanManage);
         dialog2.Scheme.BackColor = "000000";
         dialog2.Revert();
-        Assert.Equal("ECECEC", original.BackColor);
+        Assert.Equal("1C1C1E", userDark.BackColor);
+        Assert.Same(userDark, dialog2.Commit());
 
         // 对话框控件本体：预览 + 取色器 + 鼠须管下显示字体与排版组。
         var control = new SchemeEditDialog { DataContext = dialog2, Width = 600, Height = 700 };

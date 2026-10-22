@@ -254,31 +254,23 @@ public sealed partial class ColorSchemeLibraryViewModel : ObservableObject
     private void DuplicateScheme(ColorSchemeViewModel? scheme)
     {
         if (scheme is null) return;
-        AddFromState(scheme.CloneableState with { Name = UniqueName(scheme.Name) });
-    }
-
-    private void AddFromState(SchemeState state)
-    {
-        var scheme = ColorSchemeViewModel.FromState(state);
-        scheme.IsAdded = true;
-        Attach(scheme);
-        MarkDirty();
+        AddCustom(scheme.CloneableState with { Name = UniqueName(scheme.Name) });
     }
 
     /// <summary>
-    /// 内置皮肤在编辑对话框里的「另存为」：编辑结果（当前控件值）存成新的自定义
-    /// 皮肤（唯一名），原内置皮肤还原开框快照——内置定义永远不被写。
+    /// 把一份状态保存为新的自定义皮肤（编辑对话框草稿「确定」/「以此新增」）。
+    /// 名字为空或撞库时自动取唯一名；原内置皮肤永远不会被写。
     /// </summary>
-    public ColorSchemeViewModel SaveEditedAsCustom(ColorSchemeViewModel scheme, SchemeState snapshot)
+    public ColorSchemeViewModel AddCustom(SchemeState state)
     {
-        var edited = scheme.CloneableState;
-        scheme.Restore(snapshot);
-        var copy = edited with { Name = UniqueName(edited.Name) };
-        var custom = ColorSchemeViewModel.FromState(copy);
-        custom.IsAdded = true;
-        Attach(custom);
+        var name = state.Name.Trim();
+        if (name.Length == 0 || Schemes.Any(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)))
+            name = UniqueName(name.Length > 0 ? name : "custom");
+        var scheme = ColorSchemeViewModel.FromState(state with { Name = name });
+        scheme.IsAdded = true;
+        Attach(scheme);
         MarkDirty();
-        return custom;
+        return scheme;
     }
 
     [RelayCommand]
