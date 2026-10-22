@@ -1,12 +1,9 @@
 using System;
-using System.Collections;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Backup;
@@ -36,20 +33,13 @@ public partial class BackupRestoreViewModel : ObservableObject
     private string _backupFileName = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasRestoreSource), nameof(CanRestore))]
+    [NotifyPropertyChangedFor(nameof(HasRestoreSource), nameof(CanRestore), nameof(RestoreNote))]
     private string _restoreSourcePath = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanRestore))]
+    [NotifyPropertyChangedFor(nameof(CanRestore), nameof(CanBackup),
+        nameof(BackupButtonText), nameof(RestoreButtonText))]
     private bool _isBusy;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasHint))]
-    private string _hint = "";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasError))]
-    private string _errorMessage = "";
 
     public bool HasUserDir => UserDir.Length > 0;
 
@@ -57,9 +47,15 @@ public partial class BackupRestoreViewModel : ObservableObject
 
     public bool CanRestore => HasRestoreSource && !IsBusy;
 
-    public bool HasHint => Hint.Length > 0;
+    public bool CanBackup => HasUserDir && !IsBusy;
 
-    public bool HasError => ErrorMessage.Length > 0;
+    /// <summary>备份按钮文案：busy 时按钮自己报进度，页面不再放状态条。</summary>
+    public string BackupButtonText => IsBusy ? "备份中…" : "选择位置并备份…";
+
+    public string RestoreButtonText => IsBusy ? "恢复中…" : "从备份恢复";
+
+    /// <summary>恢复行右侧当前值：已选备份文件名（截断），未选时提示占位。</summary>
+    public string RestoreNote => HasRestoreSource ? Path.GetFileName(RestoreSourcePath) : "未选择";
 
     /// <summary>Where the pickers start browsing — user documents.</summary>
     public string DefaultStartFolder => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -67,24 +63,21 @@ public partial class BackupRestoreViewModel : ObservableObject
     [RelayCommand]
     private void Load()
     {
-        Hint = "";
-        ErrorMessage = "";
         if (_distribution is null)
         {
             UserDir = "";
             UserDirExists = false;
             UserDirSummary = "";
-            Hint = "未检测到 RIME 发行版：" + InstallHints.ForCurrentOs;
             return;
         }
 
         UserDir = _distribution.UserDir;
         UserDirExists = Directory.Exists(UserDir);
         UserDirSummary = !UserDirExists
-            ? "目录尚不存在（输入法首次部署后会自动创建），此时只能恢复备份。"
+            ? "目录尚不存在，此时只能恢复备份"
             : ScanUserDir(UserDir) is { } stats
                 ? $"{stats.Files} 个文件，约 {FormatBytes(stats.Bytes)}"
-                : "无法读取目录内容。";
+                : "无法读取目录内容";
         BackupFileName = $"RimeBackup_{DateTime.Now:yyyyMMdd-HHmmss}.zip";
     }
 
@@ -100,20 +93,12 @@ public partial class BackupRestoreViewModel : ObservableObject
         AppShell.OpenFolder(UserDir);
     }
 
-    /// <summary>PathPicker hands the picked items to Command as IStorageItem list.</summary>
+    /// <summary>View 层的文件选择器选定保存位置后把路径传进来。</summary>
     [RelayCommand]
-    private async Task BackupAsync(object? parameter)
+    private async Task BackupAsync(string? target)
     {
-        if (IsBusy || !HasUserDir) return;
+        if (IsBusy || !HasUserDir || string.IsNullOrEmpty(target)) return;
 
-        var target = SingleLocalPath(parameter);
-        if (target is null)
-        {
-            AppNotifications.Toast("未选择保存位置，已取消备份", NotificationType.Information);
-            return;
-        }
-
-        ErrorMessage = "";
         IsBusy = true;
         try
         {
@@ -127,7 +112,7 @@ public partial class BackupRestoreViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"备份失败：{ex.Message}";
+            AppNotifications.Toast($"备份失败：{ex.Message}", NotificationType.Error);
         }
         finally
         {
@@ -135,11 +120,11 @@ public partial class BackupRestoreViewModel : ObservableObject
         }
     }
 
+    /// <summary>View 层的文件选择器选定备份文件后把路径传进来。</summary>
     [RelayCommand]
-    private void PickRestoreSource(object? parameter)
+    private void PickRestoreSource(string? path)
     {
-        var path = SingleLocalPath(parameter);
-        if (path is null) return; // picker cancelled
+        if (string.IsNullOrEmpty(path)) return; // picker cancelled
         if (!string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase))
         {
             AppNotifications.Toast("请选择 .zip 格式的备份文件", NotificationType.Warning);
@@ -154,7 +139,6 @@ public partial class BackupRestoreViewModel : ObservableObject
     {
         if (!CanRestore) return;
 
-        ErrorMessage = "";
         var result = await OverlayDialog.ShowStandardAsync(
             BuildConfirmContent(Path.GetFileName(RestoreSourcePath), UserDir), null, "main",
             new OverlayDialogOptions
@@ -204,7 +188,7 @@ public partial class BackupRestoreViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"恢复失败：{ex.Message}";
+            AppNotifications.Toast($"恢复失败：{ex.Message}", NotificationType.Error);
         }
         finally
         {
@@ -227,12 +211,6 @@ public partial class BackupRestoreViewModel : ObservableObject
                 },
             }
         };
-
-    /// <summary>PathPicker passes IReadOnlyList&lt;IStorageItem&gt;; keep the first local path.</summary>
-    private static string? SingleLocalPath(object? parameter)
-        => (parameter as IEnumerable)?.OfType<IStorageItem>()
-            .Select(i => i.TryGetLocalPath())
-            .FirstOrDefault(p => !string.IsNullOrEmpty(p));
 
     private static (int Files, long Bytes)? ScanUserDir(string dir)
     {

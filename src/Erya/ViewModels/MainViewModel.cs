@@ -27,6 +27,8 @@ public partial class MainViewModel : ObservableObject
     /// selector; switching rebuilds every page (see ShellViewModel).
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HeroTitle), nameof(HeroVersion), nameof(HeroHint),
+        nameof(IsReady), nameof(IsDeployerMissing), nameof(IsMissing))]
     private IRimeDistribution? _distribution;
 
     /// <summary>Raised after <see cref="Distribution"/> changed at runtime.</summary>
@@ -35,26 +37,33 @@ public partial class MainViewModel : ObservableObject
     public bool HasMultipleDistributions => AvailableDistributions.Count > 1;
 
     [ObservableProperty]
-    private string _detectionTitle = "正在检测 RIME 发行版…";
-
-    [ObservableProperty]
     private string _installDirDisplay = "";
 
     [ObservableProperty]
     private string _userDir = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsReady), nameof(IsDeployerMissing), nameof(IsMissing))]
     private bool _canDeploy;
 
-    /// <summary>Persistent detection state — banner material, not toast material.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasStatus))]
-    private string _statusMessage = "";
+    /// <summary>英雄卡右上的状态徽标；三态互斥，颜色由视图按态取。</summary>
+    public bool IsReady => Distribution is not null && CanDeploy;
+    public bool IsDeployerMissing => Distribution is not null && !CanDeploy;
+    public bool IsMissing => Distribution is null;
 
-    [ObservableProperty]
-    private NotificationType _statusType = NotificationType.Information;
+    /// <summary>英雄卡主标题：发行版名；未检测到时是状态文案。</summary>
+    public string HeroTitle => Distribution?.DisplayName ?? "未检测到 RIME 发行版";
 
-    public bool HasStatus => !string.IsNullOrEmpty(StatusMessage);
+    /// <summary>英雄卡副行的版本号；缺失时为空（视图隐藏）。</summary>
+    public string HeroVersion => Distribution?.Version is { } v ? $"v{v}" : "";
+
+    /// <summary>英雄卡副行的提示文字：就绪时为空，异常时是原因或安装指引。</summary>
+    public string HeroHint => Distribution switch
+    {
+        null => InstallHints.ForCurrentOs,
+        { CanDeploy: false } d => InstallHints.DeployerMissingHint(d),
+        _ => "",
+    };
 
     public MainViewModel(DistributionManager distributions, AppPreferences? preferences = null)
     {
@@ -84,31 +93,15 @@ public partial class MainViewModel : ObservableObject
     {
         if (Distribution is null)
         {
-            DetectionTitle = "未检测到 RIME 发行版";
-            StatusType = NotificationType.Warning;
-            StatusMessage = InstallHints.ForCurrentOs;
             InstallDirDisplay = "";
             UserDir = "";
             CanDeploy = false;
             return;
         }
 
-        DetectionTitle = Distribution.Version is { } version
-            ? $"{Distribution.DisplayName} · v{version}"
-            : Distribution.DisplayName;
         InstallDirDisplay = Distribution.InstallDir ?? "";
         UserDir = Distribution.UserDir;
         CanDeploy = Distribution.CanDeploy;
-        if (CanDeploy)
-        {
-            StatusType = NotificationType.Success;
-            StatusMessage = "就绪。";
-        }
-        else
-        {
-            StatusType = NotificationType.Warning;
-            StatusMessage = InstallHints.DeployerMissingHint(Distribution);
-        }
     }
 
     [RelayCommand]
