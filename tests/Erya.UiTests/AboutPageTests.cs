@@ -56,8 +56,11 @@ public sealed class AboutPageTests
             "https://github.com/rime/librime",
             "https://github.com/rime/squirrel",
             "https://github.com/rime/weasel",
+            "https://github.com/rime/ibus-rime",
             "https://github.com/yanhuacuo/rimetool",
             "https://github.com/qzly/RimeControl",
+            "https://github.com/neolee/sct",
+            "https://github.com/rime/plum",
             "https://irihi.tech/",
             "https://github.com/irihitech",
         ], links);

@@ -180,8 +180,11 @@
     "ackSquirrelDesc": "RIME 的 macOS 前端",
     "ackWeaselDesc": "RIME 的 Windows 前端",
     "ackWeaselAuthor": "佛振 与社区",
+    "ackIbusDesc": "RIME 的 Linux 前端",
     "ackRimetoolDesc": "Qt 版 RIME 配置工具",
     "ackRimeControlDesc": "WPF 版 RIME 配置工具",
+    "ackSctDesc": "macOS 版 RIME 配置工具",
+    "ackPlumDesc": "官方配置管理器",
     "officialSite": "官网"
   },
   "settings": {

@@ -180,8 +180,11 @@
     "ackSquirrelDesc": "macOS frontend for RIME",
     "ackWeaselDesc": "Windows frontend for RIME",
     "ackWeaselAuthor": "Fochen and the community",
+    "ackIbusDesc": "Linux frontend for RIME",
     "ackRimetoolDesc": "Qt-based RIME configuration tool",
     "ackRimeControlDesc": "WPF-based RIME configuration tool",
+    "ackSctDesc": "macOS-native RIME configuration tool",
+    "ackPlumDesc": "Official configuration manager",
     "officialSite": "Website"
   },
   "settings": {
