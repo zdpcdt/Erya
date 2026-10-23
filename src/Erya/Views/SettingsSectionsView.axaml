@@ -6,6 +6,7 @@
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d"
              x:Class="Erya.Views.SettingsSectionsView"
              x:Name="Root">
@@ -127,8 +128,12 @@
                                           录入框固定宽度靠左，删除/添加按钮紧随其后  -->
                                     <DataTemplate x:DataType="sf:ListFieldViewModel">
                                         <c:Cell Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}"
-                                                Note="{Binding Items.Count, StringFormat=已设 {0} 项}">
+                                                Content="{Binding Label}" Description="{Binding Description}">
+                                            <c:Cell.Note>
+                                                <FormatTranslate FormatKey="{x:Static loc:LanguageManager+Keys.settings_hotkeyCountNote}">
+                                                    <TranslateEntry Binding="{Binding Items.Count}" />
+                                                </FormatTranslate>
+                                            </c:Cell.Note>
                                             <c:Cell.Detail>
                                                 <StackPanel Spacing="10">
                                                     <ItemsControl ItemsSource="{Binding Items}">
@@ -144,7 +149,7 @@
                                                                                   VerticalAlignment="Center"
                                                                                   Command="{Binding $parent[ContentControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
                                                                                   CommandParameter="{Binding}"
-                                                                                  ToolTip.Tip="删除此快捷键" />
+                                                                                  ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_removeHotkeyTip}}" />
                                                                 </StackPanel>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
@@ -152,12 +157,12 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <u:KeyGestureInput Width="280"
                                                                            Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                           ToolTip.Tip="聚焦后按下新的组合键" />
+                                                                           ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_newHotkeyTip}}" />
                                                         <u:IconButton Theme="{DynamicResource SolidIconButton}"
                                                                       Icon="{StaticResource SemiIconPlus}"
                                                                       VerticalAlignment="Center"
                                                                       Command="{Binding AddItemCommand}"
-                                                                      ToolTip.Tip="添加快捷键" />
+                                                                      ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_addHotkeyTip}}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                             </c:Cell.Detail>

@@ -6,6 +6,7 @@
              xmlns:tdicon="https://irihi.tech/iconica/tdesign"
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="Erya.Views.SkinPage"
              x:DataType="sf:SkinPageViewModel">
@@ -17,10 +18,10 @@
             <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <u:IconButton Icon="{StaticResource SemiIconRefresh}"
-                              Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
+                              Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
                 <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
                               Icon="{StaticResource SemiIconSave}"
-                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="保存并部署" />
+                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
             </StackPanel>
         </Grid>
 
@@ -32,19 +33,20 @@
                 <StackPanel IsVisible="{Binding HasCandidatePreview}"
                             Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40">
                     <StackPanel Spacing="2">
-                        <TextBlock Text="亮色皮肤" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_lightSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
                         <ContentControl Content="{Binding CandidatePreview}"
                                         ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                     </StackPanel>
                     <StackPanel Spacing="2">
-                        <TextBlock Text="暗色皮肤" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_darkSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
                         <ContentControl Content="{Binding CandidatePreviewDark}"
                                         ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                     </StackPanel>
                 </StackPanel>
 
                 <c:CellGroup IsVisible="{Binding HasSchemeLibrary}">
-                    <c:Cell Content="亮色主题" Description="系统浅色模式使用的皮肤">
+                    <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeLabel}}"
+                            Description="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeDesc}}">
                         <c:Cell.Icon>
                             <tdicon:Sunny Width="20" Height="20" />
                         </c:Cell.Icon>
@@ -54,7 +56,8 @@
                                       MinWidth="220" />
                         </c:Cell.RightContent>
                     </c:Cell>
-                    <c:Cell Content="暗色主题" Description="系统深色模式使用的皮肤；未设置时跟随亮色">
+                    <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeLabel}}"
+                            Description="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeDesc}}">
                         <c:Cell.Icon>
                             <tdicon:Moon Width="20" Height="20" />
                         </c:Cell.Icon>
@@ -71,19 +74,19 @@
             <ScrollViewer Grid.Row="1" Margin="0,16,0,0">
                 <StackPanel Spacing="8" IsVisible="{Binding HasSchemeLibrary}">
                     <Grid ColumnDefinitions="*,Auto,Auto">
-                        <TextBlock Text="皮肤画廊" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="＋ 新建皮肤" Classes="Tertiary"
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.skin_galleryTitle}}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="{Translate {x:Static loc:LanguageManager+Keys.skin_createButton}}" Classes="Tertiary"
                                 Command="{Binding CreateSchemeCommand}" Margin="0,0,12,0"
-                                ToolTip.Tip="以当前亮色皮肤为底新建自定义皮肤（无则空白默认）" />
+                                ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_createTip}}" />
                         <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}"
                                  Classes="ClearButton"
-                                 PlaceholderText="搜索皮肤…" Width="220" VerticalAlignment="Center">
+                                 PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.skin_searchPlaceholder}}" Width="220" VerticalAlignment="Center">
                             <TextBox.InnerLeftContent>
                                 <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
                             </TextBox.InnerLeftContent>
                         </TextBox>
                     </Grid>
-                    <TextBlock Text="点击卡片应用为亮色主题；角上按钮可指派为亮色/暗色或新建/编辑（内置皮肤的编辑打开的就是你的副本）。自定义皮肤置顶。"
+                    <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.skin_galleryHint}}"
                                Opacity="0.55" TextWrapping="Wrap" />
                     <ItemsControl ItemsSource="{Binding FilteredSchemes}">
                         <ItemsControl.ItemsPanel>
@@ -104,7 +107,7 @@
                                                 Classes="Tertiary"
                                                 Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
                                                 CommandParameter="{Binding}"
-                                                ToolTip.Tip="应用为亮色主题">
+                                                ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_applyAsLightTip}}">
                                             <StackPanel Spacing="8">
                                                     <Panel>
                                                         <Border Background="{Binding BackPreview}" CornerRadius="4" Padding="8,5">
@@ -113,10 +116,10 @@
                                                                            Foreground="{Binding CandidateTextPreview}" />
                                                                 <Border Background="{Binding HilitedBackPreview}" CornerRadius="3"
                                                                         Padding="5,2" HorizontalAlignment="Left">
-                                                                    <TextBlock Text="1. 你好" FontSize="12"
+                                                                    <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.skin_cardSampleFirst}}" FontSize="12"
                                                                                Foreground="{Binding HilitedTextPreview}" />
                                                                 </Border>
-                                                                <TextBlock Text="2. 拟好  3. 尼奥" FontSize="11"
+                                                                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.skin_cardSampleRest}}" FontSize="11"
                                                                            Foreground="{Binding CandidateTextPreview}" />
                                                             </StackPanel>
                                                         </Border>
@@ -133,36 +136,36 @@
                                                           Classes="Tertiary"
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsLightSchemeCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="设为亮色主题" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_setLightTip}}" />
                                             <u:IconButton Icon="{StaticResource SemiIconMoon}"
                                                           Classes="Tertiary"
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).UseAsDarkSchemeCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="设为暗色主题" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_setDarkTip}}" />
                                             <!--  内置皮肤：复制一份为自定义皮肤（打开即副本的编辑窗口）  -->
                                             <u:IconButton Icon="{StaticResource SemiIconCopy}"
                                                           Classes="Tertiary"
                                                           IsVisible="{Binding IsShipped}"
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="复制为自定义皮肤" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_copyAsCustomTip}}" />
                                             <!--  自定义皮肤：编辑  -->
                                             <u:IconButton Icon="{StaticResource SemiIconEdit}"
                                                           Classes="Tertiary"
                                                           IsVisible="{Binding !IsShipped}"
                                                           Command="{Binding $parent[ItemsControl].((sf:SkinPageViewModel)DataContext).EditSchemeCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="编辑此皮肤" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_editTip}}" />
                                             <u:IconButton Icon="{StaticResource SemiIconCode}"
                                                           Classes="Tertiary"
                                                           Command="{Binding CopyYamlCommand}"
-                                                          ToolTip.Tip="复制 YAML 定义" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_copyYamlTip}}" />
                                             <u:IconButton Icon="{StaticResource SemiIconDelete}"
                                                           Classes="Tertiary"
                                                           IsVisible="{Binding CanRemove}"
                                                           Command="{Binding RemoveCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="删除此皮肤" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.skin_removeTip}}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
@@ -177,7 +180,7 @@
         <StackPanel Grid.Row="1" Margin="0,14" Spacing="10" IsVisible="{Binding !IsSupported}">
             <u:Banner Type="Information" Content="{Binding UnsupportedReason}" ShowIcon="True" />
         </StackPanel>
-        <TextBlock Grid.Row="1" Text="正在读取设置…" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
+        <TextBlock Grid.Row="1" Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_loading}}" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
 
         <!-- Footer -->
         <Grid Grid.Row="2" Margin="0,4,0,0">

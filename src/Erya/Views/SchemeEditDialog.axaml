@@ -6,6 +6,7 @@
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              Width="560" MaxHeight="780"
              x:Class="Erya.Views.SchemeEditDialog"
@@ -20,8 +21,8 @@
             <ContentControl Content="{Binding Preview}"
                             ContentTemplate="{StaticResource CandidateWindowTemplate}" />
 
-            <c:CellGroup Header="信息">
-                <c:Cell Content="名称">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_infoGroup}}">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_nameLabel}}">
                     <c:Cell.RightContent>
                         <TextBox Text="{Binding Scheme.Name, Mode=TwoWay}" Width="260" />
                     </c:Cell.RightContent>
@@ -29,8 +30,8 @@
             </c:CellGroup>
 
             <!--  颜色：一排色块，点击弹取色面板（对比度主题式）  -->
-            <c:CellGroup Header="颜色">
-                <c:Cell Content="背景 / 候选文字">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorsGroup}}">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorBackCandidate}}">
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.BackColor, Mode=TwoWay}" />
@@ -38,7 +39,7 @@
                         </StackPanel>
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="高亮背景 / 高亮文字">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorHilitedBackText}}">
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.HilitedBackColor, Mode=TwoWay}" />
@@ -46,7 +47,7 @@
                         </StackPanel>
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="注释 / 高亮注释">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorComment}}">
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.CommentTextColor, Mode=TwoWay}" />
@@ -54,7 +55,7 @@
                         </StackPanel>
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="编码 / 高亮编码">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorPreedit}}">
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.TextColor, Mode=TwoWay}" />
@@ -66,9 +67,9 @@
 
             <!--  皮肤级字体/排版：鼠须管专属（SquirrelTheme 皮肤键覆盖全局 style），
                   小狼毫从皮肤只读颜色——显示即是 placebo。  -->
-            <c:CellGroup Header="字体与排版（覆盖全局排版，仅鼠须管）"
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLayoutGroup}}"
                          IsVisible="{Binding IsSquirrel}">
-                <c:Cell Content="字体">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLabel}}">
                     <c:Cell.RightContent>
                         <!--  固定宽：回退长串不能挤爆对话框  -->
                         <ComboBox ItemsSource="{Binding Scheme.FontOptions}"
@@ -76,19 +77,19 @@
                                   Width="240" />
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="字号（像素，0 = 跟随全局）">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontPointLabel}}">
                     <c:Cell.RightContent>
-                        <TextBox Text="{Binding Scheme.FontPointText, Mode=TwoWay}" Width="120" PlaceholderText="未设置" />
+                        <TextBox Text="{Binding Scheme.FontPointText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="圆角（像素，空 = 跟随全局）">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_cornerRadiusLabel}}">
                     <c:Cell.RightContent>
-                        <TextBox Text="{Binding Scheme.CornerRadiusText, Mode=TwoWay}" Width="120" PlaceholderText="未设置" />
+                        <TextBox Text="{Binding Scheme.CornerRadiusText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </c:Cell.RightContent>
                 </c:Cell>
-                <c:Cell Content="行距（像素，空 = 跟随全局）">
+                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_lineSpacingLabel}}">
                     <c:Cell.RightContent>
-                        <TextBox Text="{Binding Scheme.LineSpacingText, Mode=TwoWay}" Width="120" PlaceholderText="未设置" />
+                        <TextBox Text="{Binding Scheme.LineSpacingText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </c:Cell.RightContent>
                 </c:Cell>
             </c:CellGroup>

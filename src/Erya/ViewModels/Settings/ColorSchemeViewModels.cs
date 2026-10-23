@@ -14,6 +14,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Configuration;
+using Erya.Localization;
 using Erya.Services;
 using YamlDotNet.RepresentationModel;
 
@@ -368,7 +369,9 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     public System.Windows.Input.ICommand? DuplicateCommand => Owner?.DuplicateSchemeCommand;
 
     /// <summary>行说明：内置皮肤 vs 自定义皮肤。</summary>
-    public string KindText => IsShipped ? "内置皮肤" : "自定义皮肤";
+    public string KindText => IsShipped
+        ? Loc.Get(LanguageManager.Instance.skin_kindShipped)
+        : Loc.Get(LanguageManager.Instance.skin_kindCustom);
 
     /// <summary>卡片第二行：类型 + 原作者（去掉 &lt;邮箱&gt;，太长放不下）。</summary>
     public string DetailText
@@ -376,7 +379,7 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         get
         {
             var author = Regex.Replace(Author.Trim(), @"\s*<[^>]*>", "");
-            return author.Length == 0 ? KindText : $"{KindText} · {author}";
+            return author.Length == 0 ? KindText : Loc.Format(LanguageManager.Instance.skin_detailText, KindText, author);
         }
     }
 
@@ -425,7 +428,7 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
     /// <summary>Dropdown source for the font_face editor — this machine's font families.</summary>
     public IReadOnlyList<string> Fonts => SystemFontCatalog.Names;
 
-    public string FontUnsetLabel => "未设置";
+    public string FontUnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     private IReadOnlyList<string>? _fontOptions;
 
@@ -670,7 +673,8 @@ public sealed partial class ColorSchemeViewModel : ObservableObject
         var yaml = BuildYamlSnippet();
         if (AppNotifications.ClipboardOrNull() is { } clipboard)
             await clipboard.SetTextAsync(yaml);
-        AppNotifications.Toast($"已复制皮肤「{Name.Trim()}」的 YAML 定义", NotificationType.Success);
+        AppNotifications.Toast(
+            Loc.Format(LanguageManager.Instance.skin_copyYamlToast, Name.Trim()), NotificationType.Success);
     }
 
     internal string BuildYamlSnippet()

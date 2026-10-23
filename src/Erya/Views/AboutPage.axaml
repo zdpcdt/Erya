@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:branding="clr-namespace:Irihi.Branding;assembly=Irihi.Branding"
              xmlns:vm="clr-namespace:Erya.ViewModels"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.AboutPage"
              x:DataType="vm:AboutViewModel">
@@ -80,10 +81,10 @@
                            Text="铱泓科技 IRIHI Technology" />
                 <TextBlock HorizontalAlignment="Center" FontSize="16"
                            Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                           Text="聚焦生产力的美学进化 · Aesthetic Evolution of Productivity" />
+                           Text="{Translate {x:Static loc:LanguageManager+Keys.about_companySlogan}}" />
                 <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="14"
                            Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                           Text="尔雅 Erya 的界面由以下开源产品驱动" />
+                           Text="{Translate {x:Static loc:LanguageManager+Keys.about_productsIntro}}" />
             </StackPanel>
 
             <!--  产品卡：点击进入产品页  -->
@@ -94,10 +95,11 @@
                     <StackPanel>
                         <branding:IrihiIcon HorizontalAlignment="Center" Icon="Semi" Size="72" />
                         <TextBlock Classes="TileName" Text="Semi" />
-                        <Label Classes="TileTag Blue Ghost" Content="开源" Theme="{DynamicResource TagLabel}" />
-                        <TextBlock Classes="TileKicker" Text="Semi Design 风格主题" />
+                        <Label Classes="TileTag Blue Ghost" Content="{Translate {x:Static loc:LanguageManager+Keys.about_tagOpenSource}}" Theme="{DynamicResource TagLabel}" />
+                        <TextBlock Classes="TileKicker"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_semiKicker}}" />
                         <TextBlock Classes="TileDescription"
-                                   Text="为 Avalonia 原生控件提供 Semi Design 风格主题，并支持数据表格、停靠布局等扩展。" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_semiDesc}}" />
                     </StackPanel>
                 </HyperlinkButton>
                 <HyperlinkButton Background="{DynamicResource SemiBlue5}"
@@ -106,20 +108,22 @@
                     <StackPanel>
                         <branding:IrihiIcon HorizontalAlignment="Center" Icon="Ursa" Size="72" />
                         <TextBlock Classes="TileName" Text="Ursa" />
-                        <Label Classes="TileTag Blue Ghost" Content="开源" Theme="{DynamicResource TagLabel}" />
-                        <TextBlock Classes="TileKicker" Text="企业级控件库" />
+                        <Label Classes="TileTag Blue Ghost" Content="{Translate {x:Static loc:LanguageManager+Keys.about_tagOpenSource}}" Theme="{DynamicResource TagLabel}" />
+                        <TextBlock Classes="TileKicker"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ursaKicker}}" />
                         <TextBlock Classes="TileDescription"
-                                   Text="为桌面应用提供复杂输入、选择和数据交互控件。" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ursaDesc}}" />
                     </StackPanel>
                 </HyperlinkButton>
             </WrapPanel>
 
             <!--  致谢：尔雅构建于 RIME 生态之上，功能设计移植自前辈工具  -->
             <StackPanel MaxWidth="640" Margin="0,16" HorizontalAlignment="Center" Spacing="6">
-                <TextBlock HorizontalAlignment="Center" FontSize="18" FontWeight="Bold" Text="致谢" />
+                <TextBlock HorizontalAlignment="Center" FontSize="18" FontWeight="Bold"
+                           Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackTitle}}" />
                 <TextBlock HorizontalAlignment="Center" FontSize="14" TextAlignment="Center" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                           Text="尔雅构建于 RIME 生态之上，感谢以下项目与作者" />
+                           Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackDesc}}" />
                 <!--  单个 Grid 五行四列：列宽全表共享，天然对齐（Avalonia 无 SharedSizeGroup）  -->
                 <Border Margin="0,8,0,0" Padding="20,6" Theme="{DynamicResource CardBorder}">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
@@ -127,7 +131,7 @@
                                    VerticalAlignment="Center" Text="中州韵 RIME" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="开源跨平台输入法引擎" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimeDesc}}" />
                         <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="佛振" />
                         <HyperlinkButton Grid.Row="0" Grid.Column="3" Margin="0,8" Content="GitHub"
@@ -137,7 +141,7 @@
                                    VerticalAlignment="Center" Text="鼠须管 Squirrel" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="RIME 的 macOS 前端" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackSquirrelDesc}}" />
                         <TextBlock Grid.Row="1" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="佛振" />
                         <HyperlinkButton Grid.Row="1" Grid.Column="3" Margin="0,8" Content="GitHub"
@@ -147,9 +151,10 @@
                                    VerticalAlignment="Center" Text="小狼毫 Weasel" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="RIME 的 Windows 前端" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackWeaselDesc}}" />
                         <TextBlock Grid.Row="2" Grid.Column="2" Margin="0,8,16,8"
-                                   VerticalAlignment="Center" Text="佛振 与社区" />
+                                   VerticalAlignment="Center"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackWeaselAuthor}}" />
                         <HyperlinkButton Grid.Row="2" Grid.Column="3" Margin="0,8" Content="GitHub"
                                          NavigateUri="https://github.com/rime/weasel" />
 
@@ -157,7 +162,7 @@
                                    VerticalAlignment="Center" Text="中州韵助手 rimetool" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="Qt 版 RIME 配置工具" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimetoolDesc}}" />
                         <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="yanhuacuo" />
                         <HyperlinkButton Grid.Row="3" Grid.Column="3" Margin="0,8" Content="GitHub"
@@ -167,7 +172,7 @@
                                    VerticalAlignment="Center" Text="RimeControl" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="WPF 版 RIME 配置工具" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimeControlDesc}}" />
                         <TextBlock Grid.Row="4" Grid.Column="2" Margin="0,8,16,8"
                                    VerticalAlignment="Center" Text="qzly" />
                         <HyperlinkButton Grid.Row="4" Grid.Column="3" Margin="0,8" Content="GitHub"
@@ -178,7 +183,9 @@
 
             <!--  底部链接  -->
             <StackPanel Margin="0,32" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="32">
-                <HyperlinkButton Classes="WithIcon" Content="官网" NavigateUri="https://irihi.tech">
+                <HyperlinkButton Classes="WithIcon"
+                                 Content="{Translate {x:Static loc:LanguageManager+Keys.about_officialSite}}"
+                                 NavigateUri="https://irihi.tech">
                     <HyperlinkButton.Styles>
                         <Style Selector=".WithIcon /template/ PathIcon">
                             <Setter Property="Data" Value="{StaticResource SemiIconHome}" />

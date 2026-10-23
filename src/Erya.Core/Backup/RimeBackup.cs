@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.IO.Compression;
 
 namespace Erya.Core.Backup;
@@ -42,7 +43,7 @@ public static class RimeBackup
         ArgumentException.ThrowIfNullOrEmpty(userDir);
         ArgumentException.ThrowIfNullOrEmpty(targetZipPath);
         if (!Directory.Exists(userDir))
-            throw new DirectoryNotFoundException($"用户目录不存在：{userDir}");
+            throw new DirectoryNotFoundException(CoreLoc.Format("backup_userDirMissing", userDir));
 
         targetZipPath = Path.GetFullPath(targetZipPath);
         Directory.CreateDirectory(Path.GetDirectoryName(targetZipPath)!);
@@ -84,7 +85,7 @@ public static class RimeBackup
         ArgumentException.ThrowIfNullOrEmpty(zipPath);
         ArgumentException.ThrowIfNullOrEmpty(userDir);
         if (!File.Exists(zipPath))
-            throw new FileNotFoundException($"找不到备份文件：{zipPath}");
+            throw new FileNotFoundException(CoreLoc.Format("backup_fileNotFound", zipPath));
 
         var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(userDir));
         Directory.CreateDirectory(root);
@@ -92,7 +93,7 @@ public static class RimeBackup
         using var stream = File.OpenRead(zipPath);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
         if (archive.Entries.Count == 0)
-            throw new InvalidDataException("该压缩包不含任何文件，不是有效的 RIME 备份。");
+            throw new InvalidDataException(CoreLoc.Get("backup_invalidArchive"));
 
         // Snapshot before touching anything — this is the rollback path.
         string? safetyPath = null;
@@ -106,7 +107,7 @@ public static class RimeBackup
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 throw new InvalidOperationException(
-                    $"无法在备份所在目录生成安全备份（{safetyPath}），已中止恢复。可先将备份复制到可写目录再试。", ex);
+                    CoreLoc.Format("backup_safetyCopyFailed", safetyPath), ex);
             }
         }
 
@@ -120,7 +121,7 @@ public static class RimeBackup
             var targetPath = SafeResolve(root, entry.FullName);
             if (targetPath is null)
             {
-                skipped.Add($"{entry.FullName}（路径越出用户目录，已跳过）");
+                skipped.Add(CoreLoc.Format("backup_entryOutsideUserDir", entry.FullName));
                 continue;
             }
 

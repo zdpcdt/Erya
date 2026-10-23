@@ -15,10 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Settings\settings.default.json" />
-    <EmbeddedResource Include="Settings\settings.squirrel.json" />
-    <EmbeddedResource Include="Settings\settings.weasel.json" />
-    <EmbeddedResource Include="Packages\packages.catalog.json" />
+    <!-- 通配：基础文件 + 语言变体（settings.default.json / settings.default.zh-Hant.json …）。
+         WithCulture=false 至关重要：文件名里的 .en/.zh-Hant 后缀会被 MSBuild 当成
+         卫星程序集文化标识分流出去，CoreLoc 按名字从主程序集读流就会落空。 -->
+    <EmbeddedResource Include="Settings\settings.*.json" WithCulture="false" />
+    <EmbeddedResource Include="Packages\packages.catalog*.json" WithCulture="false" />
+    <EmbeddedResource Include="Localization\CoreStrings*.json" WithCulture="false" />
   </ItemGroup>
 
 </Project>

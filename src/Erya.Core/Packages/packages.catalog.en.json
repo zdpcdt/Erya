@@ -1,0 +1,5 @@
+{
+  "rime-ice": "Simplified Chinese setup that works out of the box: full and double Pinyin, a long-maintained curated dictionary, fully offline. The default choice for most users.",
+  "rime-frost": "Refined from rime-ice: character and word frequencies recalculated from a high-quality corpus; a rising star with excellent whole-sentence accuracy (larger download, includes the full corpus).",
+  "oh-my-rime": "Minimalist template for newcomers: ships with Emoji, component-based reverse lookup, Wubi reverse lookup, and more."
+}

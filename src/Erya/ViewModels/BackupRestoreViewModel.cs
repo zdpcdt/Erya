@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Backup;
 using Erya.Core.Distributions;
+using Erya.Localization;
 using Erya.Services;
 using Ursa.Controls;
 
@@ -50,12 +51,18 @@ public partial class BackupRestoreViewModel : ObservableObject
     public bool CanBackup => HasUserDir && !IsBusy;
 
     /// <summary>备份按钮文案：busy 时按钮自己报进度，页面不再放状态条。</summary>
-    public string BackupButtonText => IsBusy ? "备份中…" : "选择位置并备份…";
+    public string BackupButtonText => IsBusy
+        ? Loc.Get(LanguageManager.Instance.backup_backupBusy)
+        : Loc.Get(LanguageManager.Instance.backup_backupAction);
 
-    public string RestoreButtonText => IsBusy ? "恢复中…" : "从备份恢复";
+    public string RestoreButtonText => IsBusy
+        ? Loc.Get(LanguageManager.Instance.backup_restoreBusy)
+        : Loc.Get(LanguageManager.Instance.backup_restoreLabel);
 
     /// <summary>恢复行右侧当前值：已选备份文件名（截断），未选时提示占位。</summary>
-    public string RestoreNote => HasRestoreSource ? Path.GetFileName(RestoreSourcePath) : "未选择";
+    public string RestoreNote => HasRestoreSource
+        ? Path.GetFileName(RestoreSourcePath)
+        : Loc.Get(LanguageManager.Instance.backup_noSelection);
 
     /// <summary>Where the pickers start browsing — user documents.</summary>
     public string DefaultStartFolder => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -74,10 +81,10 @@ public partial class BackupRestoreViewModel : ObservableObject
         UserDir = _distribution.UserDir;
         UserDirExists = Directory.Exists(UserDir);
         UserDirSummary = !UserDirExists
-            ? "目录尚不存在，此时只能恢复备份"
+            ? Loc.Get(LanguageManager.Instance.backup_dirMissingSummary)
             : ScanUserDir(UserDir) is { } stats
-                ? $"{stats.Files} 个文件，约 {FormatBytes(stats.Bytes)}"
-                : "无法读取目录内容";
+                ? Loc.Format(LanguageManager.Instance.backup_dirSummary, stats.Files, FormatBytes(stats.Bytes))
+                : Loc.Get(LanguageManager.Instance.backup_dirUnreadable);
         BackupFileName = $"RimeBackup_{DateTime.Now:yyyyMMdd-HHmmss}.zip";
     }
 
@@ -86,7 +93,7 @@ public partial class BackupRestoreViewModel : ObservableObject
     {
         if (!UserDirExists)
         {
-            AppNotifications.Toast("用户目录尚不存在，无法打开", NotificationType.Warning);
+            AppNotifications.Toast(Loc.Get(LanguageManager.Instance.backup_openNoDirToast), NotificationType.Warning);
             return;
         }
 
@@ -104,15 +111,17 @@ public partial class BackupRestoreViewModel : ObservableObject
         {
             var report = await Task.Run(() => RimeBackup.Create(UserDir, target));
             if (report.HasSkippedFiles)
-                AppNotifications.Notify("部分文件未能打包（可能正被输入法占用）",
+                AppNotifications.Notify(Loc.Get(LanguageManager.Instance.backup_skippedPackTitle),
                     string.Join('\n', report.SkippedFiles), NotificationType.Warning);
-            AppNotifications.Toast($"备份完成：{report.FileCount} 个文件 → {Path.GetFileName(target)}",
+            AppNotifications.Toast(
+                Loc.Format(LanguageManager.Instance.backup_backupDoneToast, report.FileCount, Path.GetFileName(target)),
                 NotificationType.Success);
             BackupFileName = $"RimeBackup_{DateTime.Now:yyyyMMdd-HHmmss}.zip";
         }
         catch (Exception ex)
         {
-            AppNotifications.Toast($"备份失败：{ex.Message}", NotificationType.Error);
+            AppNotifications.Toast(Loc.Format(LanguageManager.Instance.backup_backupFailedToast, ex.Message),
+                NotificationType.Error);
         }
         finally
         {
@@ -127,7 +136,7 @@ public partial class BackupRestoreViewModel : ObservableObject
         if (string.IsNullOrEmpty(path)) return; // picker cancelled
         if (!string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase))
         {
-            AppNotifications.Toast("请选择 .zip 格式的备份文件", NotificationType.Warning);
+            AppNotifications.Toast(Loc.Get(LanguageManager.Instance.backup_invalidZipToast), NotificationType.Warning);
             return;
         }
 
@@ -143,7 +152,7 @@ public partial class BackupRestoreViewModel : ObservableObject
             BuildConfirmContent(Path.GetFileName(RestoreSourcePath), UserDir), null, "main",
             new OverlayDialogOptions
             {
-                Title = "确认恢复备份",
+                Title = Loc.Get(LanguageManager.Instance.backup_confirmTitle),
                 Mode = DialogMode.Question,
                 Buttons = DialogButton.OKCancel,
             });
@@ -153,13 +162,15 @@ public partial class BackupRestoreViewModel : ObservableObject
         try
         {
             var report = await Task.Run(() => RimeBackup.Restore(RestoreSourcePath, UserDir));
-            AppNotifications.Notify("恢复完成",
-                $"{report.FileCount} 个文件已写回用户目录。"
-                + (report.SafetyBackupPath is { } safety ? $"\n恢复前的状态已保存到：{safety}" : ""),
+            AppNotifications.Notify(Loc.Get(LanguageManager.Instance.backup_restoreDoneTitle),
+                Loc.Format(LanguageManager.Instance.backup_restoreDoneDetail, report.FileCount)
+                + (report.SafetyBackupPath is { } safety
+                    ? Loc.Format(LanguageManager.Instance.backup_safetyBackupTail, safety)
+                    : ""),
                 NotificationType.Success);
             if (report.HasSkippedFiles)
-                AppNotifications.Notify("部分文件未能恢复", string.Join('\n', report.SkippedFiles),
-                    NotificationType.Warning);
+                AppNotifications.Notify(Loc.Get(LanguageManager.Instance.backup_skippedRestoreTitle),
+                    string.Join('\n', report.SkippedFiles), NotificationType.Warning);
 
             if (_distribution is { CanDeploy: true })
             {
@@ -168,19 +179,20 @@ public partial class BackupRestoreViewModel : ObservableObject
                 try
                 {
                     await _distribution.DeployAsync();
-                    AppNotifications.Toast("重新部署完成，恢复的配置已生效", NotificationType.Success);
+                    AppNotifications.Toast(Loc.Get(LanguageManager.Instance.backup_redeployDoneToast),
+                        NotificationType.Success);
                 }
                 catch (Exception ex)
                 {
-                    AppNotifications.Notify("已恢复，但重新部署失败",
-                        $"文件已写回用户目录。{ex.Message} 稍后可按 Ctrl+R 重试。",
+                    AppNotifications.Notify(Loc.Get(LanguageManager.Instance.backup_redeployFailedTitle),
+                        Loc.Format(LanguageManager.Instance.backup_redeployFailedDetail, ex.Message),
                         NotificationType.Warning);
                 }
             }
             else
             {
-                AppNotifications.Notify("需要重新部署",
-                    "未找到部署器，恢复的配置需手动重新部署后生效。", NotificationType.Warning);
+                AppNotifications.Notify(Loc.Get(LanguageManager.Instance.backup_needRedeployTitle),
+                    Loc.Get(LanguageManager.Instance.backup_needRedeployDetail), NotificationType.Warning);
             }
 
             RestoreSourcePath = "";
@@ -188,7 +200,8 @@ public partial class BackupRestoreViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            AppNotifications.Toast($"恢复失败：{ex.Message}", NotificationType.Error);
+            AppNotifications.Toast(Loc.Format(LanguageManager.Instance.backup_restoreFailedToast, ex.Message),
+                NotificationType.Error);
         }
         finally
         {
@@ -197,20 +210,23 @@ public partial class BackupRestoreViewModel : ObservableObject
     }
 
     private static Control BuildConfirmContent(string fileName, string userDir)
-        => new StackPanel
+    {
+        var m = LanguageManager.Instance;
+        return new StackPanel
         {
             Spacing = 8,
             Children =
             {
-                new TextBlock { Text = $"备份文件：{fileName}", FontWeight = FontWeight.SemiBold },
-                new TextBlock { Text = $"恢复目标：{userDir}", TextWrapping = TextWrapping.Wrap, Opacity = 0.72 },
+                new TextBlock { Text = Loc.Format(m.backup_confirmBackupFile, fileName), FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = Loc.Format(m.backup_confirmTarget, userDir), TextWrapping = TextWrapping.Wrap, Opacity = 0.72 },
                 new TextBlock
                 {
-                    Text = "同名文件将被覆盖；恢复前会自动在备份所在目录生成安全备份（pre-restore-*.zip），如有问题可再恢复它回滚。",
+                    Text = Loc.Get(m.backup_confirmWarning),
                     TextWrapping = TextWrapping.Wrap,
                 },
             }
         };
+    }
 
     private static (int Files, long Bytes)? ScanUserDir(string dir)
     {

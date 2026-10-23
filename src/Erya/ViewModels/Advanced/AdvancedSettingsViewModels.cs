@@ -9,6 +9,7 @@ using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Localization;
 using Erya.Services;
 
 namespace Erya.ViewModels.Advanced;
@@ -41,9 +42,10 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
 
     private static IEnumerable<ConfigTarget> BuildTargets(IRimeDistribution? distribution)
     {
-        yield return new ConfigTarget("default.yaml", "default.yaml（引擎全局）");
+        var m = LanguageManager.Instance;
+        yield return new ConfigTarget("default.yaml", Loc.Get(m.advanced_targetEngine));
         if (distribution?.UiConfigFile is { } uiFile)
-            yield return new ConfigTarget(uiFile, $"{uiFile}（前端外观）");
+            yield return new ConfigTarget(uiFile, Loc.Format(m.advanced_targetFrontend, uiFile));
     }
 
     public ObservableCollection<ConfigTarget> Targets { get; } = [];
@@ -85,12 +87,13 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
             _loadedText = text;
             IsDirty = false;
             SourceFeedback = _store.CustomFileExists(SelectedTarget.BaseFile)
-                ? $"{Path.GetFileName(_store.CustomPath(SelectedTarget.BaseFile))} · 保存前自动留 .bak 备份"
-                : "补丁文件尚不存在，保存时将创建";
+                ? Loc.Format(LanguageManager.Instance.advanced_patchExistsFeedback,
+                    Path.GetFileName(_store.CustomPath(SelectedTarget.BaseFile)))
+                : Loc.Get(LanguageManager.Instance.advanced_patchMissingFeedback);
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"读取配置失败：{ex.Message}";
+            ErrorMessage = Loc.Format(LanguageManager.Instance.advanced_loadFailed, ex.Message);
         }
     }
 
@@ -103,6 +106,7 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
         try
         {
             ErrorMessage = "";
+            var m = LanguageManager.Instance;
             // Write only when edited — a clean click still redeploys (the
             // button is always clickable, mirroring the settings page).
             var saved = IsDirty;
@@ -112,15 +116,17 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
                 _store.WriteCustomText(SelectedTarget.BaseFile, Document.Text);
                 _loadedText = Document.Text;
                 IsDirty = false;
-                SourceFeedback = $"已保存 {fileName}（{DateTime.Now:HH:mm:ss}）";
+                SourceFeedback = Loc.Format(m.advanced_savedFeedback, fileName, DateTime.Now.ToString("HH:mm:ss"));
             }
 
             if (!_distribution.CanDeploy)
             {
-                AppNotifications.Notify("设置已保存",
+                AppNotifications.Notify(Loc.Get(m.advanced_savedTitle),
                     saved
-                        ? $"已写入 {fileName}。{InstallHints.DeployerMissingHint(_distribution)}"
-                        : $"本次没有修改需要写入。{InstallHints.DeployerMissingHint(_distribution)}",
+                        ? Loc.Format(m.advanced_savedWrittenDetail, fileName,
+                            InstallHints.DeployerMissingHint(_distribution))
+                        : Loc.Format(m.advanced_savedNoChangeDetail,
+                            InstallHints.DeployerMissingHint(_distribution)),
                     NotificationType.Warning);
                 return;
             }
@@ -128,23 +134,25 @@ public sealed partial class AdvancedSettingsViewModel : ObservableObject
             try
             {
                 await _distribution.DeployAsync();
-                AppNotifications.Toast(saved ? "已保存，重新部署完成" : "重新部署完成",
+                AppNotifications.Toast(
+                    saved ? Loc.Get(m.advanced_savedAndDeployedToast) : Loc.Get(m.advanced_deployedToast),
                     NotificationType.Success);
             }
             catch (Exception ex)
             {
                 // The patch is already on disk — report the deploy problem
                 // on its own instead of failing the whole save.
-                AppNotifications.Notify("已保存，但重新部署失败",
-                    $"{fileName} 已写入。{ex.Message} 稍后可重试。", NotificationType.Warning);
+                AppNotifications.Notify(Loc.Get(m.advanced_deployFailedTitle),
+                    Loc.Format(m.advanced_deployFailedDetail, fileName, ex.Message), NotificationType.Warning);
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"保存失败：{ex.Message}";
+            ErrorMessage = Loc.Format(LanguageManager.Instance.advanced_saveFailed, ex.Message);
             // The error banner sits below the editor; the save button is in
             // the top toolbar, so also surface the failure as a toast.
-            AppNotifications.Toast($"保存失败：{ex.Message}", NotificationType.Error);
+            AppNotifications.Toast(Loc.Format(LanguageManager.Instance.advanced_saveFailed, ex.Message),
+                NotificationType.Error);
         }
         finally
         {

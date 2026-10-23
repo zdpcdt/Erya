@@ -7,6 +7,7 @@ using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Localization;
 using Erya.Services;
 
 namespace Erya.ViewModels;
@@ -52,7 +53,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsMissing => Distribution is null;
 
     /// <summary>英雄卡主标题：发行版名；未检测到时是状态文案。</summary>
-    public string HeroTitle => Distribution?.DisplayName ?? "未检测到 RIME 发行版";
+    public string HeroTitle => Distribution?.DisplayName ?? Loc.Get(LanguageManager.Instance.overview_distMissing);
 
     /// <summary>英雄卡副行的版本号；缺失时为空（视图隐藏）。</summary>
     public string HeroVersion => Distribution?.Version is { } v ? $"v{v}" : "";
@@ -89,6 +90,14 @@ public partial class MainViewModel : ObservableObject
         DistributionChanged?.Invoke();
     }
 
+    /// <summary>换语言后由壳调用：长驻 VM 的计算属性重新取值（页面 VM 随重建自然更新）。</summary>
+    public void RefreshLocalizedTexts()
+    {
+        OnPropertyChanged(nameof(HeroTitle));
+        OnPropertyChanged(nameof(HeroVersion));
+        OnPropertyChanged(nameof(HeroHint));
+    }
+
     private void RefreshFromDistribution()
     {
         if (Distribution is null)
@@ -112,7 +121,8 @@ public partial class MainViewModel : ObservableObject
         var dir = Distribution.UserDir;
         if (!Directory.Exists(dir))
         {
-            AppNotifications.Toast($"用户目录尚不存在：{dir}（输入法首次部署后会自动创建）", NotificationType.Warning);
+            AppNotifications.Toast(
+                Loc.Format(LanguageManager.Instance.overview_userDirMissingToast, dir), NotificationType.Warning);
             return;
         }
 
@@ -127,11 +137,12 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await Distribution.DeployAsync();
-            AppNotifications.Toast("重新部署完成，修改过的 YAML 配置已生效", NotificationType.Success);
+            AppNotifications.Toast(Loc.Get(LanguageManager.Instance.overview_deployDoneToast), NotificationType.Success);
         }
         catch (Exception ex)
         {
-            AppNotifications.Toast($"部署失败：{ex.Message}", NotificationType.Error);
+            AppNotifications.Toast(
+                Loc.Format(LanguageManager.Instance.overview_deployFailedToast, ex.Message), NotificationType.Error);
         }
     }
 }

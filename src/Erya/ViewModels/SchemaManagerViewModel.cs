@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
 using Erya.Core.Packages;
+using Erya.Localization;
 using Erya.Services;
 using Ursa.Controls;
 
@@ -66,15 +67,17 @@ public partial class OnlinePackageViewModel(SchemaPackage package) : ObservableO
     public bool IsBusy => IsInstalling || IsUninstalling;
 
     /// <summary>已安装的包走同一安装流程：覆盖安装即升级。</summary>
-    public string InstallButtonText => IsInstalled ? "重新安装" : "安装";
+    public string InstallButtonText => IsInstalled
+        ? Loc.Get(LanguageManager.Instance.schemas_reinstallButton)
+        : Loc.Get(LanguageManager.Instance.schemas_installButton);
 
     /// <summary>Icon-only 按钮的文字语义搬到 tooltip 里。</summary>
     public string InstallToolTip => IsInstalled
-        ? "重新安装：重新下载并覆盖写入用户目录（即升级），完成后自动重新部署"
-        : "安装：下载并写入 RIME 用户目录，完成后自动重新部署";
+        ? Loc.Get(LanguageManager.Instance.schemas_reinstallTip)
+        : Loc.Get(LanguageManager.Instance.schemas_installTip);
 
     /// <summary>Progress/result message when present, otherwise the idle 已安装 badge.</summary>
-    public string? StatusText => Status is { Length: > 0 } status ? status : IsInstalled ? "已安装" : null;
+    public string? StatusText => Status is { Length: > 0 } status ? status : IsInstalled ? Loc.Get(LanguageManager.Instance.schemas_installedBadge) : null;
 }
 
 public partial class SchemaManagerViewModel : ObservableObject
@@ -121,6 +124,7 @@ public partial class SchemaManagerViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadAsync()
     {
+        var m = LanguageManager.Instance;
         IsLoading = true;
         ErrorMessage = "";
         try
@@ -128,7 +132,7 @@ public partial class SchemaManagerViewModel : ObservableObject
             if (_distribution is null)
             {
                 Schemas.Clear();
-                Hint = "未检测到 RIME 发行版：" + InstallHints.ForCurrentOs;
+                Hint = Loc.Format(m.schemas_noDistributionHint, InstallHints.ForCurrentOs);
                 return;
             }
 
@@ -140,13 +144,13 @@ public partial class SchemaManagerViewModel : ObservableObject
             RefreshInstalledStates();
 
             Hint = Schemas.Count == 0
-                ? "未发现任何输入方案：请先在小狼毫中部署一次（方案文件会出现在用户目录），或先安装方案（如雾凇拼音）。"
+                ? Loc.Get(m.schemas_emptyHint)
                 : "";
             OnPropertyChanged(nameof(HasSchemas));
         }
         catch (Exception ex)
         {
-            Hint = $"读取方案列表失败：{ex.Message}";
+            Hint = Loc.Format(m.schemas_loadFailed, ex.Message);
         }
         finally
         {
@@ -168,6 +172,7 @@ public partial class SchemaManagerViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAndDeployAsync()
     {
+        var m = LanguageManager.Instance;
         if (_distribution is null || IsLoading || Schemas.Count == 0) return;
 
         IsBusy = true;
@@ -179,21 +184,21 @@ public partial class SchemaManagerViewModel : ObservableObject
 
             if (!_distribution.CanDeploy)
             {
-                AppNotifications.Notify("方案已保存",
-                    "已写入 default.custom.yaml，但未找到部署器，需手动重新部署后生效。",
+                AppNotifications.Notify(Loc.Get(m.schemas_saveDoneTitle),
+                    Loc.Get(m.schemas_saveNoDeployer),
                     NotificationType.Warning);
                 return;
             }
 
             await _distribution.DeployAsync();
-            AppNotifications.Toast("方案已保存，重新部署完成", NotificationType.Success);
+            AppNotifications.Toast(Loc.Get(m.schemas_saveDeployDoneToast), NotificationType.Success);
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"保存失败：{ex.Message}";
+            ErrorMessage = Loc.Format(m.schemas_saveFailed, ex.Message);
             // The error banner sits above the schema list; the save button is
             // in the page toolbar — also surface the failure as a toast.
-            AppNotifications.Toast($"保存失败：{ex.Message}", NotificationType.Error);
+            AppNotifications.Toast(Loc.Format(m.schemas_saveFailed, ex.Message), NotificationType.Error);
         }
         finally
         {
@@ -211,8 +216,9 @@ public partial class SchemaManagerViewModel : ObservableObject
         // first schema-list load has run (construction leaves IsLoading=true).
         if (item is null || _distribution is null || AnyPackageBusy) return;
 
+        var m = LanguageManager.Instance;
         item.IsInstalling = true;
-        item.Status = "准备下载…";
+        item.Status = Loc.Get(m.schemas_prepareDownload);
         var progress = new Progress<SchemaInstallProgress>(p =>
             item.Status = p.Percent is { } percent ? $"{p.Phase} {percent:0}%" : p.Phase);
         try
@@ -225,10 +231,10 @@ public partial class SchemaManagerViewModel : ObservableObject
             var deployNote = _distribution.CanDeploy
                 ? await DeployQuietlyAsync()
                 : InstallHints.DeployerMissingHint(_distribution);
-            item.Status = $"已安装 {report.InstalledFiles} 个文件";
-            AppNotifications.Notify("方案安装完成",
-                $"已将 {item.Name} 的 {report.InstalledFiles} 个文件写入用户目录。" +
-                (report.BackupPath is { } backup ? $"安装前的原配置已备份：{backup}。" : "") +
+            item.Status = Loc.Format(m.schemas_installedFilesStatus, report.InstalledFiles);
+            AppNotifications.Notify(Loc.Get(m.schemas_installDoneTitle),
+                Loc.Format(m.schemas_installDoneBody, item.Name, report.InstalledFiles) +
+                (report.BackupPath is { } backup ? Loc.Format(m.schemas_installBackupNote, backup) : "") +
                 enableNote +
                 deployNote,
                 NotificationType.Success);
@@ -236,7 +242,7 @@ public partial class SchemaManagerViewModel : ObservableObject
         catch (Exception ex)
         {
             item.Status = null;
-            ErrorMessage = $"安装 {item.Name} 失败：{ex.Message}";
+            ErrorMessage = Loc.Format(m.schemas_installFailed, item.Name, ex.Message);
         }
         finally
         {
@@ -253,21 +259,22 @@ public partial class SchemaManagerViewModel : ObservableObject
     /// </summary>
     private async Task<string> EnableMarkerSchemasAsync(SchemaPackage package)
     {
+        var m = LanguageManager.Instance;
         var markerIds = package.MarkerSchemas.Select(SchemaIdOf).ToHashSet(StringComparer.Ordinal);
         var rows = Schemas.Where(s => markerIds.Contains(s.Id)).ToList();
-        if (rows.Count == 0) return "在上方列表勾选启用新方案后保存即可使用。";
+        if (rows.Count == 0) return Loc.Get(m.schemas_enableHintManual);
         if (rows.Any(r => r.IsSelected)) return "";
 
         foreach (var row in rows) row.IsSelected = true;
         try
         {
             await _distribution!.SetSelectedSchemasAsync(Schemas.Where(s => s.IsSelected).Select(s => s.Id).ToList());
-            return $"已自动启用 {string.Join("、", rows.Select(r => r.Name))}，可在上方列表调整顺序或取消。";
+            return Loc.Format(m.schemas_autoEnabledNote, string.Join("、", rows.Select(r => r.Name)));
         }
         catch (Exception ex)
         {
             foreach (var row in rows) row.IsSelected = false;
-            return $"未能自动启用方案：{ex.Message} 可在上方列表勾选后保存。";
+            return Loc.Format(m.schemas_autoEnableFailed, ex.Message);
         }
     }
 
@@ -281,11 +288,11 @@ public partial class SchemaManagerViewModel : ObservableObject
         try
         {
             await _distribution!.DeployAsync();
-            return "重新部署完成。";
+            return Loc.Get(LanguageManager.Instance.schemas_redeployDone);
         }
         catch (Exception ex)
         {
-            return $"文件已就位，但重新部署失败：{ex.Message}";
+            return Loc.Format(LanguageManager.Instance.schemas_filesReadyDeployFailed, ex.Message);
         }
     }
 
@@ -294,20 +301,22 @@ public partial class SchemaManagerViewModel : ObservableObject
     {
         if (item is null || _distribution is null || AnyPackageBusy) return;
 
+        var m = LanguageManager.Instance;
+
         // Destructive: delete only the package's own files (manifest fetched
         // from the repo), full backup first — confirm before touching disk.
         var result = await OverlayDialog.ShowStandardAsync(
             BuildUninstallConfirmContent(item.Name, _distribution.UserDir), null, "main",
             new OverlayDialogOptions
             {
-                Title = "确认删除方案包",
+                Title = Loc.Get(m.schemas_uninstallConfirmTitle),
                 Mode = DialogMode.Question,
                 Buttons = DialogButton.OKCancel,
             });
         if (result != DialogResult.OK) return;
 
         item.IsUninstalling = true;
-        item.Status = "准备获取文件清单…";
+        item.Status = Loc.Get(m.schemas_prepareManifest);
         var progress = new Progress<SchemaInstallProgress>(p => item.Status = p.Phase);
         try
         {
@@ -318,18 +327,18 @@ public partial class SchemaManagerViewModel : ObservableObject
             var deployNote = _distribution.CanDeploy
                 ? await DeployQuietlyAsync()
                 : InstallHints.DeployerMissingHint(_distribution);
-            item.Status = $"已删除 {report.DeletedFiles} 个文件";
-            AppNotifications.Notify("方案包已删除",
-                $"已从用户目录删除 {item.Name} 的 {report.DeletedFiles} 个文件。"
-                + (report.BackupPath is { } backup ? $"删除前的完整备份：{backup}。" : "")
+            item.Status = Loc.Format(m.schemas_deletedFilesStatus, report.DeletedFiles);
+            AppNotifications.Notify(Loc.Get(m.schemas_uninstallDoneTitle),
+                Loc.Format(m.schemas_uninstallDoneBody, item.Name, report.DeletedFiles)
+                + (report.BackupPath is { } backup ? Loc.Format(m.schemas_uninstallBackupNote, backup) : "")
                 + deployNote
-                + "若启用列表仍勾选已删方案，重新保存一次即可清除。",
+                + Loc.Get(m.schemas_uninstallTailNote),
                 NotificationType.Success);
         }
         catch (Exception ex)
         {
             item.Status = null;
-            ErrorMessage = $"删除 {item.Name} 失败：{ex.Message}";
+            ErrorMessage = Loc.Format(m.schemas_uninstallFailed, item.Name, ex.Message);
         }
         finally
         {
@@ -338,22 +347,25 @@ public partial class SchemaManagerViewModel : ObservableObject
     }
 
     private static Control BuildUninstallConfirmContent(string name, string userDir)
-        => new StackPanel
+    {
+        var m = LanguageManager.Instance;
+        return new StackPanel
         {
             Spacing = 8,
             Children =
             {
                 new TextBlock
                 {
-                    Text = $"将删除 {name} 安装到用户目录的全部文件；你手动添加的其他文件不受影响。",
+                    Text = Loc.Format(m.schemas_uninstallConfirmBody, name),
                     TextWrapping = TextWrapping.Wrap,
                 },
-                new TextBlock { Text = $"用户目录：{userDir}", TextWrapping = TextWrapping.Wrap, Opacity = 0.72 },
+                new TextBlock { Text = Loc.Format(m.schemas_uninstallConfirmUserDir, userDir), TextWrapping = TextWrapping.Wrap, Opacity = 0.72 },
                 new TextBlock
                 {
-                    Text = "删除前会自动生成完整备份（pre-uninstall-*.zip），如有问题可通过备份恢复回滚。",
+                    Text = Loc.Get(m.schemas_uninstallConfirmBackup),
                     TextWrapping = TextWrapping.Wrap,
                 },
             }
         };
+    }
 }

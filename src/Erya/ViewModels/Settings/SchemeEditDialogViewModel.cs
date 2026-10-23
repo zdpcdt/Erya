@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Erya.Localization;
 
 namespace Erya.ViewModels.Settings;
 
@@ -39,7 +40,9 @@ public sealed class SchemeEditDialogViewModel : ObservableObject
     /// <summary>草稿模式：编辑未入库的副本，确定=创建，取消=丢弃。</summary>
     public bool IsDraft { get; }
 
-    public string Title => IsDraft ? "新建皮肤" : $"编辑皮肤：{Scheme.Name.Trim()}";
+    public string Title => IsDraft
+        ? Loc.Get(LanguageManager.Instance.skin_dialogTitleCreate)
+        : Loc.Format(LanguageManager.Instance.skin_dialogTitleEdit, Scheme.Name.Trim());
 
     /// <summary>确定：草稿 → 入库为自定义皮肤（名字撞库自动取唯一名）；已有 → 编辑已在皮肤上。</summary>
     public ColorSchemeViewModel? Commit()

@@ -2,6 +2,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Erya.Localization;
 using Erya.ViewModels;
 
 namespace Erya.Views;
@@ -22,11 +23,11 @@ public partial class BackupRestorePage : UserControl
 
         var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "选择备份保存位置",
+            Title = Loc.Get(LanguageManager.Instance.backup_pickSaveTitle),
             SuggestedFileName = vm.BackupFileName,
             SuggestedStartLocation = await storage.TryGetFolderFromPathAsync(vm.DefaultStartFolder),
             DefaultExtension = "zip",
-            FileTypeChoices = [BackupFileType],
+            FileTypeChoices = [BackupFileType()],
         });
         if (file?.TryGetLocalPath() is { } path)
             vm.BackupCommand.Execute(path);
@@ -41,16 +42,17 @@ public partial class BackupRestorePage : UserControl
 
         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择要恢复的备份压缩包",
+            Title = Loc.Get(LanguageManager.Instance.backup_pickRestoreTitle),
             SuggestedStartLocation = await storage.TryGetFolderFromPathAsync(vm.DefaultStartFolder),
-            FileTypeFilter = [BackupFileType],
+            FileTypeFilter = [BackupFileType()],
             AllowMultiple = false,
         });
         if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
             vm.PickRestoreSourceCommand.Execute(path);
     }
 
-    private static FilePickerFileType BackupFileType { get; } = new("备份压缩包")
+    /// <summary>每次构造跟随当前语言（文件类型名会显示在系统选择器里）。</summary>
+    private static FilePickerFileType BackupFileType() => new(Loc.Get(LanguageManager.Instance.backup_zipTypeName))
     {
         Patterns = ["*.zip"],
     };

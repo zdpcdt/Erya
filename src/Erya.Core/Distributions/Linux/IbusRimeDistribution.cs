@@ -1,3 +1,5 @@
+using Erya.Core.Localization;
+
 namespace Erya.Core.Distributions.Linux;
 
 /// <summary>ibus-rime — RIME engine for the ibus input method framework.</summary>
@@ -20,7 +22,7 @@ public sealed class IbusRimeDistribution : RimeDistributionBase
 
     public override string Id => "ibus-rime";
 
-    public override string DisplayName => "ibus 中州韵";
+    public override string DisplayName => CoreLoc.Get("distName_ibus");
 
     public override Version? Version { get; }
 
@@ -59,6 +61,6 @@ public sealed class IbusRimeDistribution : RimeDistributionBase
         }
 
         throw new InvalidOperationException(
-            "未找到 ibus 或 rime_deployer，无法触发重新部署。请安装 ibus 或 librime-bin。");
+            CoreLoc.Get("ibus_deployerMissing"));
     }
 }

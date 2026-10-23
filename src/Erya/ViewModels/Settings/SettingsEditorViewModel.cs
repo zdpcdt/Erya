@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Configuration;
 using Erya.Core.Distributions;
 using Erya.Core.Settings;
+using Erya.Localization;
 using Erya.Services;
 
 namespace Erya.ViewModels.Settings;
@@ -61,7 +62,8 @@ public sealed partial class SettingsSectionViewModel : ObservableObject
             case "appOptions":
                 return new AppOptionsFieldViewModel(field);
             default:
-                throw new InvalidOperationException($"未知字段类型：{field.Type}");
+                throw new InvalidOperationException(
+                    Loc.Format(LanguageManager.Instance.settings_unknownFieldType, field.Type));
         }
     }
 }
@@ -168,7 +170,8 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             }
             OnPropertyChanged(nameof(Sections)); // 子页经 SectionsFor 重新取列表
 
-            Subtitle = $"显示合并后的生效值；修改会保存到 {Path.GetFileName(_store.CustomPath(targetFile))} 补丁，重新部署后生效。";
+            Subtitle = Loc.Format(LanguageManager.Instance.settings_subtitleFormat,
+                Path.GetFileName(_store.CustomPath(targetFile)));
 
             if (_target == "ui")
             {
@@ -194,7 +197,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"读取设置失败：{ex.Message}";
+            ErrorMessage = Loc.Format(LanguageManager.Instance.settings_loadFailed, ex.Message);
         }
         finally
         {
@@ -205,11 +208,11 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     private string ReasonUnavailable()
     {
         if (_distribution is null)
-            return "未检测到 RIME 发行版：" + InstallHints.ForCurrentOs;
+            return Loc.Format(LanguageManager.Instance.settings_reasonNoDistribution, InstallHints.ForCurrentOs);
         if (_target == "ui" && _distribution.UiConfigFile is null)
             return _distribution.Id is "fcitx5-rime" or "ibus-rime"
-                ? $"当前前端（{_distribution.DisplayName}）的候选面板外观由输入法框架自身设置（fcitx5 在「配置 → 附加组件 → 经典用户界面」中调整），RIME YAML 中没有对应配置。中英切换、标点等输入行为请在「输入设置」页调整。"
-                : $"当前前端（{_distribution.DisplayName}）没有可配置的外观 YAML。";
+                ? Loc.Format(LanguageManager.Instance.settings_reasonFrameworkPanel, _distribution.DisplayName)
+                : Loc.Format(LanguageManager.Instance.settings_reasonNoUiConfig, _distribution.DisplayName);
         return "";
     }
 
@@ -247,12 +250,14 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
             if (removals.Count > 0) _store.RemovePatchKeys(_schema.TargetFile, removals);
 
             var customName = Path.GetFileName(_store.CustomPath(_schema.TargetFile));
+            var m = LanguageManager.Instance;
             if (!_distribution.CanDeploy)
             {
-                AppNotifications.Notify("设置已保存",
+                AppNotifications.Notify(Loc.Get(m.settings_savedTitle),
                     saved
-                        ? $"已写入 {customName}。{InstallHints.DeployerMissingHint(_distribution)}"
-                        : $"本次没有修改需要写入。{InstallHints.DeployerMissingHint(_distribution)}",
+                        ? Loc.Format(m.settings_savedNoDeployerWritten, customName,
+                            InstallHints.DeployerMissingHint(_distribution))
+                        : Loc.Format(m.settings_savedNoDeployerNothing, InstallHints.DeployerMissingHint(_distribution)),
                     NotificationType.Warning);
             }
             else
@@ -260,7 +265,8 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 try
                 {
                     await _distribution.DeployAsync();
-                    AppNotifications.Toast(saved ? "设置已保存，重新部署完成" : "重新部署完成",
+                    AppNotifications.Toast(
+                        saved ? Loc.Get(m.settings_savedDeployDone) : Loc.Get(m.settings_redeployDone),
                         NotificationType.Success);
                 }
                 catch (OperationCanceledException)
@@ -271,8 +277,8 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 {
                     // The patch is already on disk — report the deploy problem
                     // on its own instead of failing the whole save.
-                    AppNotifications.Notify("设置已保存，但重新部署失败",
-                        $"已写入 {customName}。{ex.Message} 稍后可按 Ctrl+R 重试。",
+                    AppNotifications.Notify(Loc.Get(m.settings_savedDeployFailedTitle),
+                        Loc.Format(m.settings_savedDeployFailedDetail, customName, ex.Message),
                         NotificationType.Warning);
                 }
             }
@@ -280,7 +286,7 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"保存失败：{ex.Message}";
+            ErrorMessage = Loc.Format(LanguageManager.Instance.settings_saveFailed, ex.Message);
         }
         finally
         {

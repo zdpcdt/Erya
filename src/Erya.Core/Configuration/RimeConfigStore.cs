@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using YamlDotNet.RepresentationModel;
 
 namespace Erya.Core.Configuration;
@@ -165,10 +166,10 @@ public sealed class RimeConfigStore
         }
         catch (Exception ex) when (ex is YamlDotNet.Core.YamlException or ArgumentException)
         {
-            throw new InvalidOperationException($"YAML 解析失败：{ex.Message}", ex);
+            throw new InvalidOperationException(CoreLoc.Format("yaml_parseFailed", ex.Message), ex);
         }
         if (stream.Documents is [var document, ..] && document.RootNode is not YamlMappingNode)
-            throw new InvalidOperationException("补丁文件必须是 YAML 映射（键值对）。");
+            throw new InvalidOperationException(CoreLoc.Get("yaml_patchNotMapping"));
 
         var path = CustomPath(baseFileName);
         Directory.CreateDirectory(UserDir);

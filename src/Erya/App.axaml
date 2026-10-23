@@ -103,6 +103,8 @@
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
+        <!--  Irihi.Lingua（语言切换）的 CulturePicker 模板  -->
+        <StyleInclude Source="avares://Irihi.Lingua.Core/Themes/Generic.axaml" />
         <!--  AvaloniaEdit（高级设置源码编辑器）的 Semi 主题  -->
         <semi:AvaloniaEditSemiTheme />
         <!--  ColorPicker（皮肤库取色）的 Semi 主题  -->

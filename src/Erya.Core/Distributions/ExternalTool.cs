@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.Diagnostics;
 
 namespace Erya.Core.Distributions;
@@ -40,7 +41,7 @@ public static class ExternalTool
 
         using var process = Process.Start(startInfo);
         if (process is null)
-            throw new InvalidOperationException($"无法启动进程：{path}");
+            throw new InvalidOperationException(CoreLoc.Format("tool_startFailed", path));
 
         var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
         await process.WaitForExitAsync(cancellationToken);
@@ -50,8 +51,8 @@ public static class ExternalTool
             // stderr; without this the message would end in a bare "：" .
             var stderrText = (await stderr).Trim();
             throw new InvalidOperationException(stderrText.Length > 0
-                ? $"{Path.GetFileName(path)} 退出码 {process.ExitCode}：{stderrText}"
-                : $"{Path.GetFileName(path)} 退出码 {process.ExitCode}（工具未输出错误信息）");
+                ? CoreLoc.Format("tool_exitWithStderr", Path.GetFileName(path), process.ExitCode, stderrText)
+                : CoreLoc.Format("tool_exitSilent", Path.GetFileName(path), process.ExitCode));
         }
     }
 
@@ -74,7 +75,7 @@ public static class ExternalTool
             startInfo.ArgumentList.Add(argument);
 
         using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException($"无法启动进程：{path}");
+            ?? throw new InvalidOperationException(CoreLoc.Format("tool_startFailed", path));
         var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
         return (process.ExitCode, output.Trim());

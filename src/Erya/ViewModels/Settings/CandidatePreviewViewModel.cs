@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Erya.Localization;
 
 namespace Erya.ViewModels.Settings;
 
@@ -35,12 +36,19 @@ public sealed record CandidatePreviewItem(
 /// </summary>
 public sealed partial class CandidatePreviewViewModel : ObservableObject
 {
-    private static readonly (string Text, string? Comment)[] Sample =
-    [
-        ("你好", "ní hǎo"),
-        ("拟好", null),
-        ("尼奥", null),
-    ];
+    private static (string Text, string? Comment)[] Sample
+    {
+        get
+        {
+            var m = LanguageManager.Instance;
+            return
+            [
+                (Loc.Get(m.appearance_previewSample1), "ní hǎo"),
+                (Loc.Get(m.appearance_previewSample2), null),
+                (Loc.Get(m.appearance_previewSample3), null),
+            ];
+        }
+    }
 
     private readonly bool _preferDark;
     private readonly Dictionary<string, SettingsFieldViewModel> _fields = new(StringComparer.Ordinal);
@@ -246,7 +254,8 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
                 commentMargin, comment is not null);
         }).ToList();
 
-        Caption = $"皮肤：{scheme?.Name ?? "（默认）"}";
+        Caption = Loc.Format(LanguageManager.Instance.appearance_previewCaption,
+            scheme?.Name ?? Loc.Get(LanguageManager.Instance.appearance_previewDefaultName));
         OnPropertyChanged(string.Empty);
     }
 

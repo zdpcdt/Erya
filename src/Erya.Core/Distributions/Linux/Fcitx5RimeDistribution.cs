@@ -1,3 +1,5 @@
+using Erya.Core.Localization;
+
 namespace Erya.Core.Distributions.Linux;
 
 /// <summary>fcitx5-rime — RIME addon for the fcitx5 input method framework.</summary>
@@ -19,7 +21,7 @@ public sealed class Fcitx5RimeDistribution : RimeDistributionBase
 
     public override string Id => "fcitx5-rime";
 
-    public override string DisplayName => "fcitx5 中州韵";
+    public override string DisplayName => CoreLoc.Get("distName_fcitx5");
 
     public override Version? Version { get; }
 
@@ -43,7 +45,7 @@ public sealed class Fcitx5RimeDistribution : RimeDistributionBase
     public override async Task DeployAsync(CancellationToken cancellationToken = default)
     {
         if (!CanDeploy)
-            throw new InvalidOperationException("未找到 rime_deployer（librime 工具，通常在 librime-bin 包），无法触发重新部署。");
+            throw new InvalidOperationException(CoreLoc.Get("fcitx_deployerMissing"));
 
         // --build performs the same user-directory deployment the engine does;
         // the running fcitx5 picks the rebuilt artifacts up on next use.

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Avalonia.Controls.Notifications;
 using Erya.Core.Distributions;
+using Erya.Localization;
 
 namespace Erya.Services;
 
@@ -12,10 +13,10 @@ namespace Erya.Services;
 internal static class InstallHints
 {
     public static string ForCurrentOs => OperatingSystem.IsWindows()
-        ? "请先安装小狼毫（https://rime.im/download），安装完成后重新打开尔雅。"
+        ? Loc.Get(LanguageManager.Instance.hints_installWindows)
         : OperatingSystem.IsMacOS()
-            ? "请先安装鼠鬚管 Squirrel（https://rime.im/download），安装完成后重新打开尔雅。"
-            : "请先安装 fcitx5-rime 或 ibus-rime（发行版软件仓库），安装完成后重新打开尔雅。";
+            ? Loc.Get(LanguageManager.Instance.hints_installMacos)
+            : Loc.Get(LanguageManager.Instance.hints_installLinux);
 
     /// <summary>
     /// Hint shown when a distribution was found but its deployer was not.
@@ -28,13 +29,13 @@ internal static class InstallHints
     public static string DeployerMissingHint(IRimeDistribution? distribution, string? osReleaseContent = null)
         => distribution?.Id switch
         {
-            "weasel" => "未找到部署器 WeaselDeployer.exe，无法触发重新部署（小狼毫是否完整安装？）。",
-            "squirrel" => "未找到鼠鬚管部署器，无法触发重新部署。",
+            "weasel" => Loc.Get(LanguageManager.Instance.hints_weaselDeployerMissing),
+            "squirrel" => Loc.Get(LanguageManager.Instance.hints_squirrelDeployerMissing),
             "fcitx5-rime" or "ibus-rime" => LinuxDeployerHint(distribution, osReleaseContent),
             _ => OperatingSystem.IsWindows()
-                ? "未找到部署器 WeaselDeployer.exe，无法触发重新部署（小狼毫是否完整安装？）。"
+                ? Loc.Get(LanguageManager.Instance.hints_weaselDeployerMissing)
                 : OperatingSystem.IsMacOS()
-                    ? "未找到鼠鬚管部署器，无法触发重新部署。"
+                    ? Loc.Get(LanguageManager.Instance.hints_squirrelDeployerMissing)
                     : LinuxDeployerHint(null, osReleaseContent),
         };
 
@@ -42,9 +43,9 @@ internal static class InstallHints
     {
         var missing = distribution?.Id switch
         {
-            "fcitx5-rime" => "未找到 rime_deployer，无法触发重新部署。",
-            "ibus-rime" => "未找到 ibus 命令或 rime_deployer，无法触发重新部署。",
-            _ => "未找到部署工具，无法触发重新部署。",
+            "fcitx5-rime" => Loc.Get(LanguageManager.Instance.hints_linuxFcitxMissing),
+            "ibus-rime" => Loc.Get(LanguageManager.Instance.hints_linuxIbusMissing),
+            _ => Loc.Get(LanguageManager.Instance.hints_linuxGenericMissing),
         };
         var ids = OsRelease.Ids(osReleaseContent ?? OsRelease.ReadFromFile());
         var package = ids switch
@@ -56,9 +57,9 @@ internal static class InstallHints
             _ => null,
         };
         var install = package is null
-            ? "请从软件仓库安装包含 rime_deployer 的 librime 工具包（常见包名：librime、librime-bin、rime）。"
-            : $"安装命令：{package}";
-        return $"{missing}{install}安装完成后重启尔雅即可。";
+            ? Loc.Get(LanguageManager.Instance.hints_linuxInstallAny)
+            : Loc.Format(LanguageManager.Instance.hints_linuxInstallCmd, package);
+        return missing + install + Loc.Get(LanguageManager.Instance.hints_restartTail);
     }
 }
 
