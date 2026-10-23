@@ -11,6 +11,7 @@
               mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="680"
               x:Class="Erya.MainWindow"
               x:DataType="vm:ShellViewModel"
+              Icon="/Assets/app.ico"
               Title="尔雅 Erya"
               Width="1040" Height="680"
               MinWidth="860" MinHeight="560"
