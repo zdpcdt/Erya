@@ -49,4 +49,5 @@ rm -f "$OUT"
 hdiutil create -volname "Erya $VERSION" -srcfolder "$STAGE_ROOT" -ov -format UDZO "$OUT" >/dev/null
 rm -rf "$STAGE_ROOT"
 
-echo "==> $OUT（$(du -h "$OUT" | cut -f1)）"
+# 注意：macOS 系统 bash 是 3.2，$VAR 后紧跟全角字符会被并进变量名（set -u 即炸）——一律 ${VAR} 定界
+echo "==> ${OUT} ($(du -h "$OUT" | cut -f1))"
