@@ -172,6 +172,8 @@
     "semiDesc": "A Semi Design-style theme for native Avalonia controls, with extensions such as data grid and dock layout.",
     "ursaKicker": "Enterprise-grade control library",
     "ursaDesc": "Complex input, selection and data interaction controls for desktop applications.",
+    "linguaKicker": "Localization source generator",
+    "linguaDesc": "Generate strongly typed APIs from language resources and update text when the app language changes.",
     "ackTitle": "Acknowledgements",
     "ackDesc": "Erya is built on the RIME ecosystem, thanks to the following projects and authors",
     "ackRimeDesc": "Open-source cross-platform input method engine",

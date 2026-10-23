@@ -172,6 +172,8 @@
     "semiDesc": "為 Avalonia 原生控制項提供 Semi Design 風格主題，並支援資料表格、停靠版面配置等擴充功能。",
     "ursaKicker": "企業級控制項程式庫",
     "ursaDesc": "為桌面應用程式提供複雜輸入、選擇和資料互動控制項。",
+    "linguaKicker": "多語言源生成器",
+    "linguaDesc": "將多語言資源生成強類型介面，支援應用程式執行時切換語言。",
     "ackTitle": "致謝",
     "ackDesc": "爾雅建構於 RIME 生態之上，感謝以下專案與作者",
     "ackRimeDesc": "開源跨平台輸入法引擎",
