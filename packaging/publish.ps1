@@ -70,8 +70,10 @@ Write-Host ('==> dotnet publish（{0}，{1}）' -f $Rid, $mode)
 dotnet publish $Project -c $Configuration -r $Rid --self-contained true -o $publishDir @extra
 if ($LASTEXITCODE -ne 0) { throw ('dotnet publish 失败（{0}，{1}）' -f $Rid, $mode) }
 
-# 调试符号不进发行包：pdb 文件与 Native AOT 的 dSYM 目录（macOS 产出，含 ~90MB DWARF）
+# 调试符号不进发行包：pdb 文件、Native AOT 的 dSYM 目录（macOS，~90MB DWARF）
+# 与 .dbg（Linux，StripSymbols 剥离出的独立符号文件，~70MB）
 Get-ChildItem -LiteralPath $publishDir -Recurse -Filter *.pdb | Remove-Item -Force
+Get-ChildItem -LiteralPath $publishDir -Recurse -Filter *.dbg | Remove-Item -Force
 Get-ChildItem -LiteralPath $publishDir -Recurse -Directory -Filter '*.dSYM' | Remove-Item -Recurse -Force
 
 New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
