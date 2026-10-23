@@ -5,6 +5,7 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:vm="clr-namespace:Erya.ViewModels"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.SchemaManagerPage"
              x:DataType="vm:SchemaManagerViewModel">
@@ -14,18 +15,18 @@
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="勾选要启用的方案；拖动调整顺序，已启用方案的顺序即 Ctrl+` 切换顺序。" Opacity="0.6" />
-                <TextBlock Text="保存后写入 default.custom.yaml 补丁并触发重新部署。"
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_headerHint}}" Opacity="0.6" />
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_headerHintDetail}}"
                            Opacity="0.6" FontSize="12" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <u:IconButton Command="{Binding LoadCommand}"
                               Icon="{StaticResource SemiIconRefresh}"
-                              ToolTip.Tip="重新扫描方案列表" />
+                              ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_rescanTip}}" />
                 <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
                               Command="{Binding SaveAndDeployCommand}"
                               Icon="{StaticResource SemiIconSave}"
-                              ToolTip.Tip="保存并部署（写入 default.custom.yaml 并触发重新部署）"
+                              ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_saveAndDeployTip}}"
                               IsEnabled="{Binding !IsBusy}" />
             </StackPanel>
         </Grid>
@@ -41,7 +42,7 @@
                                     <!-- 拖拽把手：按住上下拖动调整顺序（对所有行开放；未启用行的位置不落盘） -->
                                     <c:DragHandle Data="{DynamicResource SemiIconHandle}"
                                                   VerticalAlignment="Center"
-                                                  ToolTip.Tip="拖动调整顺序" />
+                                                  ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_dragTip}}" />
                                     <CheckBox IsChecked="{Binding IsSelected}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
@@ -55,9 +56,9 @@
                     </c:ReorderableItemsControl>
 
                     <!-- 在线方案：社区配置包一键安装（GUI 版的东风破配方） -->
-                    <Expander Margin="0,14,0,0" Header="在线方案（社区配置包）">
+                    <Expander Margin="0,14,0,0" Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_onlineHeader}}">
                         <StackPanel Spacing="10" Margin="0,10,0,0">
-                            <TextBlock Text="从 GitHub 下载整份社区配置安装到用户目录；同名文件会被覆盖（升级即此原理），安装前自动备份原配置。"
+                            <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_onlineDesc}}"
                                        Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
                             <ItemsControl ItemsSource="{Binding OnlinePackages}">
                                 <ItemsControl.ItemTemplate>
@@ -94,7 +95,7 @@
                                                               Command="{Binding $parent[ItemsControl].((vm:SchemaManagerViewModel)DataContext).UninstallCommand}"
                                                               CommandParameter="{Binding}"
                                                               IsEnabled="{Binding !IsBusy}"
-                                                              ToolTip.Tip="删除该包安装到用户目录的全部文件（按包内文件清单精确删除，删除前自动完整备份并确认）" />
+                                                              ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_uninstallTip}}" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
@@ -109,7 +110,7 @@
         <!-- Loading / empty states -->
         <StackPanel Grid.Row="1" Margin="0,14" Spacing="10"
                     IsVisible="{Binding !HasSchemas}">
-            <TextBlock Text="正在读取方案列表…" IsVisible="{Binding IsLoading}" Opacity="0.6" />
+            <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_loadingText}}" IsVisible="{Binding IsLoading}" Opacity="0.6" />
             <u:Banner Type="Warning" Content="{Binding Hint}" ShowIcon="True"
                       IsVisible="{Binding HasHint}" />
         </StackPanel>

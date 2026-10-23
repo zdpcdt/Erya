@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Erya.Core.Localization;
 
 namespace Erya.Core.Packages;
 
@@ -20,7 +21,20 @@ public static class SchemaPackageCatalog
         var packages = JsonSerializer.Deserialize(stream, SchemaCatalogContext.Default.SchemaPackageArray)
             ?? throw new InvalidOperationException($"内置方案包目录无法解析：{resourceName}");
         Validate(packages, resourceName);
-        return packages;
+        return ApplyLanguageOverlay(packages);
+    }
+
+    /// <summary>
+    /// 语言变体 overlay：packages.catalog.{lang}.json 为 { id: 描述 } 的扁平表，
+    /// 只覆盖 description（name 是方案品牌名，不翻译）。
+    /// </summary>
+    private static IReadOnlyList<SchemaPackage> ApplyLanguageOverlay(SchemaPackage[] packages)
+    {
+        if (CoreLoc.Language.Length == 0) return packages;
+        var map = CoreLoc.TryLoadMap($"Erya.Core.Packages.packages.catalog.{CoreLoc.Language}.json");
+        if (map is null) return packages;
+        return packages.Select(p => map.TryGetValue(p.Id, out var description) ? p with { Description = description } : p)
+            .ToArray();
     }
 
     /// <summary>Fail fast on catalog typos — a bad entry would install nothing.</summary>

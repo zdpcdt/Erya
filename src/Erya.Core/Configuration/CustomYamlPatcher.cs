@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using YamlDotNet.RepresentationModel;
 
 namespace Erya.Core.Configuration;
@@ -299,7 +300,7 @@ internal static class CustomYamlPatcher
         var stream = new YamlStream();
         stream.Load(new StringReader(original));
         if (stream.Documents is not [var document, ..] || document.RootNode is not YamlMappingNode root)
-            throw new InvalidOperationException("不是可识别的 YAML 映射，无法安全写入。请手工检查该文件。");
+            throw new InvalidOperationException(CoreLoc.Get("yaml_notMapping"));
         return root;
     }
 
@@ -385,9 +386,9 @@ internal static class CustomYamlPatcher
     private static string RenderFresh(string fileTitle, IReadOnlyDictionary<string, object?> patch)
     {
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# {fileTitle} —— RIME 用户补丁配置");
-        sb.AppendLine("# 部署时会覆盖同名默认设置；修改后需重新部署生效。");
-        sb.AppendLine("# 除 patch 下的键外，其余内容可手工编辑；「尔雅」写入时只改动 patch 中对应的键。");
+        sb.AppendLine(CoreLoc.Format("yaml_headerTitleCustom", fileTitle));
+        sb.AppendLine(CoreLoc.Get("yaml_headerCustomLine2"));
+        sb.AppendLine(CoreLoc.Get("yaml_headerCustomLine3"));
         sb.AppendLine();
         sb.AppendLine("patch:");
         foreach (var (key, value) in patch)
@@ -402,7 +403,7 @@ internal static class CustomYamlPatcher
         var backupPath = path + BackupSuffix;
         if (File.Exists(backupPath)) File.WriteAllText(path, File.ReadAllText(backupPath));
         throw new InvalidOperationException(
-            $"写入 {Path.GetFileName(path)} 后未能通过校验，原文件已还原。");
+            CoreLoc.Format("yaml_writeVerifyFailed", Path.GetFileName(path)));
     }
 
     private static bool Verify(string path, IReadOnlyDictionary<string, object?> expected, IReadOnlyList<string> absent)

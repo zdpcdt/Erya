@@ -7,6 +7,7 @@
              xmlns:dist="clr-namespace:Erya.Core.Distributions;assembly=Erya.Core"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:vm="clr-namespace:Erya.ViewModels"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="520"
              x:Class="Erya.Views.OverviewPage"
              x:DataType="vm:MainViewModel">
@@ -44,17 +45,17 @@
                     <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsReady}">
                         <Ellipse Width="8" Height="8" Fill="{DynamicResource SemiColorSuccess}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="就绪" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.overview_badgeReady}}" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsDeployerMissing}">
                         <Ellipse Width="8" Height="8" Fill="{DynamicResource SemiColorWarning}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="部署器缺失" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.overview_badgeDeployerMissing}}" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsMissing}">
                         <Ellipse Width="8" Height="8" Fill="{DynamicResource SemiColorText3}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="未检测到" FontSize="12" Opacity="0.55" VerticalAlignment="Center" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.overview_badgeMissing}}" FontSize="12" Opacity="0.55" VerticalAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -63,16 +64,17 @@
         <!--  环境 + 维护两组；未检测到 RIME 时整块隐藏，页面只剩英雄卡空态  -->
         <StackPanel Spacing="20" IsVisible="{Binding !IsMissing}">
 
-            <c:CellGroup Header="环境" Description="检测到的 RIME 发行版信息">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_envTitle}}"
+                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_envDesc}}">
                 <c:Cell Icon="{StaticResource SemiIconComponentStroked}"
-                        Content="输入前端"
-                        Description="本机安装了多个 RIME 前端，尔雅只管理选中的这个；切换后其他页面会重新加载"
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_frontendLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_frontendDesc}}"
                         IsVisible="{Binding HasMultipleDistributions}">
                     <c:Cell.RightContent>
                         <ComboBox ItemsSource="{Binding AvailableDistributions}"
                                   SelectedItem="{Binding Distribution, Mode=TwoWay}"
                                   MinWidth="240"
-                                  ToolTip.Tip="选择尔雅要管理的 RIME 前端">
+                                  ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.overview_frontendTip}}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="dist:IRimeDistribution">
                                     <TextBlock Text="{Binding DisplayName}" />
@@ -82,7 +84,7 @@
                     </c:Cell.RightContent>
                 </c:Cell>
                 <c:Cell Icon="{StaticResource SemiIconFolderStroked}"
-                        Content="安装目录"
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_installDirLabel}}"
                         IsVisible="{Binding InstallDirDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <c:Cell.Note>
                         <TextBlock Text="{Binding InstallDirDisplay}" FontSize="13" Opacity="0.75"
@@ -91,8 +93,8 @@
                     </c:Cell.Note>
                 </c:Cell>
                 <c:Cell Icon="{StaticResource SemiIconFolderOpenStroked}"
-                        Content="用户目录"
-                        Description="方案配置、自定义补丁与用户词典所在位置">
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_userDirLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_userDirDesc}}">
                     <c:Cell.Note>
                         <TextBlock Text="{Binding UserDir}" FontSize="13" Opacity="0.75"
                                    TextTrimming="CharacterEllipsis" MaxWidth="360"
@@ -102,17 +104,17 @@
                         <u:IconButton Command="{Binding OpenUserDirCommand}"
                                       Theme="{DynamicResource SolidIconButton}"
                                       Icon="{StaticResource SemiIconFolderOpen}"
-                                      ToolTip.Tip="在资源管理器中打开用户目录" />
+                                      ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.overview_openUserDirTip}}" />
                     </c:Cell.RightContent>
                 </c:Cell>
             </c:CellGroup>
 
-            <c:CellGroup Header="维护">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_maintTitle}}">
                 <c:Cell Icon="{StaticResource SemiIconRedoStroked}"
-                        Content="重新部署"
-                        Description="重新生成 build 目录，使修改过的 YAML 配置生效">
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_deployLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_deployDesc}}">
                     <c:Cell.RightContent>
-                        <Button Content="重新部署" Classes="Primary" MinWidth="96"
+                        <Button Content="{Translate {x:Static loc:LanguageManager+Keys.overview_deployLabel}}" Classes="Primary" MinWidth="96"
                                 Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
                     </c:Cell.RightContent>
                 </c:Cell>

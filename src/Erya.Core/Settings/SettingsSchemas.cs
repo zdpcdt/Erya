@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Erya.Core.Localization;
 
 namespace Erya.Core.Settings;
 
@@ -35,7 +36,36 @@ public static class SettingsSchemas
         var schema = JsonSerializer.Deserialize(stream, SettingsSchemaContext.Default.SettingsSchema)
             ?? throw new InvalidOperationException($"内置设置 schema 无法解析：{resourceName}");
         Validate(schema, resourceName);
+        ApplyLanguageOverlay(schema, name);
         return schema;
+    }
+
+    /// <summary>
+    /// 语言变体 overlay：settings.{name}.{lang}.json 为扁平键值表
+    /// （"sectionId.title" / "sectionId.fieldId.label" / "…description"），
+    /// 只覆盖文案，结构（keyPath/type/default）始终来自 base 文件。
+    /// </summary>
+    private static void ApplyLanguageOverlay(SettingsSchema schema, string name)
+    {
+        if (CoreLoc.Language.Length == 0) return;
+        var map = CoreLoc.TryLoadMap($"Erya.Core.Settings.settings.{name}.{CoreLoc.Language}.json");
+        if (map is null) return;
+
+        foreach (var section in schema.Sections)
+        {
+            if (map.TryGetValue($"{section.Id}.title", out var title) && title.Length > 0)
+                section.Title = title;
+            if (map.TryGetValue($"{section.Id}.description", out var description) && description.Length > 0)
+                section.Description = description;
+            foreach (var field in section.Fields)
+            {
+                if (map.TryGetValue($"{section.Id}.{field.Id}.label", out var label) && label.Length > 0)
+                    field.Label = label;
+                if (map.TryGetValue($"{section.Id}.{field.Id}.description", out var fieldDescription)
+                    && fieldDescription.Length > 0)
+                    field.Description = fieldDescription;
+            }
+        }
     }
 
     /// <summary>Fail fast on schema typos — a bad field would render as nothing.</summary>

@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.IO.Compression;
 using System.Formats.Tar;
 using System.Net.Http;
@@ -67,13 +68,13 @@ public sealed class SchemaInstaller
             // A package without a single schema installs nothing useful — fail
             // before touching the user directory.
             if (!HasSchemaFile(staging))
-                throw new InvalidOperationException($"包内没有 *.schema.yaml，{package.Name} 不是有效的 RIME 方案配置。");
+                throw new InvalidOperationException(CoreLoc.Format("installer_noSchemas", package.Name));
 
             Directory.CreateDirectory(userDir);
             string? backupPath = null;
             if (HasFiles(userDir))
             {
-                progress?.Report(new("正在备份当前配置…", null));
+                progress?.Report(new(CoreLoc.Get("installer_progressBackingUp"), null));
                 backupPath = PreInstallBackupPath(package.Id);
                 try
                 {
@@ -82,11 +83,11 @@ public sealed class SchemaInstaller
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
                     // No backup, no install — the backup is the rollback path.
-                    throw new InvalidOperationException($"无法生成安装前备份（{backupPath}），已中止安装。", ex);
+                    throw new InvalidOperationException(CoreLoc.Format("installer_backupFailedInstall", backupPath), ex);
                 }
             }
 
-            progress?.Report(new("正在写入用户目录…", null));
+            progress?.Report(new(CoreLoc.Get("installer_progressWriting"), null));
             var (files, bytes) = CopyAll(staging, userDir);
             return new SchemaInstallReport(files, bytes, backupPath, skipped);
         }
@@ -115,14 +116,14 @@ public sealed class SchemaInstaller
         Directory.CreateDirectory(tempRoot);
         try
         {
-            progress?.Report(new("正在获取文件清单…", null));
+            progress?.Report(new(CoreLoc.Get("installer_progressListing"), null));
             var archivePath = await DownloadAsync(
                 package, Path.Combine(tempRoot, "package.tgz"), progress, cancellationToken);
             var staging = Path.Combine(tempRoot, "staging");
             await ExtractAsync(package, archivePath, staging, cancellationToken);
 
             if (!HasSchemaFile(staging))
-                throw new InvalidOperationException($"包内没有 *.schema.yaml，{package.Name} 不是有效的 RIME 方案配置。");
+                throw new InvalidOperationException(CoreLoc.Format("installer_noSchemas", package.Name));
 
             var userRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(userDir));
             var targets = Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
@@ -133,7 +134,7 @@ public sealed class SchemaInstaller
             string? backupPath = null;
             if (HasFiles(userDir))
             {
-                progress?.Report(new("正在备份当前配置…", null));
+                progress?.Report(new(CoreLoc.Get("installer_progressBackingUp"), null));
                 backupPath = PreUninstallBackupPath(package.Id);
                 try
                 {
@@ -142,11 +143,11 @@ public sealed class SchemaInstaller
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
                     // No backup, no delete — the backup is the rollback path.
-                    throw new InvalidOperationException($"无法生成删除前备份（{backupPath}），已中止删除。", ex);
+                    throw new InvalidOperationException(CoreLoc.Format("installer_backupFailedDelete", backupPath), ex);
                 }
             }
 
-            progress?.Report(new("正在删除文件…", null));
+            progress?.Report(new(CoreLoc.Get("installer_progressDeleting"), null));
             var deleted = 0;
             foreach (var target in targets)
             {
@@ -175,17 +176,17 @@ public sealed class SchemaInstaller
         }
         catch (HttpRequestException ex)
         {
-            throw new InvalidOperationException($"网络错误，无法访问 {package.ArchiveUrl}：{ex.Message}", ex);
+            throw new InvalidOperationException(CoreLoc.Format("installer_netError", package.ArchiveUrl, ex.Message), ex);
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
-            throw new InvalidOperationException($"下载超时：{package.ArchiveUrl}", ex);
+            throw new InvalidOperationException(CoreLoc.Format("installer_timeout", package.ArchiveUrl), ex);
         }
 
         using (response)
         {
             if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"下载失败：HTTP {(int)response.StatusCode}（{package.ArchiveUrl}）");
+                throw new InvalidOperationException(CoreLoc.Format("installer_httpError", (int)response.StatusCode, package.ArchiveUrl));
 
             var total = response.Content.Headers.ContentLength;
             await using var network = await response.Content.ReadAsStreamAsync(ct);
@@ -197,10 +198,10 @@ public sealed class SchemaInstaller
             {
                 downloaded += read;
                 if (downloaded > MaxArchiveBytes)
-                    throw new InvalidOperationException("包体积超出安全上限（512 MB），已中止。");
+                    throw new InvalidOperationException(CoreLoc.Get("installer_tooLarge"));
                 await output.WriteAsync(buffer.AsMemory(0, read), ct);
                 if (total is > 0)
-                    progress?.Report(new($"正在下载 {package.Name}…", Math.Min(100, downloaded * 100.0 / total.Value)));
+                    progress?.Report(new(CoreLoc.Format("installer_progressDownloading", package.Name), Math.Min(100, downloaded * 100.0 / total.Value)));
             }
         }
         return targetPath;
@@ -228,7 +229,7 @@ public sealed class SchemaInstaller
             var firstSlash = name.IndexOf('/');
             if (firstSlash <= 0)
             {
-                skipped.Add($"{name}（缺少仓库根目录，已跳过）");
+                skipped.Add(CoreLoc.Format("installer_skipNoRoot", name));
                 continue;
             }
             // GitHub tarballs nest everything under one root; entries outside
@@ -236,7 +237,7 @@ public sealed class SchemaInstaller
             rootPrefix ??= name[..firstSlash];
             if (!name.StartsWith(rootPrefix + "/", StringComparison.Ordinal))
             {
-                skipped.Add($"{name}（路径不在仓库根目录下，已跳过）");
+                skipped.Add(CoreLoc.Format("installer_skipOutsideRoot", name));
                 continue;
             }
 
@@ -247,7 +248,7 @@ public sealed class SchemaInstaller
             var targetPath = SafeCombine(staging, relative);
             if (targetPath is null)
             {
-                skipped.Add($"{relative}（路径越出安装范围，已跳过）");
+                skipped.Add(CoreLoc.Format("installer_skipOutsideInstall", relative));
                 continue;
             }
 

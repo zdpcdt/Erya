@@ -7,6 +7,7 @@ using Erya.Core.Distributions;
 using Erya.Core.Distributions.Linux;
 using Erya.Core.Distributions.MacOS;
 using Erya.Core.Distributions.Weasel;
+using Erya.Services;
 using Erya.ViewModels;
 
 namespace Erya;
@@ -38,7 +39,9 @@ public partial class App : Application
             {
                 // Linux 前端（fcitx5/ibus）的候选面板由输入法框架自己绘制，
                 // 没有 squirrel/weasel 那份外观 YAML → 外观设置整组不显示。
+                // 偏好由组合根加载传入：ShellViewModel 只对显式实例持久化（测试传 null）。
                 DataContext = new ShellViewModel(new DistributionManager([.. locators]),
+                    AppPreferences.Load(),
                     showAppearance: !OperatingSystem.IsLinux()),
             };
         }

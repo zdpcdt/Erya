@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Core.Localization;
+using Erya.Localization;
 using Erya.Services;
 using Erya.ViewModels.Advanced;
 using Erya.ViewModels.Settings;
+using Irihi.Lingua;
 
 namespace Erya.ViewModels;
 
@@ -28,6 +33,10 @@ public partial class ShellViewModel : ObservableObject
     // （fcitx5/ibus）的候选面板由输入法框架自己绘制，没有这份 YAML，
     // 组合根（App.axaml.cs）在 Linux 上关闭整组入口。
     private readonly bool _showAppearance;
+    // 语言偏好只随显式传入的实例持久化；测试传 null 即不落盘。
+    private readonly AppPreferences? _preferences;
+    // 已应用语言（ CultureName）；构造期应用持久化语言时跳过重复切换。
+    private string _appliedLanguage = "zh-Hans";
     private SchemaManagerViewModel _schemas = null!;
     private SettingsEditorViewModel _inputSettings = null!;
     private SettingsEditorViewModel _appearance = null!;
@@ -40,7 +49,22 @@ public partial class ShellViewModel : ObservableObject
     private Dictionary<string, (bool Loaded, ObservableObject Page)> _lazyPages = [];
     private IRimeDistribution? _distribution;
 
-    public IReadOnlyList<NavItem> NavItems { get; }
+    /// <summary>CulturePicker 驱动的 Lingua 管理器（App 层字符串）。</summary>
+    public IList<ILinguaManager> LinguaManagers { get; } = [LanguageManager.Instance];
+
+    /// <summary>语言选择器条目；显示名固定用各自语言书写。</summary>
+    public IReadOnlyList<LinguaCulture> Cultures { get; } =
+    [
+        new() { CultureName = "zh-Hans", DisplayName = "简体中文", ShortDisplayName = "简" },
+        new() { CultureName = "zh-Hant", DisplayName = "繁體中文", ShortDisplayName = "繁" },
+        new() { CultureName = "en", DisplayName = "English", ShortDisplayName = "EN" },
+    ];
+
+    [ObservableProperty]
+    private LinguaCulture? _selectedCulture;
+
+    [ObservableProperty]
+    private IReadOnlyList<NavItem> _navItems = [];
 
     [ObservableProperty]
     private NavItem? _selectedNav;
@@ -59,37 +83,52 @@ public partial class ShellViewModel : ObservableObject
         bool showAppearance = true)
     {
         _showAppearance = showAppearance;
+        _preferences = preferences;
         _overview = new MainViewModel(distributions, preferences);
         BuildPages();
         // A frontend switch rebuilds every page against the new distribution;
         // unsaved edits on other pages are deliberately dropped (rare action).
         _overview.DistributionChanged += RebuildPages;
 
-        List<NavItem> items =
-        [
-            new NavItem("overview", "概览", Icon("SemiIconHome")),
-            new NavItem("schemas", "方案管理", Icon("SemiIconCheckList")),
-            new NavItem("inputSettings", "输入设置", Icon("SemiIconSetting")),
-        ];
-        if (_showAppearance)
+        // 持久化语言在页面构建前应用，首帧即正确语言（App 组合根负责传入偏好）。
+        if (preferences?.Language is { } language)
         {
-            items.Add(new NavItem("appearance", "外观设置", Icon("SemiIconColorPalette"),
-            [
-                new NavItem("skin", "皮肤库", Icon("SemiIconColorPalette")),
-                new NavItem("layout", "候选窗排版", Icon("SemiIconSetting")),
-                new NavItem("apps", "应用行为", Icon("SemiIconDesktop")),
-            ]));
+            _appliedLanguage = language;
+            LanguageManager.Instance.UpdateCulture(new CultureInfo(language));
+            CoreLoc.Language = language;
         }
-        items.Add(new NavItem("advanced", "高级设置", Icon("SemiIconCode")));
-        items.Add(new NavItem("backup", "备份恢复", Icon("SemiIconRestore")));
-        items.Add(new NavItem("about", "关于", Icon("SemiIconInfoCircle")));
-        NavItems = items;
+        BuildNav();
         InitializeLazyPages();
 
         // Two-way binding pushes this into NavMenu, selecting the item visually.
         _selectedNav = NavItems[0];
         CurrentPage = _overview;
         PageTitle = _selectedNav.Header;
+        SelectedCulture = Cultures.FirstOrDefault(c => c.CultureName == _appliedLanguage) ?? Cultures[0];
+    }
+
+    private void BuildNav()
+    {
+        var m = LanguageManager.Instance;
+        List<NavItem> items =
+        [
+            new NavItem("overview", Loc.Get(m.nav_overview), Icon("SemiIconHome")),
+            new NavItem("schemas", Loc.Get(m.nav_schemas), Icon("SemiIconCheckList")),
+            new NavItem("inputSettings", Loc.Get(m.nav_inputSettings), Icon("SemiIconSetting")),
+        ];
+        if (_showAppearance)
+        {
+            items.Add(new NavItem("appearance", Loc.Get(m.nav_appearance), Icon("SemiIconColorPalette"),
+            [
+                new NavItem("skin", Loc.Get(m.nav_skin), Icon("SemiIconColorPalette")),
+                new NavItem("layout", Loc.Get(m.nav_layout), Icon("SemiIconSetting")),
+                new NavItem("apps", Loc.Get(m.nav_apps), Icon("SemiIconDesktop")),
+            ]));
+        }
+        items.Add(new NavItem("advanced", Loc.Get(m.nav_advanced), Icon("SemiIconCode")));
+        items.Add(new NavItem("backup", Loc.Get(m.nav_backup), Icon("SemiIconRestore")));
+        items.Add(new NavItem("about", Loc.Get(m.nav_about), Icon("SemiIconInfoCircle")));
+        NavItems = items;
     }
 
     private void BuildPages()
@@ -147,6 +186,50 @@ public partial class ShellViewModel : ObservableObject
             LoadPage(entry.Page);
         }
         CurrentPage = entry.Page;
+    }
+
+    partial void OnSelectedCultureChanged(LinguaCulture? value)
+    {
+        // 构造期设置初始选择时 _appliedLanguage 已同步，这里自然跳过。
+        if (value is not null)
+            ApplyLanguage(value.CultureName);
+    }
+
+    /// <summary>
+    /// 换语言：Lingua 全量推送（picker 可能已驱动过，重复 UpdateCulture 幂等）、
+    /// Core 层字典切换、偏好落盘，然后重建导航与全部页面——页面 VM 在构造时
+    /// 同步读取当前语言，设置页的 schema 也按新语言重载。
+    /// </summary>
+    private void ApplyLanguage(string cultureName)
+    {
+        if (cultureName == _appliedLanguage) return;
+        _appliedLanguage = cultureName;
+
+        LanguageManager.Instance.UpdateCulture(new CultureInfo(cultureName));
+        CoreLoc.Language = cultureName;
+        if (_preferences is not null)
+        {
+            _preferences.Language = cultureName;
+            _preferences.Save();
+        }
+
+        RebuildNav();
+        RebuildPages();
+        _overview.RefreshLocalizedTexts();
+    }
+
+    /// <summary>换语言后导航标题重建；选中项按 Key 映射到新实例，保持当前页。</summary>
+    private void RebuildNav()
+    {
+        var previousKey = SelectedNav?.Key;
+        BuildNav();
+        // 直写字段绕开 OnSelectedNavChanged（避免一次多余的页面加载），再通知绑定。
+        _selectedNav = previousKey is { } key
+            ? NavItems.SelectMany(item => item.Children is { Count: > 0 } children ? children : [item])
+                .FirstOrDefault(item => item.Key == key)
+            : null;
+        PageTitle = SelectedNav?.Header ?? "";
+        OnPropertyChanged(nameof(SelectedNav));
     }
 
     /// <summary>Frontend switch: fresh page VMs bound to the new distribution.</summary>

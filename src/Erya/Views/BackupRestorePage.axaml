@@ -6,22 +6,23 @@
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:vm="clr-namespace:Erya.ViewModels"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
              x:Class="Erya.Views.BackupRestorePage"
              x:DataType="vm:BackupRestoreViewModel">
 
     <StackPanel Spacing="20">
 
-        <TextBlock Text="备份与恢复均针对 RIME 用户目录（方案配置、自定义补丁、用户词典）。"
+        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.backup_intro}}"
                    Opacity="0.6" TextWrapping="Wrap" />
 
         <!--  备份 / 恢复两组。结果反馈走 Toast；busy 由按钮文案与禁用表达，页面不放状态条  -->
         <StackPanel Spacing="20" IsVisible="{Binding HasUserDir}">
 
-            <c:CellGroup Header="备份"
-                         Description="打包用户目录为 zip，用于存档或迁移；build 目录是部署产物，不参与备份">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_backupTitle}}"
+                         Description="{Translate {x:Static loc:LanguageManager+Keys.backup_backupDesc}}">
                 <c:Cell Icon="{StaticResource SemiIconSaveStroked}"
-                        Content="备份用户目录">
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.backup_backupLabel}}">
                     <c:Cell.Note>
                         <TextBlock Text="{Binding UserDirSummary}" FontSize="13" Opacity="0.75"
                                    VerticalAlignment="Center" />
@@ -31,7 +32,7 @@
                             <u:IconButton Command="{Binding OpenUserDirCommand}"
                                           Theme="{DynamicResource SolidIconButton}"
                                           Icon="{StaticResource SemiIconFolderOpen}"
-                                          ToolTip.Tip="在资源管理器中打开用户目录" />
+                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.backup_openUserDirTip}}" />
                             <Button Classes="Primary" MinWidth="120"
                                     Content="{Binding BackupButtonText}"
                                     IsEnabled="{Binding CanBackup}"
@@ -41,10 +42,10 @@
                 </c:Cell>
             </c:CellGroup>
 
-            <c:CellGroup Header="恢复"
-                         Description="同名文件会被覆盖；恢复前自动在备份所在目录生成安全备份，完成后自动重新部署">
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreTitle}}"
+                         Description="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreDesc}}">
                 <c:Cell Icon="{StaticResource SemiIconRestoreStroked}"
-                        Content="从备份恢复">
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreLabel}}">
                     <c:Cell.Note>
                         <TextBlock Text="{Binding RestoreNote}" FontSize="13" Opacity="0.75"
                                    TextTrimming="CharacterEllipsis" MaxWidth="280"
@@ -53,7 +54,7 @@
                     </c:Cell.Note>
                     <c:Cell.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button MinWidth="108" Content="选择备份文件…"
+                            <Button MinWidth="108" Content="{Translate {x:Static loc:LanguageManager+Keys.backup_pickBackupFile}}"
                                     IsEnabled="{Binding !IsBusy}"
                                     Click="OnPickRestoreClick" />
                             <Button Classes="Primary" MinWidth="108"
@@ -74,9 +75,9 @@
             <StackPanel HorizontalAlignment="Center" Spacing="10">
                 <views:RimeLogoIcon Width="32" Height="32" Opacity="0.45"
                                     HorizontalAlignment="Center" />
-                <TextBlock Text="未检测到 RIME 发行版" FontWeight="SemiBold"
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.backup_emptyTitle}}" FontWeight="SemiBold"
                            HorizontalAlignment="Center" />
-                <TextBlock Text="安装鼠须管、小狼毫等 RIME 前端后，可在此备份与恢复用户目录配置。"
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.backup_emptyDesc}}"
                            Opacity="0.6" FontSize="12" HorizontalAlignment="Center"
                            TextWrapping="Wrap" />
             </StackPanel>

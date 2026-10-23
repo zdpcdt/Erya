@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Erya.Localization;
 using Erya.Services;
 using Erya.Views;
 using Ursa.Controls;
@@ -157,8 +158,8 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
     /// </summary>
     internal static ColorSchemeViewModel CreateDraft(ColorSchemeViewModel? seed)
         => ColorSchemeViewModel.FromState(seed?.CloneableState is { } state
-            ? state with { Name = "我的皮肤" }
-            : new SchemeState("我的皮肤", "",
+            ? state with { Name = Loc.Get(LanguageManager.Instance.skin_defaultDraftName) }
+            : new SchemeState(Loc.Get(LanguageManager.Instance.skin_defaultDraftName), "",
                 "FFFFFF", "000000", "D3E3F6", "000000", "333333", "333333", "000000", "000000"));
 
     private async Task EditAsync(ColorSchemeViewModel? scheme)

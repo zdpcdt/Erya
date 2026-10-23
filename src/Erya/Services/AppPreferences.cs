@@ -20,6 +20,9 @@ public sealed partial class AppPreferences
     /// <summary>Id of the frontend the user picked in the switcher; null = auto.</summary>
     public string? DistributionId { get; set; }
 
+    /// <summary>UI language culture name ("zh-Hans"/"zh-Hant"/"en"); null = 简体 base.</summary>
+    public string? Language { get; set; }
+
     public static AppPreferences Load(string? path = null)
     {
         var pathToUse = path ?? DefaultPath();
@@ -28,7 +31,11 @@ public sealed partial class AppPreferences
         {
             if (!File.Exists(pathToUse)) return prefs;
             var data = JsonSerializer.Deserialize(File.ReadAllText(pathToUse), PrefsContext.Default.Persisted);
-            if (data is not null) prefs.DistributionId = data.DistributionId;
+            if (data is not null)
+            {
+                prefs.DistributionId = data.DistributionId;
+                prefs.Language = data.Language;
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -42,7 +49,7 @@ public sealed partial class AppPreferences
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new Persisted(DistributionId), PrefsContext.Default.Persisted));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new Persisted(DistributionId, Language), PrefsContext.Default.Persisted));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -54,7 +61,7 @@ public sealed partial class AppPreferences
         => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Erya", "preferences.json");
 
-    private sealed record Persisted(string? DistributionId);
+    private sealed record Persisted(string? DistributionId, string? Language);
 
     /// <summary>Native AOT 下 System.Text.Json 反射模式不可用，偏好持久化走源生成。</summary>
     [JsonSerializable(typeof(Persisted))]

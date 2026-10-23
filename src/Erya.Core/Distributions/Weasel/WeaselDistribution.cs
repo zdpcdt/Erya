@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.Diagnostics;
 using Erya.Core.Configuration;
 using Erya.Core.Models;
@@ -23,7 +24,7 @@ public sealed class WeaselDistribution : RimeDistributionBase
 
     public override string Id => "weasel";
 
-    public override string DisplayName => "小狼毫 Weasel";
+    public override string DisplayName => CoreLoc.Get("distName_weasel");
 
     public override Version? Version { get; }
 
@@ -40,7 +41,7 @@ public sealed class WeaselDistribution : RimeDistributionBase
     public override async Task DeployAsync(CancellationToken cancellationToken = default)
     {
         if (!CanDeploy)
-            throw new InvalidOperationException($"未找到部署器：{DeployerPath}（小狼毫是否已安装？）");
+            throw new InvalidOperationException(CoreLoc.Format("weasel_deployerMissing", DeployerPath));
 
         // /deploy runs silently (a progress dialog only on failure) and exits
         // when done — including the WeaselServer maintenance cycle that makes
@@ -54,12 +55,12 @@ public sealed class WeaselDistribution : RimeDistributionBase
             {
                 UseShellExecute = false,
                 Arguments = "/deploy",
-            }) ?? throw new InvalidOperationException("部署器启动失败。");
+            }) ?? throw new InvalidOperationException(CoreLoc.Get("weasel_deployerStartFailed"));
             await process.WaitForExitAsync(cancellationToken);
             if (process.ExitCode == 0) return;
             if (attempt >= 2)
                 throw new InvalidOperationException(
-                    $"重新部署失败（退出码 {process.ExitCode}）。可尝试从托盘菜单手动「重新部署」，或稍后重试。");
+                    CoreLoc.Format("weasel_deployFailed", process.ExitCode));
             await Task.Delay(1500, cancellationToken);
         }
     }

@@ -7,6 +7,7 @@
              xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="620"
              x:Class="Erya.Views.AppsPage"
              x:DataType="sf:AppsPageViewModel">
@@ -18,10 +19,10 @@
             <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
                 <u:IconButton Icon="{StaticResource SemiIconRefresh}"
-                              Command="{Binding LoadCommand}" ToolTip.Tip="重新读取设置" />
+                              Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
                 <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
                               Icon="{StaticResource SemiIconSave}"
-                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="保存并部署" />
+                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
             </StackPanel>
         </Grid>
 
@@ -30,9 +31,9 @@
 
             <!--  工具行：添加应用 + 搜索  -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                <TextBlock Grid.Column="0" Text="加入列表的应用会在启动输入时自动切到右侧设置的状态——终端、SSH、控制台编辑器这类直接敲英文的程序最常用。"
+                <TextBlock Grid.Column="0" Text="{Translate {x:Static loc:LanguageManager+Keys.apps_introHint}}"
                            Opacity="0.55" TextWrapping="Wrap" VerticalAlignment="Center" />
-                <Button x:Name="AddButton" Grid.Column="1" Content="＋ 添加应用" Classes="Primary" Margin="0,0,12,0">
+                <Button x:Name="AddButton" Grid.Column="1" Content="{Translate {x:Static loc:LanguageManager+Keys.apps_addButton}}" Classes="Primary" Margin="0,0,12,0">
                     <Button.Flyout>
                         <Flyout Placement="Bottom">
                             <views:AddAppFlyout DataContext="{Binding Picker}" />
@@ -40,7 +41,7 @@
                     </Button.Flyout>
                 </Button>
                 <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}"
-                         Classes="ClearButton" PlaceholderText="搜索应用…"
+                         Classes="ClearButton" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.apps_searchPlaceholder}}"
                          Width="200" VerticalAlignment="Center">
                     <TextBox.InnerLeftContent>
                         <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
@@ -83,7 +84,7 @@
                                                           Icon="{StaticResource SemiIconDelete}"
                                                           Command="{Binding $parent[ItemsControl].((sf:AppsPageViewModel)DataContext).RemoveAppCommand}"
                                                           CommandParameter="{Binding}"
-                                                          ToolTip.Tip="删除此应用规则" />
+                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.apps_removeRuleTip}}" />
                                         </StackPanel>
                                     </c:Cell.RightContent>
                                 </c:Cell>
@@ -93,8 +94,8 @@
 
                     <!--  空态：没有任何规则  -->
                     <StackPanel Spacing="12" IsVisible="{Binding !HasAnyApp}">
-                        <TextBlock Text="还没有应用规则" FontWeight="SemiBold" />
-                        <TextBlock Text="终端、SSH、远程桌面这类应用里通常直接敲英文——为它们设置「默认英文」，启动输入时自动切换，不用每次手动按 Shift。"
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.apps_emptyTitle}}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.apps_emptyDesc}}"
                                    Opacity="0.6" TextWrapping="Wrap" MaxWidth="520" HorizontalAlignment="Left" />
                         <ItemsControl ItemsSource="{Binding EmptyStatePresets}">
                             <ItemsControl.ItemsPanel>
@@ -108,7 +109,7 @@
                                             HorizontalContentAlignment="Left"
                                             Command="{Binding $parent[ItemsControl].((sf:AppsPageViewModel)DataContext).QuickAddCommand}"
                                             CommandParameter="{Binding}"
-                                            ToolTip.Tip="一键添加为「默认英文」">
+                                            ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.apps_quickAddTip}}">
                                         <StackPanel Spacing="1">
                                             <TextBlock Text="{Binding Title}" />
                                             <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
@@ -122,7 +123,7 @@
                     </StackPanel>
 
                     <!--  搜索无结果（有规则但都被过滤掉）  -->
-                    <TextBlock Text="没有匹配的应用规则。" Opacity="0.55"
+                    <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.apps_searchMiss}}" Opacity="0.55"
                                IsVisible="{Binding SearchMiss}" />
 
                 </StackPanel>
@@ -133,7 +134,7 @@
         <StackPanel Grid.Row="1" Margin="0,14" Spacing="10" IsVisible="{Binding !IsSupported}">
             <u:Banner Type="Information" Content="{Binding UnsupportedReason}" ShowIcon="True" />
         </StackPanel>
-        <TextBlock Grid.Row="1" Text="正在读取设置…" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
+        <TextBlock Grid.Row="1" Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_loading}}" IsVisible="{Binding IsLoading}" Opacity="0.6" Margin="0,14" />
 
         <!-- Footer -->
         <Grid Grid.Row="2" Margin="0,4,0,0">

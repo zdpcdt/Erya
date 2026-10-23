@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
+             xmlns:loc="clr-namespace:Erya.Localization"
              mc:Ignorable="d" d:DesignWidth="340" d:DesignHeight="440"
              Width="340"
              x:Class="Erya.Views.AddAppFlyout"
@@ -14,7 +15,8 @@
 
         <TextBox x:Name="SearchBox" Text="{Binding SearchText, Mode=TwoWay}"
                  Classes="ClearButton"
-                 Watermark="搜索或输入应用标识…" KeyDown="OnSearchKeyDown">
+                 Watermark="{Translate {x:Static loc:LanguageManager+Keys.settings_addAppSearchWatermark}}"
+                 KeyDown="OnSearchKeyDown">
             <TextBox.InnerLeftContent>
                 <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
             </TextBox.InnerLeftContent>
@@ -34,7 +36,8 @@
         <!--  正在运行（仅 Windows；exe 名即标识）。已添加的灰显不可点。  -->
         <ScrollViewer MaxHeight="380" IsVisible="{Binding HasEntries}">
             <StackPanel Spacing="6">
-                <TextBlock Text="正在运行" FontSize="12" Opacity="0.55" Margin="2,2,0,2"
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.settings_addAppRunning}}"
+                           FontSize="12" Opacity="0.55" Margin="2,2,0,2"
                            IsVisible="{Binding HasFilteredEntries}" />
                 <ItemsControl ItemsSource="{Binding FilteredEntries}">
                     <ItemsControl.ItemTemplate>
@@ -48,7 +51,8 @@
                                     <TextBlock Grid.Column="0" Text="{Binding Id}" FontSize="12"
                                                FontFamily="Consolas, Menlo, monospace"
                                                TextTrimming="CharacterEllipsis" />
-                                    <u:Badge Grid.Column="1" Content="已添加" VerticalAlignment="Center"
+                                    <u:Badge Grid.Column="1" Content="{Translate {x:Static loc:LanguageManager+Keys.settings_addAppAdded}}"
+                                             VerticalAlignment="Center"
                                              IsVisible="{Binding IsAdded}" />
                                 </Grid>
                             </Button>

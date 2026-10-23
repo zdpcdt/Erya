@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Erya.Localization;
 
 namespace Erya.ViewModels.Settings;
 
@@ -63,8 +64,8 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
         {
             var id = SearchText.Trim();
             if (id.Length == 0) return null;
-            if (id.Any(char.IsWhiteSpace)) return "标识不能包含空白字符。";
-            if (_existing.Contains(id)) return $"已有 {id} 的规则。";
+            if (id.Any(char.IsWhiteSpace)) return Loc.Get(LanguageManager.Instance.apps_pickerHintWhitespace);
+            if (_existing.Contains(id)) return Loc.Format(LanguageManager.Instance.apps_addDuplicate, id);
             return null;
         }
     }
@@ -73,7 +74,7 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
     public bool CanAddCustom
         => SearchText.Trim().Length > 0 && HintText is null && !ExactMatchExists;
 
-    public string CustomAddLabel => $"添加 “{SearchText.Trim()}”";
+    public string CustomAddLabel => Loc.Format(LanguageManager.Instance.apps_pickerAddCustom, SearchText.Trim());
 
     [RelayCommand]
     private void PickEntry(AddAppEntry? entry)

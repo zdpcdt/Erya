@@ -6,6 +6,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Settings;
+using Erya.Localization;
 using Erya.Services;
 
 namespace Erya.ViewModels.Settings;
@@ -182,7 +183,7 @@ public sealed partial class FontFieldViewModel : TextFieldViewModel
         };
     }
 
-    public string UnsetLabel => "未设置";
+    public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     /// <summary>
     /// Built once per Load (which runs before the field is bound) and kept
@@ -242,7 +243,7 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
 
     public bool AllowUnset { get; }
 
-    public string UnsetLabel => "未设置";
+    public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     /// <summary>Combo list including the explicit unset entry.</summary>
     public IReadOnlyList<string> Options { get; }
@@ -367,7 +368,7 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
 
     public IReadOnlyList<string> Choices => Field.Choices ?? [];
 
-    public string UnsetLabel => "未设置";
+    public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     public IReadOnlyList<string> Options => [UnsetLabel, .. Choices];
 
@@ -377,7 +378,9 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
         get
         {
             var count = Rows.Count(r => r.Selection is not null);
-            return count == 0 ? "未设置" : $"已设 {count} 项";
+            return count == 0
+                ? Loc.Get(LanguageManager.Instance.appearance_unset)
+                : Loc.Format(LanguageManager.Instance.appearance_keyMappingSummarySet, count);
         }
     }
 
@@ -429,7 +432,7 @@ public sealed partial class KeyMappingRowViewModel(string key) : ObservableObjec
         set => Selection = value == UnsetLabel ? null : value;
     }
 
-    public string UnsetLabel => "未设置";
+    public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     partial void OnSelectionChanged(string? value)
     {
@@ -460,7 +463,9 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
         get
         {
             var count = Options.Count(o => o.IsChecked);
-            return count == 0 ? "未启用" : $"已启用 {count} 项";
+            return count == 0
+                ? Loc.Get(LanguageManager.Instance.appearance_checkListSummaryNone)
+                : Loc.Format(LanguageManager.Instance.appearance_checkListSummarySet, count);
         }
     }
 
@@ -550,9 +555,9 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
     public string? AddApp(string appId, bool asciiMode)
     {
         var id = appId.Trim();
-        if (id.Length == 0) return "请填写应用标识。";
+        if (id.Length == 0) return Loc.Get(LanguageManager.Instance.apps_addEmptyId);
         if (Rows.Any(r => string.Equals(r.AppId.Trim(), id, StringComparison.OrdinalIgnoreCase)))
-            return $"已有 {id} 的规则。";
+            return Loc.Format(LanguageManager.Instance.apps_addDuplicate, id);
         var row = new AppOptionsRowViewModel(id, _editableKeys, new Dictionary<string, object?>());
         if (asciiMode)
             row.Options.FirstOrDefault(o => o.Key == "ascii_mode")?.IsChecked = true;
@@ -579,14 +584,19 @@ public sealed partial class AppOptionsFieldViewModel : SettingsFieldViewModel
 public sealed partial class AppOptionsRowViewModel : ObservableObject
 {
     /// <summary>Checkbox text per option key — schema keys are stable frontend identifiers.</summary>
-    private static readonly IReadOnlyDictionary<string, string> OptionLabels = new Dictionary<string, string>
+    private static string OptionLabelOf(string key)
     {
-        ["ascii_mode"] = "默认英文",
-        ["vim_mode"] = "Vim 模式",
-        ["inline_preedit"] = "内嵌编码",
-        ["inline"] = "强制内嵌编码",
-        ["no_inline"] = "禁用内嵌编码",
-    };
+        var m = LanguageManager.Instance;
+        return key switch
+        {
+            "ascii_mode" => Loc.Get(m.apps_optionAsciiMode),
+            "vim_mode" => Loc.Get(m.apps_optionVimMode),
+            "inline_preedit" => Loc.Get(m.apps_optionInlinePreedit),
+            "inline" => Loc.Get(m.apps_optionInline),
+            "no_inline" => Loc.Get(m.apps_optionNoInline),
+            _ => key,
+        };
+    }
 
     private readonly IReadOnlyDictionary<string, object?> _unmodeled;
     private readonly HashSet<string> _loadedTrues;
@@ -600,7 +610,7 @@ public sealed partial class AppOptionsRowViewModel : ObservableObject
         _loadedTrues = [.. editableKeys.Where(k => loaded.TryGetValue(k, out var v) && v is true)];
         foreach (var key in editableKeys)
         {
-            var option = new AppOptionViewModel(key, OptionLabels.GetValueOrDefault(key, key), _loadedTrues.Contains(key));
+            var option = new AppOptionViewModel(key, OptionLabelOf(key), _loadedTrues.Contains(key));
             option.PropertyChanged += OnOptionChanged;
             Options.Add(option);
         }
@@ -622,7 +632,9 @@ public sealed partial class AppOptionsRowViewModel : ObservableObject
         get
         {
             var on = Options.Where(o => o.IsChecked).Select(o => o.Label).ToList();
-            return on.Count == 0 ? "未设置输入规则" : string.Join(" · ", on);
+            return on.Count == 0
+                ? Loc.Get(LanguageManager.Instance.apps_summaryNoRule)
+                : string.Join(" · ", on);
         }
     }
 

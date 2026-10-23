@@ -3,6 +3,7 @@
               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
               xmlns:u="https://irihi.tech/ursa"
+              xmlns:lingua="https://irihi.tech/lingua"
               xmlns:vm="clr-namespace:Erya.ViewModels"
               xmlns:settings="clr-namespace:Erya.ViewModels.Settings"
               xmlns:adv="clr-namespace:Erya.ViewModels.Advanced"
@@ -103,6 +104,12 @@
     </Panel>
 
     <u:UrsaWindow.RightContent>
-        <u:ThemeToggleButton IsThreeState="True" />
+        <!-- 语言切换在主题切换左侧（参赛演示：简/繁/EN 三语实时切换） -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <lingua:CulturePicker Managers="{Binding LinguaManagers}"
+                                  Cultures="{Binding Cultures}"
+                                  SelectedItem="{Binding SelectedCulture, Mode=TwoWay}" />
+            <u:ThemeToggleButton IsThreeState="True" />
+        </StackPanel>
     </u:UrsaWindow.RightContent>
 </u:UrsaWindow>

@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.Text;
 using YamlDotNet.RepresentationModel;
 
@@ -55,7 +56,7 @@ internal static class DefaultCustomYamlEditor
         var backupPath = path + BackupSuffix;
         if (File.Exists(backupPath)) File.WriteAllText(path, File.ReadAllText(backupPath));
         throw new InvalidOperationException(
-            $"写入 {FileName} 后未能通过校验，原文件已还原。");
+            CoreLoc.Format("yaml_writeVerifyFailed", FileName));
     }
 
     private static bool Verify(string path, IReadOnlyList<string> expected)
@@ -121,7 +122,7 @@ internal static class DefaultCustomYamlEditor
         stream.Load(new StringReader(original));
         if (stream.Documents is not [var document, ..] || document.RootNode is not YamlMappingNode root)
             throw new InvalidOperationException(
-                $"{FileName} 不是可识别的 YAML 映射，无法安全写入。请手工检查该文件。");
+                FileName + " " + CoreLoc.Get("yaml_notMapping"));
 
         if (!RimeYaml.TryGetChild(root, "patch", out var patchNode) || patchNode is not YamlMappingNode patch)
         {
@@ -212,9 +213,9 @@ internal static class DefaultCustomYamlEditor
     private static string RenderFresh(IReadOnlyList<string> ids)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("# default.custom.yaml —— RIME 用户补丁配置");
-        sb.AppendLine("# 部署时会覆盖 default.yaml 中的同名设置；修改后需重新部署生效。");
-        sb.AppendLine("# 尔雅 Erya 只维护 patch/schema_list（输入方案列表），其余内容可手工编辑。");
+        sb.AppendLine(CoreLoc.Format("yaml_headerTitleCustom", "default.custom.yaml"));
+        sb.AppendLine(CoreLoc.Get("yaml_headerDefaultLine2"));
+        sb.AppendLine(CoreLoc.Get("yaml_headerDefaultLine3"));
         sb.AppendLine();
         sb.AppendLine("patch:");
         foreach (var line in KeyAndItems(2, ids)) sb.AppendLine(line);

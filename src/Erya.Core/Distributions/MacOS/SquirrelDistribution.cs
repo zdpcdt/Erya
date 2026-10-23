@@ -1,3 +1,4 @@
+using Erya.Core.Localization;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -36,7 +37,7 @@ public sealed class SquirrelDistribution : RimeDistributionBase
 
     public override string Id => "squirrel";
 
-    public override string DisplayName => "鼠鬚管 Squirrel";
+    public override string DisplayName => CoreLoc.Get("distName_squirrel");
 
     public override string? InstallDir { get; }
 
@@ -61,7 +62,7 @@ public sealed class SquirrelDistribution : RimeDistributionBase
     public override async Task DeployAsync(CancellationToken cancellationToken = default)
     {
         if (!CanDeploy)
-            throw new InvalidOperationException($"未找到鼠鬚管主程序：{_binaryPath}（鼠鬚管是否已安装？）");
+            throw new InvalidOperationException(CoreLoc.Format("squirrel_deployerMissing", _binaryPath));
 
         var instanceRunning = IsSquirrelRunning();
         var stamp = BuildStamp();
@@ -69,8 +70,7 @@ public sealed class SquirrelDistribution : RimeDistributionBase
 
         if (instanceRunning && !await WaitForBuildAdvanceAsync(stamp, RedeployTimeout, cancellationToken))
             throw new InvalidOperationException(
-                $"已通知鼠鬚管重新部署，但 {(int)RedeployTimeout.TotalSeconds} 秒内未检测到部署完成。" +
-                "可从输入法菜单手动「重新部署」，或稍后重试。");
+                CoreLoc.Format("squirrel_deployTimeout", (int)RedeployTimeout.TotalSeconds));
     }
 
     internal static bool IsSquirrelRunning()
