@@ -12,7 +12,7 @@ RID="${1:-linux-x64}"
 case "$RID" in
   linux-x64)   APPARCH=x86_64;  DEBARCH=amd64 ;;
   linux-arm64) APPARCH=aarch64; DEBARCH=arm64 ;;
-  *) echo "不支持的 RID：$RID（支持 linux-x64 / linux-arm64）" >&2; exit 1 ;;
+  *) echo "不支持的 RID：${RID}（支持 linux-x64 / linux-arm64）" >&2; exit 1 ;;
 esac
 
 VERSION="$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' src/Erya/Erya.csproj | head -1)"
@@ -24,7 +24,7 @@ fi
 # ---------- 1. publish 一次，三种格式共用 ----------
 
 PUB="dist/publish-$RID"
-echo "==> dotnet publish（self-contained，$RID）"
+echo "==> dotnet publish（self-contained，${RID}）"
 rm -rf "$PUB"
 dotnet publish src/Erya -c Release -r "$RID" --self-contained true -o "$PUB"
 
@@ -46,7 +46,7 @@ rm -rf "$TAR_DIR"
 
 # ---------- 3. AppImage ----------
 
-echo "==> AppImage（$APPARCH）"
+echo "==> AppImage（${APPARCH}）"
 APPDIR="dist/Erya.AppDir"
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr"
@@ -70,7 +70,7 @@ chmod 755 "$APPDIR/AppRun"
 TOOL="dist/cache/appimagetool-$APPARCH.AppImage"
 if [[ ! -x "$TOOL" ]]; then
   mkdir -p dist/cache
-  echo "    下载 appimagetool（$APPARCH）…"
+  echo "    下载 appimagetool（${APPARCH}）…"
   wget -q -O "$TOOL" "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$APPARCH.AppImage"
   chmod +x "$TOOL"
 fi
@@ -81,7 +81,7 @@ rm -rf "$APPDIR"
 
 # ---------- 4. deb ----------
 
-echo "==> deb（$DEBARCH）"
+echo "==> deb（${DEBARCH}）"
 DEBROOT="dist/debroot"
 rm -rf "$DEBROOT"
 mkdir -p "$DEBROOT/usr/lib/erya" "$DEBROOT/usr/bin" \

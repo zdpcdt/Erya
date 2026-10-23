@@ -67,7 +67,7 @@ jobs:
           emit osx-arm64 macos-latest   false "$sf_portable"
           emit osx-arm64 macos-latest   true  "$sf_portable"
           if [[ "${#entries[@]}" -eq 0 ]]; then
-            echo "错误：筛选结果为空（platform=$PLAT mode=$MODE）" >&2
+              echo "错误：筛选结果为空（platform=${PLAT} mode=${MODE}）" >&2
             exit 1
           fi
           joined="$(IFS=,; echo "${entries[*]}")"
