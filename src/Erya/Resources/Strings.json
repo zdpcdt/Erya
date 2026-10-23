@@ -172,6 +172,8 @@
     "semiDesc": "为 Avalonia 原生控件提供 Semi Design 风格主题，并支持数据表格、停靠布局等扩展。",
     "ursaKicker": "企业级控件库",
     "ursaDesc": "为桌面应用提供复杂输入、选择和数据交互控件。",
+    "linguaKicker": "多语言源生成器",
+    "linguaDesc": "将多语言资源生成强类型接口，支持应用运行时切换语言。",
     "ackTitle": "致谢",
     "ackDesc": "尔雅构建于 RIME 生态之上，感谢以下项目与作者",
     "ackRimeDesc": "开源跨平台输入法引擎",

@@ -38,20 +38,21 @@ public sealed class AboutPageTests
         Assert.IsType<AboutViewModel>(vm.CurrentPage);
         Assert.Equal("关于", vm.PageTitle);
 
-        // 品牌图标：页头 Irihi + 两张产品卡 Semi / Ursa（Irihi.Branding 原生绘制）。
+        // 品牌图标：页头 Irihi + 三张产品卡 Semi / Ursa / Lingua（Irihi.Branding 原生绘制）。
         var icons = window.GetVisualDescendants().OfType<IrihiIcon>().ToList();
         Assert.Equal(
         [
-            IconName.Irihi, IconName.Semi, IconName.Ursa,
+            IconName.Irihi, IconName.Semi, IconName.Ursa, IconName.Lingua,
         ], icons.Select(i => i.Icon));
 
-        // 两张产品卡 + 致谢五行(RIME 生态) + 官网 / GitHub 两个底部链接，全部带外链。
+        // 三张产品卡 + 致谢五行(RIME 生态) + 官网 / GitHub 两个底部链接，全部带外链。
         var links = window.GetVisualDescendants().OfType<HyperlinkButton>()
             .Select(b => b.NavigateUri?.AbsoluteUri).ToList();
         Assert.Equal(
         [
             "https://irihi.tech/products/semi-avalonia/",
             "https://irihi.tech/products/ursa",
+            "https://irihi.tech/products/lingua",
             "https://github.com/rime/librime",
             "https://github.com/rime/squirrel",
             "https://github.com/rime/weasel",

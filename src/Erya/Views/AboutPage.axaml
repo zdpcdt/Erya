@@ -87,8 +87,8 @@
                            Text="{Translate {x:Static loc:LanguageManager+Keys.about_productsIntro}}" />
             </StackPanel>
 
-            <!--  产品卡：点击进入产品页  -->
-            <WrapPanel MaxWidth="592" HorizontalAlignment="Center">
+            <!--  产品卡：点击进入产品页（三张卡含边距共 3×280=840，宽窗口下一行排布）  -->
+            <WrapPanel MaxWidth="840" HorizontalAlignment="Center">
                 <HyperlinkButton Background="{DynamicResource SemiPurple5}"
                                  NavigateUri="https://irihi.tech/products/semi-avalonia/"
                                  Theme="{StaticResource ProductTile}">
@@ -113,6 +113,19 @@
                                    Text="{Translate {x:Static loc:LanguageManager+Keys.about_ursaKicker}}" />
                         <TextBlock Classes="TileDescription"
                                    Text="{Translate {x:Static loc:LanguageManager+Keys.about_ursaDesc}}" />
+                    </StackPanel>
+                </HyperlinkButton>
+                <HyperlinkButton Background="{DynamicResource SemiTeal5}"
+                                 NavigateUri="https://irihi.tech/products/lingua"
+                                 Theme="{StaticResource ProductTile}">
+                    <StackPanel>
+                        <branding:IrihiIcon HorizontalAlignment="Center" Icon="Lingua" Size="72" />
+                        <TextBlock Classes="TileName" Text="Lingua" />
+                        <Label Classes="TileTag Blue Ghost" Content="{Translate {x:Static loc:LanguageManager+Keys.about_tagOpenSource}}" Theme="{DynamicResource TagLabel}" />
+                        <TextBlock Classes="TileKicker"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_linguaKicker}}" />
+                        <TextBlock Classes="TileDescription"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_linguaDesc}}" />
                     </StackPanel>
                 </HyperlinkButton>
             </WrapPanel>
