@@ -1,15 +1,18 @@
 # 尔雅发布打包：一次构建一个「平台 × AOT/非 AOT」组合，产出 dist/Erya_<版本>_<平台>[_aot].zip
 #
 # 用法（仓库根目录）：
-#   pwsh packaging/publish.ps1 -Rid win-x64            # 自包含便携版（非 AOT）
-#   pwsh packaging/publish.ps1 -Rid win-x64 -Aot       # Native AOT 版
+#   pwsh packaging/publish.ps1 -Rid win-x64                 # 自包含便携版（非 AOT）
+#   pwsh packaging/publish.ps1 -Rid win-x64 -SingleFile     # 便携版单文件（一个 exe，原生库自解压）
+#   pwsh packaging/publish.ps1 -Rid win-x64 -Aot            # Native AOT 版
 #   # Windows 本机没有 pwsh 时（Windows PowerShell 5.1 同样可跑）：
 #   powershell -ExecutionPolicy Bypass -File packaging\publish.ps1 -Rid win-x64 -Aot
 #
 # RID：win-x64 / linux-x64 / linux-arm64 / osx-x64 / osx-arm64
 # 注意：Native AOT 不能交叉编译——目标平台必须在对应系统的本机上构建
-#       （win-x64 在 Windows、linux-x64 在 Linux、osx-arm64 在 macOS；.github/workflows/ci.yml 矩阵已对齐）。
+#       （win-x64 在 Windows、linux-x64 在 Linux、osx-arm64 在 macOS；GitHub Actions 矩阵已对齐）。
 #       非 AOT 的自包含发布可以交叉构建（如 Windows 上打 linux-x64/osx-arm64 包）。
+# -SingleFile 仅对非 AOT 有意义：Native AOT 本身即单体产物（Linux/macOS 单二进制；
+#       Windows 因无静态链接的 Skia，exe+3 原生 DLL 就是极限形态），与 -Aot 互斥。
 # Linux/macOS 主机上用 zip CLI 打包以保留可执行位（Compress-Archive 会丢 +x，解压后无法直接运行）。
 
 [CmdletBinding()]
@@ -19,6 +22,9 @@ param(
     [string]$Rid,
 
     [switch]$Aot,
+
+    # 便携版单文件：PublishSingleFile + 自解压原生库，产物为一个可执行文件（~75MB）
+    [switch]$SingleFile,
 
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
@@ -45,13 +51,20 @@ $label = $Rid.Replace('-', '_')
 $mode = 'self-contained'
 $extra = @()
 if ($Aot) {
+    if ($SingleFile) { throw '-Aot 与 -SingleFile 互斥：Native AOT 本身即单体产物（Windows 的 exe+3 原生 DLL 已是极限形态）。' }
     $label += '_aot'
     $mode = 'Native AOT'
     $extra += '/p:PublishAot=true'
+} elseif ($SingleFile) {
+    $mode = 'self-contained 单文件'
+    $extra += '/p:PublishSingleFile=true', '/p:IncludeNativeLibrariesForSelfExtract=true'
 }
 
 $publishDir = Join-Path $RepoRoot ('artifacts/publish/' + $label)
 $zipPath = Join-Path $DistDir ('Erya_' + $Version + '_' + $label + '.zip')
+
+# 清掉上次构建的残留，避免本地连续构建不同形态时新旧文件混进 zip
+if (Test-Path -LiteralPath $publishDir) { Remove-Item -LiteralPath $publishDir -Recurse -Force }
 
 Write-Host ('==> dotnet publish（{0}，{1}）' -f $Rid, $mode)
 dotnet publish $Project -c $Configuration -r $Rid --self-contained true -o $publishDir @extra

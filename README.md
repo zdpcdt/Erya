@@ -41,7 +41,7 @@
 - [x] 高级设置（base+patch 合并配置树、行内改值即写补丁、每键撤销、路径/值搜索、仅显示已修改；源码模式直接编辑 `.custom.yaml`，保存前 YAML 校验并留 `.bak`）
 - [x] 备份恢复（zip 打包用户目录；恢复前自动在备份旁生成安全备份，恢复后自动触发重新部署）
 - [x] Linux 打包三件套（`packaging/linux/dist.sh` 一次构建产出 tar.gz / AppImage / deb，均自包含）
-- [x] 打包与 CI（`packaging/publish.ps1` 一条命令构建一个「平台 × AOT/非 AOT」组合，产出 `dist/Erya_<版本>_<平台>[_aot].zip`——win-x64 / linux-x64 / osx-arm64 × 2 共六包；Native AOT 不可交叉编译，各 RID 在原生系统构建。GitHub Actions：push/PR 只跑三平台全量测试，**打包一律在 Actions 页手动 Run workflow**——按需勾选 AOT/便携变体，release_tag 留空仅出构建产物、填版本号（如 `v0.1.0`）则构建完成后自动建 tag 与 GitHub Release 并挂全部产物，含 Linux 三件套）
+- [x] 打包与 CI（`packaging/publish.ps1` 单组合打包：「平台 × AOT/非 AOT」产出 `dist/Erya_<版本>_<平台>[_aot].zip`；非 AOT 支持 `-SingleFile` 单文件发布（一个 ~108MB 的 exe，原生库自解压），与 AOT 互斥——Windows AOT 因无静态链接 Skia，exe+3 原生 DLL 已是极限；Native AOT 不可交叉编译，各 RID 在原生系统构建。三条 GitHub Actions 工作流：**test**（push/PR 三平台全量测试）、**package**（手动精准打包：平台/形态下拉 + 单文件开关，动态矩阵只给选中组合起 runner）、**release**（手动填 `v0.1.0` 之类：六 zip + Linux 三件套 tar.gz/AppImage/deb + macOS DMG（Erya.app）→ 自动建 tag 与 Release 挂全部产物））
 - [x] 在线方案安装（方案管理页一键安装雾凇拼音/白霜拼音/薄荷输入法：GitHub tarball 直下无需 git、自动过滤文档与 CI 杂物、安装前自动备份用户目录、装完自动重新部署；按包内标志方案文件识别已安装——显示「已安装」、按钮变为重新安装即覆盖升级；已安装的包可删除——按包内文件清单精确删除、只动该包文件、删前整目录备份+确认对话框）
 - [ ] macOS 真机验证（定位器与部署已实现，可用 `ERYA_SQUIRREL_APP` 环境变量在 CI 指向测试目录）。Linux 检测与部署链路已在 Ubuntu 26.04（librime 1.16）真机验证。
 
