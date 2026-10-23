@@ -65,7 +65,7 @@ Grab a self-contained build from [Releases](https://github.com/zdpcdt/Erya/relea
 | Platform | File | Notes |
 |---|---|---|
 | Windows x64 | `Erya_0.1.0_win_x64.zip` (also an `_aot` variant — smaller, faster startup) | unzip and run |
-| macOS arm64 | `Erya_0.1.0_osx_arm64.zip` | unsigned/unnotarized: `xattr -cr` first |
+| macOS arm64 | `Erya_0.1.0_osx_arm64.dmg` (drag into Applications), `.zip` | unsigned/unnotarized: `xattr -cr` first |
 | Linux x64 | `Erya_0.1.0_linux_x64.zip` | unzip and `./Erya`, or use a bundle below |
 
 Linux also ships three bundle formats: `tar.gz` (user-level `install.sh`), `AppImage` (portable), `deb` (`sudo apt install`).

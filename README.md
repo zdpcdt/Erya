@@ -65,7 +65,7 @@ RIME 是高度可定制的中文输入法引擎，但它的全部力量都藏在
 | 平台 | 文件 | 用法 |
 |---|---|---|
 | Windows x64 | `Erya_0.1.0_win_x64.zip`（另有 `_aot` 变体，更小更快） | 解压即用 |
-| macOS arm64 | `Erya_0.1.0_osx_arm64.zip` | 未经签名/公证，首次运行先 `xattr -cr` 解除隔离 |
+| macOS arm64 | `Erya_0.1.0_osx_arm64.dmg`（拖入 Applications 即装）、`.zip` | 未经签名/公证，首次运行先 `xattr -cr` 解除隔离 |
 | Linux x64 | `Erya_0.1.0_linux_x64.zip` | 解压后 `./Erya`；或用下面的三件套 |
 
 Linux 另有三件套发行包：`tar.gz`（用户级 `install.sh` 安装）/ `AppImage`（免安装）/ `deb`（`sudo apt install`）。
