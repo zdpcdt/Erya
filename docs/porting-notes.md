@@ -1,0 +1,39 @@
+# Porting Notes: Qt/QML → Avalonia
+
+[← 简体中文 README](../README.md) · [← English README](../README.en.md)
+
+This is an entry for the **Avalonia Port Challenge 2026**. Its main functional reference is [rimetool](https://github.com/yanhuacuo/rimetool), a Qt 6 / QML application for the Weasel (小狼毫) frontend, Windows-only by design: tray icons, registry conventions, Windows-specific paths. Two more tools shaped the design — [RimeControl](https://github.com/qzly/RimeControl) (WPF, backup/restore flow) and [SCT](https://github.com/neolee/sct) (macOS, the two-layer base+patch config model and schema-driven settings pages). **Erya shares no code or assets with any of them**: it is a ground-up implementation in **Avalonia 12 / .NET 10**, with the explicit goal of running the same binary source on Windows, Linux and macOS against whichever RIME frontend the user has. Below is what the port actually taught us — the parts a diff won't show.
+
+## 1. The hard part was never the UI — it was RIME's patch semantics
+
+RIME never edits a shipped YAML file. Every user change lands in a `<file>.custom.yaml` under a `patch:` map, applied **on top of** the shipped tree. Two rules shaped the whole design:
+
+- **A patch key replaces, it does not merge.** Writing `preset_color_schemes:` as one key wipes every built-in color scheme and leaves only what you wrote. Editing a shipped scheme therefore has to go through *leaf keys* — `preset_color_schemes/aqua/back_color` — which RIME merges into the shipped definition, so fields our editor does not model (`label_color`, `border_color`, …) survive. We migrated an earlier whole-key write format automatically on the next save, restoring fields the old format dropped.
+- **Display merged values, write only user-dirty keys.** Every settings page reads base + patch merged, and saving writes exactly the keys the user touched — deleting a key from the patch restores the shipped default. Schema files describe fields (`keyPath` → control type → range); a YAML-documented test pins every weasel key against the list the 0.17 frontend actually reads, so a key that renders fine but can never take effect fails CI instead of shipping as a placebo.
+
+Text-level editing (`YamlLines`) preserves user comments in `default.custom.yaml`; a write that no longer parses triggers an automatic rollback.
+
+## 2. One codebase, three frontends, honest differences
+
+An `IRimeDistribution` abstraction covers detection, user/install directories, deployment and the frontend's own UI config:
+
+- **Windows / Weasel**: files under the install dir's `data/` (not the user dir!), `WeaselDeployer /deploy` runs synchronously.
+- **macOS / Squirrel**: app bundle lookup, and `--reload` **only posts a notification and returns** — we learned this the hard way and now poll the build directory's timestamp (20 s budget) to report deployment completion truthfully.
+- **Linux / fcitx5-rime & ibus-rime**: both can coexist, so there is a frontend switcher; when the deployer is missing, `/etc/os-release` is parsed to name the right librime package per distro (`librime-bin` vs `librime` vs `rime`).
+
+Where a frontend genuinely has no setting (Linux panels own their own theming; Weasel has no translucency), the UI says so instead of exposing dead controls. The live candidate-window preview is one view model that resolves *both* key spellings — `style/layout/*` (Weasel) and `style/*` (Squirrel) — and previews unsaved edits, including in-scheme font/size overrides that win over the style-level keys.
+
+## 3. Qt → Avalonia, concretely
+
+- QML's declarative bindings map naturally to AXAML + `CommunityToolkit.Mvvm`; what QML gave for free (types on the QML side) becomes small observables — e.g. the settings fields expose a tri-state "current value" (`CurrentValue`) so the preview can tell *0* apart from *unset*.
+- Qt Quick Controls → **Semi.Avalonia + Ursa** for the whole chrome; the settings-center look is a custom `Cell`/`CellGroup` pair (pseudo-classes `:expanded`/`:over-detail` to keep interactive rows from firing when you click inside their detail area), and drag-to-reorder is a custom `ReorderableItemsControl`.
+- Cross-platform font enumeration goes through Avalonia's `FontManager`; hotkeys capture through Ursa's `KeyGestureInput`, with a converter that translates RIME's `Caps_Lock`/`Shift_L` tokens into per-platform display names and back.
+- **Avalonia 12 notes for fellow porters**: `IClipboard.SetTextAsync` moved to an extension in `Avalonia.Input.Platform`; `UrsaWindow` does **not** auto-install toast/notification managers (mount `WindowToastManager` on your main window or every toast silently disappears — our most embarrassing bug, now under test).
+
+## 4. Testing as a first-class feature
+
+213 tests, all runnable headless on any OS: config-store roundtrips (comment preservation, rollback, leaf-key migration), schema validation, deploy-wait logic with injected clocks, and **render tests that screenshot real pages** — the README gallery is generated by a test running against the machine's real RIME install (Weasel on Windows, Squirrel on macOS), which doubles as our visual acceptance gate.
+
+## 5. Beyond the original
+
+Cross-platform everything aside: leaf-key scheme patching (the original rewrites whole blocks), a live candidate-window preview driven by pending edits, one-click online scheme installation (GitHub tarball, per-file uninstall manifest, automatic backup before install/delete), and Linux packaging (tar.gz / AppImage / deb out of one script).
