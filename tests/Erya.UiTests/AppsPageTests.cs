@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Erya.Controls;
 using Erya.Core.Distributions;
+using Erya.Services;
 using Erya.ViewModels.Settings;
 using Erya.Views;
 using Xunit;
@@ -113,14 +114,13 @@ public sealed class AppsPageTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Apps_page_empty_state_offers_quick_presets()
+    public async Task Apps_page_empty_state_shows_hint_without_quick_presets()
     {
         Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
 
         // 真实组装顺序：页面 VM 先构造（此时还没有字段），编辑器加载后补挂。
-        // 预设注入 Windows 列表：生产按平台取，Linux 上为空，测试须与平台无关。
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
-        var vm = new AppsPageViewModel(editor, AppBehaviorPresets.Windows);
+        var vm = new AppsPageViewModel(editor);
         Assert.Null(vm.Field);
         await editor.LoadCommand.ExecuteAsync(null);
         Assert.NotNull(vm.Field);
@@ -130,21 +130,16 @@ public sealed class AppsPageTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
+        // 空态只有标题+说明（用户反馈：什么应用都没加时不需要一排预设按钮），
+        // 加应用一律走「＋ 添加应用」弹层。
         Assert.False(vm.HasAnyApp);
-
-        // 空态：预设快捷按钮（点一下=添加为「默认英文」），列表区没有卡片。
-        var presetButtons = page.GetVisualDescendants().OfType<Button>()
-            .Where(b => b.DataContext is AppPresetItem).ToList();
-        Assert.Equal(vm.EmptyStatePresets.Count, presetButtons.Count);
+        Assert.True(page.GetVisualDescendants().OfType<TextBlock>()
+            .Any(t => t.Text == "还没有应用规则" && t.IsVisible));
+        Assert.True(page.GetVisualDescendants().OfType<TextBlock>()
+            .Any(t => t.Text.Contains("直接敲英文") && t.IsVisible));
         Assert.DoesNotContain(page.GetVisualDescendants(), c => c is Cell { DataContext: AppOptionsRowViewModel });
-
-        vm.QuickAddCommand.Execute(vm.EmptyStatePresets[0]);
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(vm.HasAnyApp);
-        var added = Assert.Single(vm.Field!.Rows);
-        Assert.Equal(vm.EmptyStatePresets[0].Id, added.AppId);
-        Assert.True(added.Options.Single(o => o.Key == "ascii_mode").IsChecked);
-        Assert.True(vm.IsDirty);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(),
+            b => b.DataContext is AddAppEntry); // 弹层没打开，运行中列表的条目按钮不在页面上
         window.Close();
     }
 
@@ -176,21 +171,33 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_picker_filters_shows_states_and_adds_in_one_click()
     {
-        // 运行中列表注入固定值（生产取本机进程，Windows-only，测试须与平台无关）。
+        // 运行中列表注入固定值（生产取本机：Windows=进程 exe 名，macOS=应用名
+        // +Bundle ID，测试须与平台无关）——混一条带友好名的 mac 条目覆盖两态。
         var added = new List<string>();
         var vm = new AddAppPickerViewModel(["cmd.exe"], added.Add,
-            ["cmd.exe", "chrome.exe", "rider64.exe"]);
+            [new RunningApp("cmd.exe"), new RunningApp("chrome.exe"),
+             new RunningApp("rider64.exe"), new RunningApp("com.apple.Terminal", "终端")]);
 
         // 条目在列；已有规则的那条标「已添加」（不可点，不再事后报错）。
-        Assert.Equal(["cmd.exe", "chrome.exe", "rider64.exe"], vm.Entries.Select(e => e.Id));
+        Assert.Equal(["cmd.exe", "chrome.exe", "rider64.exe", "com.apple.Terminal"],
+            vm.Entries.Select(e => e.Id));
+        var macEntry = vm.Entries.Single(e => e.Id == "com.apple.Terminal");
+        Assert.Equal("终端", macEntry.Title);
+        Assert.True(macEntry.HasTitle);
+        Assert.All(vm.Entries.Where(e => !ReferenceEquals(e, macEntry)), e => Assert.False(e.HasTitle));
         Assert.True(vm.Entries.Single(e => e.Id == "cmd.exe").IsAdded);
         Assert.Contains(vm.Entries, e => e is { Id: "chrome.exe", IsAdded: false });
 
-        // 搜索按标识过滤。
+        // 搜索按标识过滤；友好名也算命中（mac 用户敲应用名，不是 Bundle ID）。
         vm.SearchText = "chrome";
         Assert.Equal(["chrome.exe"], vm.FilteredEntries.Select(e => e.Id));
+        vm.SearchText = "终端";
+        Assert.Equal(["com.apple.Terminal"], vm.FilteredEntries.Select(e => e.Id));
+        // 敲应用名不是敲标识：没有「完全匹配」，添加行照常可用。
+        Assert.False(vm.ExactMatchExists);
+        Assert.True(vm.CanAddCustom);
 
-        // 输入恰好等于某条目标识 → 点那条即可，不出「添加」行（前缀不算完全匹配）。
+        // 输入恰好等于某条标识 → 点那条即可，不出「添加」行（前缀不算完全匹配）。
         vm.SearchText = "chrome.exe";
         Assert.True(vm.ExactMatchExists);
         Assert.False(vm.CanAddCustom);
@@ -213,11 +220,11 @@ public sealed class AppsPageTests : IDisposable
         vm.AddCustomCommand.Execute(null);
         Assert.Equal(["myapp.exe"], added); // 无新增
 
-        // 点选即加：已添加的条目点了没反应，未添加的直接回调。
+        // 点选即加：已添加的条目点了没反应，未添加的直接回调（入列的是标识不是友好名）。
         vm.PickEntryCommand.Execute(vm.Entries.Single(e => e.Id == "cmd.exe"));
         Assert.Equal(["myapp.exe"], added);
-        vm.PickEntryCommand.Execute(vm.Entries.Single(e => e.Id == "rider64.exe"));
-        Assert.Equal(["myapp.exe", "rider64.exe"], added);
+        vm.PickEntryCommand.Execute(macEntry);
+        Assert.Equal(["myapp.exe", "com.apple.Terminal"], added);
     }
 
     [AvaloniaFact]
@@ -229,7 +236,7 @@ public sealed class AppsPageTests : IDisposable
         Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
         await editor.LoadCommand.ExecuteAsync(null);
-        var vm = new AppsPageViewModel(editor, runningApps: ["mockapp.exe"]);
+        var vm = new AppsPageViewModel(editor, runningApps: [new RunningApp("mockapp.exe")]);
 
         var page = new AppsPage { DataContext = vm, Width = 760, Height = 620 };
         var window = new Window { Width = 800, Height = 680, Content = page };
@@ -280,7 +287,8 @@ public sealed class AppsPageTests : IDisposable
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
         await editor.LoadCommand.ExecuteAsync(null);
         // 注入固定运行中列表：fixture 的 cmd.exe 要在列表里才能测「已添加」标记。
-        var vm = new AppsPageViewModel(editor, runningApps: ["cmd.exe", "mockapp.exe"]);
+        var vm = new AppsPageViewModel(editor,
+            runningApps: [new RunningApp("cmd.exe"), new RunningApp("mockapp.exe")]);
 
         // 已有的应用在弹层里带「已添加」标记。
         vm.OpenPickerCommand.Execute(null);
@@ -310,10 +318,12 @@ public sealed class AppsPageTests : IDisposable
     [AvaloniaFact]
     public void Add_app_flyout_renders_groups_states_and_enter_key()
     {
-        // 注入固定运行中列表——测试与平台无关（生产取本机进程，非 Windows 为空）。
+        // 注入固定运行中列表——测试与平台无关（生产取本机：Windows=进程 exe 名，
+        // macOS=应用名+Bundle ID，Linux 为空）。
         var added = new List<string>();
         var picker = new AddAppPickerViewModel(["cmd.exe"], added.Add,
-            ["cmd.exe", "chrome.exe"]);
+            [new RunningApp("cmd.exe"), new RunningApp("chrome.exe"),
+             new RunningApp("com.apple.Terminal", "终端")]);
         var flyout = new AddAppFlyout { DataContext = picker, Width = 340 };
         var window = new Window { Width = 380, Height = 560, Content = flyout };
         window.Show();
@@ -334,7 +344,14 @@ public sealed class AppsPageTests : IDisposable
         Assert.Contains(disabled.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
             b => b.Content as string == "已添加" && b.IsVisible);
 
-        // 点未添加的条目直接触发回调。
+        // 带友好名的条目（macOS 形态）：应用名做主行，Bundle ID 退为小字第二行
+        // （按可见文本断言——折叠的另一半 Id 行与 Badge 模板仍在视觉树里）。
+        var macEntry = entries.Single(b => ((AddAppEntry)b.DataContext!).HasTitle);
+        var macTexts = macEntry.GetVisualDescendants().OfType<TextBlock>()
+            .Where(t => t.IsVisible).Select(t => t.Text).ToList();
+        Assert.Equal(["终端", "com.apple.Terminal"], macTexts);
+
+        // 点未添加的条目直接触发回调（入列的是标识，不是友好名）。
         var pickable = entries.First(b => b.IsEnabled);
         var pickableId = ((AddAppEntry)pickable.DataContext!).Id;
         pickable.Command.Execute(pickable.CommandParameter);

@@ -33,7 +33,7 @@
                    IsVisible="{Binding HintText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                    TextWrapping="Wrap" />
 
-        <!--  正在运行（仅 Windows；exe 名即标识）。已添加的灰显不可点。  -->
+        <!--  正在运行（Windows=进程 exe 名；macOS=应用名+小字 Bundle ID）。已添加的灰显不可点。  -->
         <ScrollViewer MaxHeight="380" IsVisible="{Binding HasEntries}">
             <StackPanel Spacing="6">
                 <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.settings_addAppRunning}}"
@@ -48,9 +48,20 @@
                                     CommandParameter="{Binding}"
                                     IsEnabled="{Binding !IsAdded}">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="{Binding Id}" FontSize="12"
-                                               FontFamily="Consolas, Menlo, monospace"
-                                               TextTrimming="CharacterEllipsis" />
+                                    <!--  无友好名（Windows）：exe 名一行等宽；有友好名（macOS）：应用名+小字 Bundle ID 两行  -->
+                                    <StackPanel Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Id}" FontSize="12"
+                                                   FontFamily="Consolas, Menlo, monospace"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   IsVisible="{Binding !HasTitle}" />
+                                        <TextBlock Text="{Binding Title}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   IsVisible="{Binding HasTitle}" />
+                                        <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
+                                                   FontFamily="Consolas, Menlo, monospace"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   IsVisible="{Binding HasTitle}" />
+                                    </StackPanel>
                                     <u:Badge Grid.Column="1" Content="{Translate {x:Static loc:LanguageManager+Keys.settings_addAppAdded}}"
                                              VerticalAlignment="Center"
                                              IsVisible="{Binding IsAdded}" />

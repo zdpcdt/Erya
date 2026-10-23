@@ -244,7 +244,6 @@
     "removeRuleTip": "Remove this app rule",
     "emptyTitle": "No App Rules Yet",
     "emptyDesc": "Terminals, SSH and remote desktop apps usually take direct English input—set them to “Default English” and they switch automatically when input starts, no need to press Shift every time.",
-    "quickAddTip": "Add as “Default English” in one click",
     "searchMiss": "No matching app rules.",
     "optionAsciiMode": "Default English",
     "optionVimMode": "Vim mode",
@@ -255,14 +254,7 @@
     "addEmptyId": "Please enter an app identifier.",
     "addDuplicate": "A rule for {0} already exists.",
     "pickerHintWhitespace": "The identifier cannot contain whitespace.",
-    "pickerAddCustom": "Add “{0}”",
-    "presetCmd": "Command Prompt",
-    "presetConhost": "Classic Console Host",
-    "presetWindowsTerminal": "Windows Terminal",
-    "presetOpenSsh": "OpenSSH Client",
-    "presetRdp": "Remote Desktop Connection",
-    "presetMacTerminal": "Terminal",
-    "presetMacRdp": "Windows Remote Desktop"
+    "pickerAddCustom": "Add “{0}”"
   },
   "appearance": {
     "reloadTip": "Reload settings",

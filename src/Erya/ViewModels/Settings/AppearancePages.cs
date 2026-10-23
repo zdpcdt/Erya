@@ -262,22 +262,20 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
 /// <summary>
 /// 应用行为页：app_options 的专用卡片列表（不走通用分节渲染）——每应用一张卡，
 /// 右侧按 schema choices 渲染该前端的选项开关（鼠须管含 Vim/内嵌编码，小狼毫
-/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（正在运行的应用点一下即加，
-/// 手输回车即加，见 AddAppPickerViewModel），空态另有常用应用一键添加。
-/// 数据仍在共享编辑器的 appOptions 字段上，保存走同一条管线。
+/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（正在运行的应用点一下即加
+/// ——Windows 按进程 exe 名、macOS 按应用名+Bundle ID，手输回车即加，见
+/// AddAppPickerViewModel）。数据仍在共享编辑器的 appOptions 字段上，保存走
+/// 同一条管线。
 /// </summary>
 public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
-    private readonly IReadOnlyList<AppPresetItem> _presets;
-    private readonly IReadOnlyList<string>? _runningApps;
+    private readonly IReadOnlyList<RunningApp>? _runningApps;
     private AppOptionsFieldViewModel? _field;
 
     public AppsPageViewModel(SettingsEditorViewModel editor,
-        IReadOnlyList<AppPresetItem>? presets = null,
-        IReadOnlyList<string>? runningApps = null) : base(editor, "apps")
+        IReadOnlyList<RunningApp>? runningApps = null) : base(editor, "apps")
     {
-        // 预设按平台给出（Linux 生产上整页不出现）；可注入供测试在任何平台跑。
-        _presets = presets ?? AppBehaviorPresets.ForCurrentOs();
+        // 本机正在运行的应用（注入供测试与平台无关）。
         _runningApps = runningApps;
         editor.PropertyChanged += OnEditorChangedForApps;
         HookField();
@@ -334,22 +332,12 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
         RequestClosePicker?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>空态快捷添加：一键为常用应用建「默认英文」规则，跳过弹层。</summary>
-    [RelayCommand]
-    private void QuickAdd(AppPresetItem? preset)
-    {
-        if (preset is not null) Field?.AddApp(preset.Id, asciiMode: true);
-    }
-
     /// <summary>卡片上的删除（转发到字段，简化行模板绑定）。</summary>
     [RelayCommand]
     private void RemoveApp(AppOptionsRowViewModel? row)
     {
         if (row is not null) Field?.RemoveRowCommand.Execute(row);
     }
-
-    /// <summary>空态里放的常用应用快捷入口（平台相关，构造时定死）。</summary>
-    public IReadOnlyList<AppPresetItem> EmptyStatePresets => _presets;
 
     private void OnEditorChangedForApps(object? sender, PropertyChangedEventArgs e)
     {

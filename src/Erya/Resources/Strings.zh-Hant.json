@@ -244,7 +244,6 @@
     "removeRuleTip": "刪除此應用程式規則",
     "emptyTitle": "還沒有應用程式規則",
     "emptyDesc": "終端機、SSH、遠端桌面這類應用程式裡通常直接輸入英文——為它們設定「預設英文」，啟動輸入時自動切換，不用每次手動按 Shift。",
-    "quickAddTip": "一鍵新增為「預設英文」",
     "searchMiss": "沒有相符的應用程式規則。",
     "optionAsciiMode": "預設英文",
     "optionVimMode": "Vim 模式",
@@ -255,14 +254,7 @@
     "addEmptyId": "請填寫應用程式識別碼。",
     "addDuplicate": "已有 {0} 的規則。",
     "pickerHintWhitespace": "識別碼不能包含空白字元。",
-    "pickerAddCustom": "新增 “{0}”",
-    "presetCmd": "命令提示字元",
-    "presetConhost": "傳統主控台宿主",
-    "presetWindowsTerminal": "Windows 終端機",
-    "presetOpenSsh": "OpenSSH 用戶端",
-    "presetRdp": "遠端桌面連線",
-    "presetMacTerminal": "終端機（Terminal）",
-    "presetMacRdp": "Windows 遠端桌面"
+    "pickerAddCustom": "新增 “{0}”"
   },
   "appearance": {
     "reloadTip": "重新讀取設定",
