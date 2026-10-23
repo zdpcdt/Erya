@@ -137,9 +137,9 @@
                 <TextBlock HorizontalAlignment="Center" FontSize="14" TextAlignment="Center" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextBlockTertiaryForeground}"
                            Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackDesc}}" />
-                <!--  单个 Grid 五行四列：列宽全表共享，天然对齐（Avalonia 无 SharedSizeGroup）  -->
+                <!--  单个 Grid 八行四列：列宽全表共享，天然对齐（Avalonia 无 SharedSizeGroup）  -->
                 <Border Margin="0,8,0,0" Padding="20,6" Theme="{DynamicResource CardBorder}">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                         <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Text="中州韵 RIME" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
@@ -172,24 +172,54 @@
                                          NavigateUri="https://github.com/rime/weasel" />
 
                         <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" Text="中州韵助手 rimetool" />
+                                   VerticalAlignment="Center" Text="ibus-rime" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimetoolDesc}}" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackIbusDesc}}" />
                         <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,8,16,8"
-                                   VerticalAlignment="Center" Text="yanhuacuo" />
+                                   VerticalAlignment="Center" Text="佛振" />
                         <HyperlinkButton Grid.Row="3" Grid.Column="3" Margin="0,8" Content="GitHub"
-                                         NavigateUri="https://github.com/yanhuacuo/rimetool" />
+                                         NavigateUri="https://github.com/rime/ibus-rime" />
 
                         <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
-                                   VerticalAlignment="Center" Text="RimeControl" />
+                                   VerticalAlignment="Center" Text="中州韵助手 rimetool" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextBlockTertiaryForeground}"
-                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimeControlDesc}}" />
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimetoolDesc}}" />
                         <TextBlock Grid.Row="4" Grid.Column="2" Margin="0,8,16,8"
-                                   VerticalAlignment="Center" Text="qzly" />
+                                   VerticalAlignment="Center" Text="yanhuacuo" />
                         <HyperlinkButton Grid.Row="4" Grid.Column="3" Margin="0,8" Content="GitHub"
+                                         NavigateUri="https://github.com/yanhuacuo/rimetool" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Text="RimeControl" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextBlockTertiaryForeground}"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackRimeControlDesc}}" />
+                        <TextBlock Grid.Row="5" Grid.Column="2" Margin="0,8,16,8"
+                                   VerticalAlignment="Center" Text="qzly" />
+                        <HyperlinkButton Grid.Row="5" Grid.Column="3" Margin="0,8" Content="GitHub"
                                          NavigateUri="https://github.com/qzly/RimeControl" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Text="SCT" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextBlockTertiaryForeground}"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackSctDesc}}" />
+                        <TextBlock Grid.Row="6" Grid.Column="2" Margin="0,8,16,8"
+                                   VerticalAlignment="Center" Text="Neo Lee" />
+                        <HyperlinkButton Grid.Row="6" Grid.Column="3" Margin="0,8" Content="GitHub"
+                                         NavigateUri="https://github.com/neolee/sct" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,8" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Text="东风破 plum" />
+                        <TextBlock Grid.Row="7" Grid.Column="1" Margin="16,8" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextBlockTertiaryForeground}"
+                                   Text="{Translate {x:Static loc:LanguageManager+Keys.about_ackPlumDesc}}" />
+                        <TextBlock Grid.Row="7" Grid.Column="2" Margin="0,8,16,8"
+                                   VerticalAlignment="Center" Text="佛振" />
+                        <HyperlinkButton Grid.Row="7" Grid.Column="3" Margin="0,8" Content="GitHub"
+                                         NavigateUri="https://github.com/rime/plum" />
                     </Grid>
                 </Border>
             </StackPanel>
