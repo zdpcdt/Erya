@@ -92,34 +92,11 @@
                         </c:CellGroup.ItemTemplate>
                     </c:CellGroup>
 
-                    <!--  空态：没有任何规则  -->
+                    <!--  空态：没有任何规则，只剩标题+说明（快捷添加走「＋ 添加应用」弹层）  -->
                     <StackPanel Spacing="12" IsVisible="{Binding !HasAnyApp}">
                         <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.apps_emptyTitle}}" FontWeight="SemiBold" />
                         <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.apps_emptyDesc}}"
                                    Opacity="0.6" TextWrapping="Wrap" MaxWidth="520" HorizontalAlignment="Left" />
-                        <ItemsControl ItemsSource="{Binding EmptyStatePresets}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <u:ElasticWrapPanel IsFillHorizontal="True" ItemWidth="200" ItemSpacing="8" LineSpacing="8" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="sf:AppPresetItem">
-                                    <Button Classes="Tertiary" Padding="12,8" HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Left"
-                                            Command="{Binding $parent[ItemsControl].((sf:AppsPageViewModel)DataContext).QuickAddCommand}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.apps_quickAddTip}}">
-                                        <StackPanel Spacing="1">
-                                            <TextBlock Text="{Binding Title}" />
-                                            <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
-                                                       FontFamily="Consolas, Menlo, monospace"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                     </StackPanel>
 
                     <!--  搜索无结果（有规则但都被过滤掉）  -->

@@ -244,7 +244,6 @@
     "removeRuleTip": "删除此应用规则",
     "emptyTitle": "还没有应用规则",
     "emptyDesc": "终端、SSH、远程桌面这类应用里通常直接敲英文——为它们设置「默认英文」，启动输入时自动切换，不用每次手动按 Shift。",
-    "quickAddTip": "一键添加为「默认英文」",
     "searchMiss": "没有匹配的应用规则。",
     "optionAsciiMode": "默认英文",
     "optionVimMode": "Vim 模式",
@@ -255,14 +254,7 @@
     "addEmptyId": "请填写应用标识。",
     "addDuplicate": "已有 {0} 的规则。",
     "pickerHintWhitespace": "标识不能包含空白字符。",
-    "pickerAddCustom": "添加 “{0}”",
-    "presetCmd": "命令提示符",
-    "presetConhost": "传统控制台宿主",
-    "presetWindowsTerminal": "Windows 终端",
-    "presetOpenSsh": "OpenSSH 客户端",
-    "presetRdp": "远程桌面连接",
-    "presetMacTerminal": "终端（Terminal）",
-    "presetMacRdp": "Windows 远程桌面"
+    "pickerAddCustom": "添加 “{0}”"
   },
   "appearance": {
     "reloadTip": "重新读取设置",

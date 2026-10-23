@@ -4,16 +4,25 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Localization;
+using Erya.Services;
 
 namespace Erya.ViewModels.Settings;
 
-/// <summary>弹层里的一条可添加应用（正在运行的进程，exe 名即标识）。</summary>
-public sealed record AddAppEntry(string Id, bool IsAdded);
+/// <summary>
+/// 弹层里的一条可添加应用（正在运行的应用，Id 即 app_options 的键：
+/// Windows 是 exe 名，macOS 是 Bundle ID）。
+/// </summary>
+public sealed record AddAppEntry(string Id, bool IsAdded, string? Title = null)
+{
+    /// <summary>macOS 的 Bundle ID 很长——有友好名时行首显示应用名，标识退为小字第二行。</summary>
+    public bool HasTitle => Title is { Length: > 0 };
+}
 
 /// <summary>
-/// 添加应用弹层（点选即添加）：正在运行的应用一个可搜索列表，点任意条目
-/// 立即回调添加（默认英文）并关闭；输入无匹配时首行变「添加 “xxx”」，
-/// 回车即加。已存在的条目灰显「已添加」，手输重复给行内提示——不再事后报错。
+/// 添加应用弹层（点选即添加）：正在运行的应用一个可搜索列表（Windows 按
+/// exe 名、macOS 按应用名+Bundle ID 显示），点任意条目立即回调添加（默认
+/// 英文）并关闭；输入无匹配时首行变「添加 “xxx”」，回车即加。已存在的
+/// 条目灰显「已添加」，手输重复给行内提示——不再事后报错。
 /// </summary>
 public sealed partial class AddAppPickerViewModel : ObservableObject
 {
@@ -21,15 +30,14 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
     private readonly Action<string> _add;
 
     public AddAppPickerViewModel(IReadOnlyCollection<string> existingIds, Action<string> add,
-        IReadOnlyList<string>? runningApps = null)
+        IReadOnlyList<RunningApp>? runningApps = null)
     {
         _existing = new HashSet<string>(existingIds.Where(id => id.Length > 0),
             StringComparer.OrdinalIgnoreCase);
         _add = add;
-        // 运行中（仅 Windows 有意义：进程 exe 名才是 app_options 的键；
-        // macOS 进程名≠Bundle ID，为空——那里弹层就是纯手输）。可注入供测试。
-        Entries = (runningApps ?? AppBehaviorPresets.RunningWindowsApps())
-            .Select(id => new AddAppEntry(id, IsAdded: _existing.Contains(id)))
+        // 本机正在运行的应用（Linux 为空——那里弹层就是纯手输）。可注入供测试。
+        Entries = (runningApps ?? RunningApps.Enumerate())
+            .Select(app => new AddAppEntry(app.Id, IsAdded: _existing.Contains(app.Id), app.Title))
             .ToList();
     }
 
@@ -92,7 +100,9 @@ public sealed partial class AddAppPickerViewModel : ObservableObject
     {
         var query = SearchText.Trim();
         if (query.Length == 0) return entries;
-        return entries.Where(e => e.Id.Contains(query, StringComparison.OrdinalIgnoreCase));
+        // 标识或应用名命中都算——mac 用户敲的是应用名，不是 Bundle ID。
+        return entries.Where(e => e.Id.Contains(query, StringComparison.OrdinalIgnoreCase)
+                                  || e.Title?.Contains(query, StringComparison.OrdinalIgnoreCase) == true);
     }
 
     private void Refresh()
