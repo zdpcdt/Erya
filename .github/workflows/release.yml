@@ -1,0 +1,123 @@
+# 尔雅发版：只在 Actions 页手动 Run workflow，填 release_tag（如 v0.1.0）。
+# 构建全家福并自动创建 GitHub Release（tag 不存在时以当前 commit 建）：
+#   - 六个 zip：3 平台 × 便携单文件（PublishSingleFile）/ Native AOT
+#   - Linux 三件套：tar.gz / AppImage / deb（packaging/linux/dist.sh）
+#   - macOS DMG：Erya.app 打包（packaging/macos/dmg.sh）
+# main 每次 push 已被 test 工作流三平台测试过，此处不再重复跑测试。
+
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '发布标签（如 v0.1.0）'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  package-portable:
+    name: portable (${{ matrix.rid }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64, os: windows-latest }
+          - { rid: linux-x64, os: ubuntu-latest }
+          - { rid: osx-arm64, os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: publish + zip（单文件）
+        shell: pwsh
+        run: ./packaging/publish.ps1 -Rid ${{ matrix.rid }} -SingleFile
+      - name: Linux 三件套 (tar.gz / AppImage / deb)
+        if: matrix.rid == 'linux-x64'
+        run: bash packaging/linux/dist.sh linux-x64
+      - name: macOS DMG (Erya.app)
+        if: matrix.rid == 'osx-arm64'
+        run: bash packaging/macos/dmg.sh artifacts/publish/osx_arm64
+      - name: upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: erya-${{ matrix.rid }}
+          path: |
+            dist/*.zip
+            dist/*.dmg
+          if-no-files-found: error
+      - name: upload Linux bundles
+        if: matrix.rid == 'linux-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: erya-linux-bundles
+          path: |
+            dist/*.tar.gz
+            dist/*.AppImage
+            dist/*.deb
+          if-no-files-found: warn
+
+  package-aot:
+    name: aot (${{ matrix.rid }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64, os: windows-latest }
+          - { rid: linux-x64, os: ubuntu-latest }
+          - { rid: osx-arm64, os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: AOT toolchain (clang + zlib)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+      - name: publish + zip
+        shell: pwsh
+        run: ./packaging/publish.ps1 -Rid ${{ matrix.rid }} -Aot
+      - name: upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: erya-${{ matrix.rid }}-aot
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: [package-portable, package-aot]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # tag 不存在时由 action 以当前 commit SHA 创建
+          tag_name: ${{ inputs.release_tag }}
+          files: |
+            dist/Erya_*.zip
+            dist/Erya_*.dmg
+            dist/erya-*.tar.gz
+            dist/*.AppImage
+            dist/*.deb
+          generate_release_notes: true

@@ -1,0 +1,101 @@
+# 尔雅精准打包：只在 Actions 页手动 Run workflow，push 不触发。
+#   平台下拉（all / win-x64 / linux-x64 / osx-arm64）× 形态下拉（all / portable / aot）
+#   × 单文件开关（便携版 PublishSingleFile，产物一个 exe；AOT 不适用）。
+# select job 先按选择算出组合清单（动态矩阵），package job 只给选中的组合起 runner，
+# 勾「win-x64 + aot」就只跑一个 job。产物 zip 挂在 run 页，不发 Release。
+# Native AOT 不可交叉编译，每个 RID 在原生系统 runner 上构建。
+
+name: package
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 平台
+        type: choice
+        options: [all, win-x64, linux-x64, osx-arm64]
+        default: all
+      mode:
+        description: 形态
+        type: choice
+        options: [all, portable, aot]
+        default: all
+      single_file:
+        description: 便携版单文件（仅非 AOT 生效）
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        env:
+          PLAT: ${{ inputs.platform }}
+          MODE: ${{ inputs.mode }}
+          SF: ${{ inputs.single_file }}
+        run: |
+          set -euo pipefail
+          sf_portable=false
+          if [[ "$SF" == "true" ]]; then sf_portable=true; fi
+          entries=()
+          emit() { # rid os aot sf
+            local rid="$1" os="$2" aot="$3" sf="$4" label="$rid"
+            if [[ "$PLAT" != "all" && "$PLAT" != "$rid" ]]; then return 0; fi
+            if [[ "$aot" == "true" ]]; then
+              if [[ "$MODE" != "all" && "$MODE" != "aot" ]]; then return 0; fi
+              label="$rid-aot"; sf=false
+            else
+              if [[ "$MODE" != "all" && "$MODE" != "portable" ]]; then return 0; fi
+            fi
+            entries+=("{\"rid\":\"$rid\",\"os\":\"$os\",\"aot\":$aot,\"sf\":$sf,\"label\":\"$label\"}")
+          }
+          emit win-x64   windows-latest false "$sf_portable"
+          emit win-x64   windows-latest true  "$sf_portable"
+          emit linux-x64 ubuntu-latest  false "$sf_portable"
+          emit linux-x64 ubuntu-latest  true  "$sf_portable"
+          emit osx-arm64 macos-latest   false "$sf_portable"
+          emit osx-arm64 macos-latest   true  "$sf_portable"
+          if [[ "${#entries[@]}" -eq 0 ]]; then
+            echo "错误：筛选结果为空（platform=$PLAT mode=$MODE）" >&2
+            exit 1
+          fi
+          joined="$(IFS=,; echo "${entries[*]}")"
+          echo "matrix={\"include\":[$joined]}" >> "$GITHUB_OUTPUT"
+
+  package:
+    needs: select
+    name: package (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: AOT toolchain (clang + zlib)
+        if: runner.os == 'Linux' && matrix.aot
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+      - name: publish + zip
+        shell: pwsh
+        run: ./packaging/publish.ps1 -Rid ${{ matrix.rid }} -Aot:('${{ matrix.aot }}' -eq 'true') -SingleFile:('${{ matrix.sf }}' -eq 'true')
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: erya-${{ matrix.label }}
+          path: dist/*.zip
+          if-no-files-found: error
