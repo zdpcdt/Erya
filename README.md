@@ -1,94 +1,78 @@
 # 尔雅 Erya
 
-**中州韵输入法引擎（RIME）的可视化配置工具** —— 让每个用户都能"近雅"：不写 YAML，也能把 RIME 调教得服服帖帖。
+**简体中文** · [English](README.en.md)
 
-> 尔，近也；雅，雅言也。《尔雅》为辞书之祖，取"引向正音"之意。
+![License](https://img.shields.io/badge/license-MIT-blue) ![UI](https://img.shields.io/badge/UI-Avalonia%2012-red) ![.NET](https://img.shields.io/badge/.NET-10-purple) ![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-green)
 
-基于 **Avalonia** 构建，一套代码覆盖 Windows（小狼毫 Weasel）、Linux（fcitx5-rime / ibus-rime）、macOS（鼠鬚管 Squirrel）。
+**中州韵输入法引擎（RIME）的可视化配置工具** —— 不写 YAML，也能把 RIME 调教得服服帖帖。
 
-![皮肤库：亮/暗候选窗并排预览 + 皮肤列表与选中编辑（真实小狼毫配置）](docs/screenshots/skin.png)
+> 尔，近也；雅，雅言也。《尔雅》为辞书之祖，取「引向正音」之意。
+
+一套代码覆盖三大桌面平台，自动对接本机的 RIME 前端：Windows 小狼毫（Weasel）、macOS 鼠须管（Squirrel）、Linux fcitx5-rime / ibus-rime。界面内置简体中文 / 繁體中文 / English 三语。
 
 | 概览 | 方案管理 | 输入设置 | 候选窗排版 | 应用行为 |
 |---|---|---|---|---|
 | ![概览](docs/screenshots/overview.png) | ![方案管理](docs/screenshots/schemas.png) | ![输入设置](docs/screenshots/input.png) | ![排版](docs/screenshots/layout.png) | ![应用](docs/screenshots/apps.png) |
 
-> 截图由仓库里的无头渲染测试对着本机真实安装的小狼毫 0.17 生成（`DocsScreenshotGenerator`），所见即真实数据。
+![皮肤库：亮/暗候选窗并排预览 + 皮肤列表与选中编辑（真实发行版配置）](docs/screenshots/skin.png)
 
-### 移植前后对照（Qt 版 rimetool → Avalonia 版尔雅）
+> 截图由仓库里的无头渲染测试对着本机真实安装的 RIME 前端生成（`DocsScreenshotGenerator`，截图机即真实运行时：Windows 上对小狼毫、macOS 上对鼠须管——本组截图取自鼠须管），所见即真实数据。
 
-| 功能 | Qt 版 rimetool（移植前） | 尔雅 Erya · Avalonia（移植后） |
+## 它解决什么问题
+
+RIME 是高度可定制的中文输入法引擎，但它的全部力量都藏在 YAML 里：补丁语义、键路径、各前端互不相同的键名——普通用户面对的是劝退级别的配置门槛，改错一个键轻则无效、重则候选框消失。
+
+工具生态同样如此：Windows 官方自带的图形界面只覆盖最基础的开关，进阶设置全靠手改 YAML；第三方工具各自优秀，却各守一端、互不跨平台——Qt、WPF、macOS 原生各一套（Qt 版 rimetool 的移植对照见下文）；Linux 更是连图形配置工具都没有——官方的配置管理器东风破（plum）是命令行脚本，桌面面板的设置只管输入法框架本身，RIME 的方案与补丁仍然要手改 YAML。
+
+| 官方自带（小狼毫 · Windows） | RimeControl（WPF · Windows） | SCT（macOS 原生） |
 |---|---|---|
-| 主题配色 + 预览 | <img src="docs/screenshots/rimetool-qt-color.png" width="360"> | <img src="docs/screenshots/skin.png" width="360"> |
-| 排版风格 | <img src="docs/screenshots/rimetool-qt-layout.png" width="360"> | <img src="docs/screenshots/layout.png" width="360"> |
-| 深色主题 | <img src="docs/screenshots/rimetool-qt-misc.png" width="360"> | <img src="docs/screenshots/skin-dark.png" width="360"> |
+| <img src="docs/screenshots/ecosystem-weasel.png" width="280"> | <img src="docs/screenshots/ecosystem-rimecontrol.png" width="280"> | <img src="docs/screenshots/ecosystem-sct.png" width="280"> |
 
-同样的功能面（配色/排版/杂项/热键/标点/方案/备份），从 Windows 专用 Qt 6 应用变成一套代码跑 Windows / Linux / macOS 的 Avalonia 应用。
+尔雅把这些知识写进程序：
 
-## 当前状态
+- **所见即生效值**：每个设置显示 base + patch 合并后的真实生效值；保存只写你动过的键，从补丁删除即恢复发行版默认——永不触碰发行版文件。
+- **不会写坏**：整键覆盖会丢未建模字段的坑（如 `preset_color_schemes` 整段重写）由叶子键补丁规避；未知键原样带回；写坏自动回滚。
+- **每个键都真实**：暴露的每个配置键都对照前端源码逐一核验（小狼毫 0.17 / 鼠须管 / librime 1.16），并有白名单测试防止「能渲染但引擎根本不读」的 placebo 键混入。
 
-🚧 项目启动于 2026-10（Avalonia Port Challenge 2026 参赛作品，移植自 Qt 版 [rimetool](https://github.com/yanhuacuo/rimetool) 的功能设计，并借鉴 WPF 版 [RimeControl](https://github.com/qzly/RimeControl) 的备份恢复思路；设置页架构参考 macOS 版 [SCT](https://github.com/neolee/sct) 的双层配置模型与 schema 驱动 UI）。
+## 功能
 
-- [x] 发行版抽象层（`IRimeDistribution`）；Windows 小狼毫、Linux fcitx5-rime / ibus-rime、macOS 鼠须管的检测与部署（Ctrl+R / Cmd+R 全局重新部署）；概览页版本号在 Linux 上取自包管理器（dpkg-query / rpm / pacman）
-- [x] 前端切换器（fcitx5-rime 与 ibus-rime 并存时选择尔雅管理的那个；选择持久化到 `~/.config/Erya/preferences.json`）
-- [x] 部署器缺失引导（Linux 读取 `/etc/os-release`，按发行版给出 librime 工具包安装命令：Debian/Ubuntu `librime-bin`、Arch/Fedora `librime`、openSUSE `rime`）
-- [x] 主界面外壳（Semi.Avalonia + Ursa）
-- [x] 方案管理（勾选启用/停用、启用顺序调整即切换顺序；写入 `default.custom.yaml` 补丁并自动部署；文本级编辑保留用户注释，写入后校验失败自动回滚）
-- [x] 输入设置（schema 驱动：候选词个数、方案选单、中英切换按键矩阵、功能快捷键、数字标点——全部前端通用，写入 `default.custom.yaml`）
-- [x] 外观设置拆三子页（NavMenu 分组下拉：**皮肤库**（配色选择 + 亮/暗候选窗并排预览 + 皮肤列表/选中编辑的 master-detail，内置皮肤只读可「以此新增」派生）/ **候选窗排版**（排列行为/字体/间距/圆角边距/阴影/宽高限制分组 Cell，顶部固定预览）/ **应用行为**（按应用设置输入行为）；macOS 写 `squirrel.custom.yaml`、Windows 写 `weasel.custom.yaml`；Linux 前端显示指引——面板外观归 fcitx5/ibus 自身设置）
-- [x] 候选窗实时预览（颜色/字体/间距/圆角/横竖排/阴影/内嵌编码全联动，未保存的编辑立即反映；同一份预览代码同时认小狼毫 `style/layout/*` 与鼠须管 `style/*` 两套键路径；亮暗双窗对照）
-- [x] 皮肤库（`preset_color_schemes` 编辑器：BGR 颜色 + 候选条实时预览；内置皮肤以**叶子键补丁**写入——`preset_color_schemes/<id>/<字段>` 合并进官方定义，`label_color`/`border_color` 等未建模字段不丢；一键复制整皮肤 YAML）
-- [x] 排版风格补全（边距/阴影/宽高限制/边框宽/高亮扩张/序号注释字体/悬停响应/候选缩略——键名逐一对照小狼毫 0.17 源码与发行数据校验）
-- [x] 高级设置（base+patch 合并配置树、行内改值即写补丁、每键撤销、路径/值搜索、仅显示已修改；源码模式直接编辑 `.custom.yaml`，保存前 YAML 校验并留 `.bak`）
-- [x] 备份恢复（zip 打包用户目录；恢复前自动在备份旁生成安全备份，恢复后自动触发重新部署）
-- [x] Linux 打包三件套（`packaging/linux/dist.sh` 一次构建产出 tar.gz / AppImage / deb，均自包含）
-- [x] 打包与 CI（`packaging/publish.ps1` 单组合打包：「平台 × AOT/非 AOT」产出 `dist/Erya_<版本>_<平台>[_aot].zip`；非 AOT 支持 `-SingleFile` 单文件发布（一个 ~108MB 的 exe，原生库自解压），与 AOT 互斥——Windows AOT 因无静态链接 Skia，exe+3 原生 DLL 已是极限；Native AOT 不可交叉编译，各 RID 在原生系统构建。三条 GitHub Actions 工作流：**test**（push/PR 三平台全量测试）、**package**（手动精准打包：平台/形态下拉 + 单文件开关，动态矩阵只给选中组合起 runner）、**release**（手动填 `v0.1.0` 之类：六 zip + Linux 三件套 tar.gz/AppImage/deb + macOS DMG（Erya.app）→ 自动建 tag 与 Release 挂全部产物））
-- [x] 在线方案安装（方案管理页一键安装雾凇拼音/白霜拼音/薄荷输入法：GitHub tarball 直下无需 git、自动过滤文档与 CI 杂物、安装前自动备份用户目录、装完自动重新部署；按包内标志方案文件识别已安装——显示「已安装」、按钮变为重新安装即覆盖升级；已安装的包可删除——按包内文件清单精确删除、只动该包文件、删前整目录备份+确认对话框）
-- [ ] macOS 真机验证（定位器与部署已实现，可用 `ERYA_SQUIRREL_APP` 环境变量在 CI 指向测试目录）。Linux 检测与部署链路已在 Ubuntu 26.04（librime 1.16）真机验证。
+**方案管理**
 
-### 设置页如何工作（schema 驱动）
+- 勾选启用/停用方案、拖动调整切换顺序，保存即写 `default.custom.yaml` 并自动重新部署
+- 在线方案安装：一键安装雾凇拼音 / 白霜拼音 / 薄荷拼音（GitHub tarball 直下，无需 git）；安装前自动备份、装完自动部署；已安装的包按文件清单精确删除，只动该包文件
+- 方案列表文本级编辑保留你的注释，写入校验失败自动回滚
 
-设置页由 `Erya.Core/Settings/settings.*.json` 描述（字段 → `keyPath` → 控件类型 → 范围/选项 → 目标文件），RIME 出新配置项时改 JSON 即可，不用动代码。读写遵循 RIME 补丁规则：显示 base + patch 合并后的生效值，修改只写入对应 `.custom.yaml` 的 `patch:`，永不触碰发行版默认文件；每键可撤销（从补丁中删除即恢复默认）。
+**输入设置**
 
-## Porting Notes: Qt/QML → Avalonia (write-up)
+- 候选词个数、方案选单、中英切换按键矩阵、功能快捷键（含以词定字）、数字标点——全部三前端通用
 
-This is an entry for the **Avalonia Port Challenge 2026**. The original [rimetool](https://github.com/yanhuacuo/rimetool) is a Qt 6 / QML application, Windows-only by design: it talks to the Weasel (小狼毫) frontend through Windows-specific paths, tray icons and registry conventions. Erya is a ground-up reimplementation of its feature set in **Avalonia 12 / .NET 10**, with the explicit goal of running the same binary source on Windows, Linux and macOS against whichever RIME frontend the user has. Below is what the port actually taught us — the parts a diff won't show.
+**外观**
 
-### 1. The hard part was never the UI — it was RIME's patch semantics
+- **皮肤库**：`preset_color_schemes` 编辑器，BGR 颜色拾取 + 亮/暗候选窗并排实时预览；内置皮肤只读、可「以此新增」派生、一键复制整皮肤 YAML
+- **候选窗排版**：字体 / 间距 / 圆角 / 阴影 / 横竖排 / 宽高限制全量键位，顶部实时预览，未保存的编辑立即反映；同一份预览同时认小狼毫 `style/layout/*` 与鼠须管 `style/*` 两套键路径
+- **应用行为**：按应用设定默认英文、Vim 模式；macOS 枚举正在运行的应用一键添加，Windows 取有窗口进程
 
-RIME never edits a shipped YAML file. Every user change lands in a `<file>.custom.yaml` under a `patch:` map, applied **on top of** the shipped tree. Two rules shaped the whole design:
+**高级与安全网**
 
-- **A patch key replaces, it does not merge.** Writing `preset_color_schemes:` as one key wipes every built-in color scheme and leaves only what you wrote. Editing a shipped scheme therefore has to go through *leaf keys* — `preset_color_schemes/aqua/back_color` — which RIME merges into the shipped definition, so fields our editor does not model (`label_color`, `border_color`, …) survive. We migrated an earlier whole-key write format automatically on the next save, restoring fields the old format dropped.
-- **Display merged values, write only user-dirty keys.** Every settings page reads base + patch merged, and saving writes exactly the keys the user touched — deleting a key from the patch restores the shipped default. Schema files describe fields (`keyPath` → control type → range); a YAML-documented test pins every weasel key against the list the 0.17 frontend actually reads, so a key that renders fine but can never take effect fails CI instead of shipping as a placebo.
+- 高级设置：base + patch 合并配置树、行内改值即写补丁、每键撤销、路径/值搜索；源码模式直接编辑 `.custom.yaml`（保存前 YAML 校验并留 `.bak`）
+- 备份恢复：一键 zip 打包用户目录；恢复前自动生成安全备份，恢复后自动重新部署
+- 部署：Ctrl+R / Cmd+R 全局重新部署；Linux 双前端并存时可选择尔雅管理的那个；缺部署器时按发行版给出 librime 工具包安装命令
 
-Text-level editing (`YamlLines`) preserves user comments in `default.custom.yaml`; a write that no longer parses triggers an automatic rollback.
+## 下载
 
-### 2. One codebase, three frontends, honest differences
+到 [Releases](https://github.com/zdpcdt/Erya/releases) 取自包含发布包（无需安装 .NET 运行时，由 CI 构建）：
 
-An `IRimeDistribution` abstraction covers detection, user/install directories, deployment and the frontend's own UI config:
+| 平台 | 文件 | 用法 |
+|---|---|---|
+| Windows x64 | `Erya_0.1.0_win_x64.zip`（另有 `_aot` 变体，更小更快） | 解压即用 |
+| macOS arm64 | `Erya_0.1.0_osx_arm64.zip` | 未经签名/公证，首次运行先 `xattr -cr` 解除隔离 |
+| Linux x64 | `Erya_0.1.0_linux_x64.zip` | 解压后 `./Erya`；或用下面的三件套 |
 
-- **Windows / Weasel**: files under the install dir's `data/` (not the user dir!), `WeaselDeployer /deploy` runs synchronously.
-- **macOS / Squirrel**: app bundle lookup, and `--reload` **only posts a notification and returns** — we learned this the hard way and now poll the build directory's timestamp (20 s budget) to report deployment completion truthfully.
-- **Linux / fcitx5-rime & ibus-rime**: both can coexist, so there is a frontend switcher; when the deployer is missing, `/etc/os-release` is parsed to name the right librime package per distro (`librime-bin` vs `librime` vs `rime`).
+Linux 另有三件套发行包：`tar.gz`（用户级 `install.sh` 安装）/ `AppImage`（免安装）/ `deb`（`sudo apt install`）。
 
-Where a frontend genuinely has no setting (Linux panels own their own theming; Weasel has no translucency), the UI says so instead of exposing dead controls. The live candidate-window preview is one view model that resolves *both* key spellings — `style/layout/*` (Weasel) and `style/*` (Squirrel) — and previews unsaved edits, including in-scheme font/size overrides that win over the style-level keys.
+检测与部署链路已在 macOS（arm64 · 鼠须管）与 Ubuntu 26.04（librime 1.16 · fcitx5-rime/ibus-rime）真机验证。
 
-### 3. Qt → Avalonia, concretely
-
-- QML's declarative bindings map naturally to AXAML + `CommunityToolkit.Mvvm`; what QML gave for free (types on the QML side) becomes small observables — e.g. the settings fields expose a tri-state "current value" (`CurrentValue`) so the preview can tell *0* apart from *unset*.
-- Qt Quick Controls → **Semi.Avalonia + Ursa** for the whole chrome; the settings-center look is a custom `Cell`/`CellGroup` pair (pseudo-classes `:expanded`/`:over-detail` to keep interactive rows from firing when you click inside their detail area), and drag-to-reorder is a custom `ReorderableItemsControl`.
-- Cross-platform font enumeration goes through Avalonia's `FontManager`; hotkeys capture through Ursa's `KeyGestureInput`, with a converter that translates RIME's `Caps_Lock`/`Shift_L` tokens into per-platform display names and back.
-- **Avalonia 12 notes for fellow porters**: `IClipboard.SetTextAsync` moved to an extension in `Avalonia.Input.Platform`; `UrsaWindow` does **not** auto-install toast/notification managers (mount `WindowToastManager` on your main window or every toast silently disappears — our most embarrassing bug, now under test).
-
-### 4. Testing as a first-class feature
-
-213 tests, all runnable headless on any OS: config-store roundtrips (comment preservation, rollback, leaf-key migration), schema validation, deploy-wait logic with injected clocks, and **render tests that screenshot real pages** — the gallery above is generated by a test running against the machine's real Weasel install, which doubles as our visual acceptance gate.
-
-### 5. Beyond the original
-
-Cross-platform everything aside: leaf-key scheme patching (the original rewrites whole blocks), a live candidate-window preview driven by pending edits, one-click online scheme installation (GitHub tarball, per-file uninstall manifest, automatic backup before install/delete), and Linux packaging (tar.gz / AppImage / deb out of one script).
-
-
-## 技术栈
+## 从源码构建
 
 | 组件 | 选型 |
 |---|---|
@@ -97,37 +81,47 @@ Cross-platform everything aside: leaf-key scheme patching (the original rewrites
 | MVVM | CommunityToolkit.Mvvm |
 | YAML | YamlDotNet |
 
-## 构建运行
-
 ```bash
 dotnet build Erya.slnx
 dotnet run --project src/Erya
 ```
 
-### 可下载构建（比赛评委可直接运行）
+打包：`pwsh packaging/publish.ps1 -Rid win-x64 [-Aot]` 产出 `dist/Erya_<版本>_<平台>[_aot].zip`（Native AOT 不可交叉编译，各 RID 需在原生系统构建）；Linux 三件套由 `packaging/linux/dist.sh` 一次产出。GitHub Actions 在 push/PR 跑三平台全量测试，打包在 Actions 页手动 Run workflow，`release_tag` 填版本号即自动创建 Release 并挂全部产物。
 
-`dist/` 下为自包含发布包（无需安装 .NET 运行时；Windows zip 解压即用，macOS zip 解压后运行 `Erya.app` 内的二进制或 `chmod +x Erya && ./Erya`，Linux 同理）：
+## 工作原理：和补丁语义做朋友
 
-| 平台 | 文件 |
-|---|---|
-| Windows x64 | `Erya_0.1.0_win_x64.zip`（73 MB，Release 构建冒烟通过） |
-| macOS arm64 | `Erya_0.1.0_osx_arm64.zip`（交叉发布；未经真机签名/公证，首次运行需 `xattr -cr` 解除隔离） |
-| Linux x64 | `Erya_0.1.0_linux_x64.zip`（另有三件套发行包见下节） |
+RIME 的用户修改全部落在 `<文件>.custom.yaml` 的 `patch:` 里，且**补丁键是整体替换、不是合并**。尔雅的读写模型由此而来：
 
-## Linux 发行包
+1. **显示合并值，只写脏键**——每页读 base + patch 合并后的生效值，保存只写动过的键，未知键原样带回。
+2. **叶子键补丁**——编辑内置皮肤走 `preset_color_schemes/<id>/<字段>` 合并进官方定义，未建模字段不丢。
+3. **schema 驱动 UI**——设置页由 `Erya.Core/Settings/settings.*.json` 描述（键路径 → 控件类型 → 范围），RIME 出新配置项改 JSON 即可，不用动代码。
 
-```bash
-packaging/linux/dist.sh        # 一次构建，产出三种格式（自包含，无需 .NET 运行时）
-```
+全仓 213 条测试三平台均可无头运行：配置读写 round-trip、schema 白名单校验、部署等待逻辑（注入时钟）、真实页面渲染截图——README 里这张画廊本身就是测试产物，兼作视觉验收门。
 
-| 产物 | 安装方式 |
-|---|---|
-| `dist/erya-<版本>-linux-x64.tar.gz` | 解压后 `./install.sh`：用户级装到 `~/.local/share/erya` + 应用菜单入口与图标（无需 root；`uninstall.sh` 卸载） |
-| `dist/Erya_<版本>_x86_64.AppImage` | `chmod +x` 后双击运行，免安装 |
-| `dist/erya_<版本>-1_amd64.deb` | `sudo apt install ./erya_*.deb`（程序装到 `/usr/lib/erya`，入口 `/usr/bin/erya`） |
+## 设计参考与移植背景
 
-`dist.sh [RID]` 可指定运行时（如 `linux-arm64`，需在对应架构主机或 qemu-user 下构建）；AppImage 构建首次会自动下载官方 `appimagetool`（缓存于 `dist/cache/`）。
+尔雅是 [Avalonia Port Challenge 2026](https://avaloniaui.net/blog/avalonia-port-challenge) 的参赛作品，功能设计对标三款前辈工具，**代码与资源全部全新编写，未复用任何既有代码**：
+
+- [rimetool](https://github.com/yanhuacuo/rimetool)（Windows · Qt 6/QML）——功能面的主要参考：配色、排版、杂项、热键、标点、方案、备份
+- [RimeControl](https://github.com/qzly/RimeControl)（Windows · WPF）——备份恢复的交互思路
+- [SCT](https://github.com/neolee/sct)（macOS）——双层配置模型（base + patch）与 schema 驱动设置页的架构参考
+
+完整的移植笔记（英文）见 [docs/porting-notes.md](docs/porting-notes.md)。
+
+| 功能 | rimetool（Qt · 移植前） | 尔雅（Avalonia · 移植后） |
+|---|---|---|
+| 主题配色 + 预览 | <img src="docs/screenshots/rimetool-qt-color.png" width="360"> | <img src="docs/screenshots/skin.png" width="360"> |
+| 排版风格 | <img src="docs/screenshots/rimetool-qt-layout.png" width="360"> | <img src="docs/screenshots/layout.png" width="360"> |
+| 深色主题 | <img src="docs/screenshots/rimetool-qt-misc.png" width="360"> | <img src="docs/screenshots/skin-dark.png" width="360"> |
+
+> 「移植前」截图为 Qt 版 rimetool，仅作功能对照。
+
+## 致谢
+
+- [RIME · 中州韵](https://rime.im)（佛振）与各前端：鼠须管 Squirrel、小狼毫 Weasel、fcitx5-rime / ibus-rime
+- [rimetool](https://github.com/yanhuacuo/rimetool)（Qt 版配置工具，功能设计的主要参考）、[SCT](https://github.com/neolee/sct)（双层配置模型参考）、[RimeControl](https://github.com/qzly/RimeControl)（备份恢复思路）
+- UI 基建：[Semi.Avalonia](https://github.com/irihitech/Semi.Avalonia) / [Ursa](https://github.com/irihitech/Ursa.Avalonia) / Avalonia 社区
 
 ## License
 
-MIT（见 LICENSE）
+MIT（见 [LICENSE](LICENSE)）

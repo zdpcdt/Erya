@@ -490,3 +490,6 @@ dist/
 # Erya Core 的 Packages 命名空间是源码，不是 NuGet packages 目录（勿被上方 **/[Pp]ackages/* 吞掉）
 !src/Erya.Core/Packages/
 !src/Erya.Core/Packages/**
+
+# ZCode 本地会话目录
+.zcode/
