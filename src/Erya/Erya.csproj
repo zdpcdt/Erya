@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- RIME logo（英雄卡/空态，双主题两份），RimeLogoIcon 加载 -->
+    <!-- RIME logo（英雄卡/空态，双主题两份），RimeLogoIcon 加载；app.ico 为窗口/任务栏图标 -->
     <AvaloniaResource Include="Assets/*.png" />
+    <AvaloniaResource Include="Assets/app.ico" />
   </ItemGroup>
 
   <ItemGroup>
