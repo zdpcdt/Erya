@@ -29,25 +29,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Irihi.Branding" Version="0.2.0" />
-    <PackageReference Include="Irihi.Iconica.TDesign" Version="1.0.0" />
-    <PackageReference Include="Irihi.Iconica.IconPark" Version="2.1.0" />
-    <PackageReference Include="Irihi.Lingua" Version="1.1.0" />
-    <PackageReference Include="Irihi.Ursa" Version="2.2.0" />
-    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.2.0" />
-    <PackageReference Include="Semi.Avalonia" Version="12.1.0.1" />
-    <PackageReference Include="Semi.Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Semi.Avalonia.ColorPicker" Version="12.1.0.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Irihi.Branding" />
+    <PackageReference Include="Irihi.Iconica.TDesign" />
+    <PackageReference Include="Irihi.Iconica.IconPark" />
+    <PackageReference Include="Irihi.Lingua" />
+    <PackageReference Include="Irihi.Ursa" />
+    <PackageReference Include="Irihi.Ursa.Themes.Semi" />
+    <PackageReference Include="Semi.Avalonia" />
+    <PackageReference Include="Semi.Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Semi.Avalonia.ColorPicker" />
   </ItemGroup>
 
   <ItemGroup>
