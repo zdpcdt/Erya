@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- 全仓 NuGet 包版本唯一来源：csproj 里只写 Include，不写 Version。
+       升级版本只改本文件。 -->
+
+  <ItemGroup Label="Avalonia">
+    <PackageVersion Include="Avalonia" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Controls.ColorPicker" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Headless.XUnit" Version="12.1.3" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Irihi / Semi 生态">
+    <PackageVersion Include="Irihi.Avalonia.Shared" Version="0.5.0" />
+    <PackageVersion Include="Irihi.Branding" Version="0.2.0" />
+    <PackageVersion Include="Irihi.Iconica.TDesign" Version="1.0.0" />
+    <PackageVersion Include="Irihi.Iconica.IconPark" Version="2.1.0" />
+    <PackageVersion Include="Irihi.Lingua" Version="1.1.0" />
+    <PackageVersion Include="Irihi.Ursa" Version="2.2.0" />
+    <PackageVersion Include="Irihi.Ursa.Themes.Semi" Version="2.2.0" />
+    <PackageVersion Include="Semi.Avalonia" Version="12.1.0.1" />
+    <PackageVersion Include="Semi.Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageVersion Include="Semi.Avalonia.ColorPicker" Version="12.1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="MVVM / 数据">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="测试">
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+</Project>
