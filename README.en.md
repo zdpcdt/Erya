@@ -57,6 +57,7 @@ Erya encodes that knowledge into the app itself:
 - Advanced settings: base + patch merged tree, inline edit = instant patch write, per-key undo, path/value search; a source mode to edit `.custom.yaml` directly (YAML validation + `.bak` before saving)
 - Backup & restore: one-click zip of the user directory; restore takes a safety backup first and auto-deploys afterwards
 - Deployment: Ctrl+R / Cmd+R global redeploy; a frontend switcher when fcitx5-rime and ibus-rime coexist; distro-specific `librime` package hints when the deployer is missing
+- First-run onboarding: with no RIME on the machine, one click downloads and runs the latest Weasel installer (progress bar, auto-detection lights the app up afterwards — no restart); the official download page and a restart-free re-detect are one click away too
 
 ## Download
 

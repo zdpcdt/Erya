@@ -10,7 +10,10 @@ namespace Erya.Core.Tests;
 /// Offline installer tests: the network is faked with an HttpMessageHandler
 /// serving a programmatically built tar.gz, so download/unpack/backup/copy run
 /// for real while the tests stay hermetic.
+/// 与 CoreLocTests / SettingsSchemaOverlayTests 共享串行 Collection：进度文案
+/// 断言依赖 base 语言，且那两个类会切 CoreLoc.Language。
 /// </summary>
+[Collection("core-loc")]
 public sealed class SchemaPackageTests : IDisposable
 {
     private readonly string _root;

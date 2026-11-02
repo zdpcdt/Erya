@@ -123,4 +123,17 @@ internal static class AppShell
             AppNotifications.Toast($"无法打开目录：{ex.Message}", NotificationType.Error);
         }
     }
+
+    /// <summary>Opens an external https URL in the system browser, toasting on failure.</summary>
+    public static void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            AppNotifications.Toast($"无法打开链接：{ex.Message}", NotificationType.Error);
+        }
+    }
 }

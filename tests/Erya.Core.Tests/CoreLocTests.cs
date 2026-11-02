@@ -5,7 +5,10 @@ namespace Erya.Core.Tests;
 /// <summary>
 /// CoreLoc 的 base 行为与语言切换回落。翻译变体（zh-Hant/en）落地后，
 /// 本文件里的 VariantTests 断言会随资源文件自动生效。
+/// 与 SchemaPackageTests / SettingsSchemaOverlayTests 共享串行 Collection：
+/// 三者都要求静态 CoreLoc.Language 在自己运行期间保持特定语言。
 /// </summary>
+[Collection("core-loc")]
 public sealed class CoreLocTests : IDisposable
 {
     private readonly string _originalLanguage = CoreLoc.Language;

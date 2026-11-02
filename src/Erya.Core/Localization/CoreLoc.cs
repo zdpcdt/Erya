@@ -12,6 +12,12 @@ namespace Erya.Core.Localization;
 /// </summary>
 public static class CoreLoc
 {
+    // Get loads maps lazily and Language swaps them out; both are touched
+    // from worker threads (installer progress) and the UI thread (language
+    // switch) concurrently — an unsynchronized swap can pin the previous
+    // language's map while _language already moved on.
+    private static readonly object Gate = new();
+
     private static Dictionary<string, string>? _base;
     private static Dictionary<string, string>? _variant;
 
@@ -20,21 +26,31 @@ public static class CoreLoc
 
     public static string Language
     {
-        get => _language;
+        get
+        {
+            lock (Gate) return _language;
+        }
         set
         {
-            if (_language == value) return;
-            _language = value;
-            _variant = null;
+            lock (Gate)
+            {
+                if (_language == value) return;
+                _language = value;
+                _variant = null;
+            }
         }
     }
 
     /// <summary>取当前语言下的字符串（缺 key 回落 base，再缺返回 key 本身）。</summary>
     public static string Get(string key)
     {
-        _variant ??= LoadVariant(_language);
-        _base ??= LoadVariant("");
-        return (_variant is not null && _variant.TryGetValue(key, out var v)) || _base!.TryGetValue(key, out v)
+        Dictionary<string, string>? variant, baseMap;
+        lock (Gate)
+        {
+            variant = _variant ??= LoadVariant(_language);
+            baseMap = _base ??= LoadVariant("");
+        }
+        return (variant is not null && variant.TryGetValue(key, out var v)) || baseMap!.TryGetValue(key, out v)
             ? v
             : key;
     }
