@@ -54,14 +54,14 @@
                 <StackPanel Spacing="12">
 
                     <!--  应用规则卡片：标识 + 状态摘要 + 开关 + 删除  -->
-                    <c:CellGroup ItemsSource="{Binding FilteredRows}">
-                        <c:CellGroup.ItemTemplate>
+                    <u:SettingsCardGroup ItemsSource="{Binding FilteredRows}">
+                        <u:SettingsCardGroup.ItemTemplate>
                             <DataTemplate x:DataType="sf:AppOptionsRowViewModel">
-                                <c:Cell Content="{Binding AppId}" Description="{Binding SummaryText}">
-                                    <c:Cell.Icon>
+                                <u:SettingsCard Content="{Binding AppId}" Description="{Binding SummaryText}">
+                                    <u:SettingsCard.Icon>
                                         <tdicon:TerminalWindow Width="20" Height="20" />
-                                    </c:Cell.Icon>
-                                    <c:Cell.RightContent>
+                                    </u:SettingsCard.Icon>
+                                    <u:SettingsCard.RightContent>
                                         <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
                                             <!--  逐应用选项按 schema choices 分流：鼠须管含 Vim/内嵌编码，小狼毫内嵌编码  -->
                                             <ItemsControl ItemsSource="{Binding Options}">
@@ -86,11 +86,11 @@
                                                           CommandParameter="{Binding}"
                                                           ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.apps_removeRuleTip}}" />
                                         </StackPanel>
-                                    </c:Cell.RightContent>
-                                </c:Cell>
+                                    </u:SettingsCard.RightContent>
+                                </u:SettingsCard>
                             </DataTemplate>
-                        </c:CellGroup.ItemTemplate>
-                    </c:CellGroup>
+                        </u:SettingsCardGroup.ItemTemplate>
+                    </u:SettingsCardGroup>
 
                     <!--  空态：没有任何规则，只剩标题+说明（快捷添加走「＋ 添加应用」弹层）  -->
                     <StackPanel Spacing="12" IsVisible="{Binding !HasAnyApp}">

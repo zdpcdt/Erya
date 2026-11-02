@@ -13,7 +13,7 @@ using Erya.ViewModels.Settings;
 using Ursa.Controls;
 using Xunit;
 
-// 挂上真正的 Erya App：App.axaml 的资源与样式（Semi 主题、图标、Cell 主题）
+// 挂上真正的 Erya App：App.axaml 的资源与样式（Semi 主题、图标）
 // 才会在 headless 会话中生效，控件模板才能套用。
 [assembly: AvaloniaTestApplication(typeof(Erya.UiTests.TestAppBuilder))]
 

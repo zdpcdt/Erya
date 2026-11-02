@@ -41,47 +41,14 @@ public partial class DemoViewModel : ObservableObject
     [ObservableProperty]
     private string _reorderSummary = "";
 
+    /// <summary>int 绑定：清空输入框时产生校验错误 → ValidationErrorIcon 显示感叹号。</summary>
+    [ObservableProperty]
+    private int _pageSize = 5;
+
     public DemoViewModel()
     {
         ReorderableItems.CollectionChanged += (_, _) =>
             ReorderSummary = "当前顺序：" + string.Join(" → ", ReorderableItems);
         ReorderSummary = "当前顺序：" + string.Join(" → ", ReorderableItems);
-    }
-
-    [ObservableProperty]
-    private bool _autoCommitAscii;
-
-    /// <summary>int 绑定：清空输入框时产生校验错误 → ValidationErrorIcon 显示感叹号。</summary>
-    [ObservableProperty]
-    private int _pageSize = 5;
-
-    [ObservableProperty]
-    private string _customPhrase = "/sl";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FontPointSummary))]
-    private double _fontPoint = 14;
-
-    public string FontPointSummary => $"{FontPoint:0.#} pt";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FuzzySummary))]
-    private bool _fuzzyZh = true;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FuzzySummary))]
-    private bool _fuzzyNasal;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FuzzySummary))]
-    private bool _fuzzyHF;
-
-    public string FuzzySummary
-    {
-        get
-        {
-            var count = (FuzzyZh ? 1 : 0) + (FuzzyNasal ? 1 : 0) + (FuzzyHF ? 1 : 0);
-            return count == 0 ? "未启用" : $"已启用 {count} 项";
-        }
     }
 }

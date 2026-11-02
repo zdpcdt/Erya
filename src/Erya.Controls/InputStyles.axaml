@@ -1,0 +1,17 @@
+<!--
+    输入控件的跨控件样式。使用方需要在 Application.Styles 中引入本文件。
+    silent-errors：屏蔽 NumericUpDown / TextBox 内建的红底+错误文字 UI，
+    配合 ValidationErrorIcon 使用（错误改为右侧红色感叹号，悬停看原因）。
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--  内建 DataValidationErrors 换成 Semi 的静默主题（不画错误 UI）；
+         控件本身的 :error 红底样式仍在，如需完全安静可再覆盖  -->
+    <Style Selector="NumericUpDown.silent-errors /template/ DataValidationErrors">
+        <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+    </Style>
+    <Style Selector="TextBox.silent-errors /template/ DataValidationErrors">
+        <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />
+    </Style>
+</Styles>

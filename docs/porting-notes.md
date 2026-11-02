@@ -26,7 +26,7 @@ Where a frontend genuinely has no setting (Linux panels own their own theming; W
 ## 3. Qt → Avalonia, concretely
 
 - QML's declarative bindings map naturally to AXAML + `CommunityToolkit.Mvvm`; what QML gave for free (types on the QML side) becomes small observables — e.g. the settings fields expose a tri-state "current value" (`CurrentValue`) so the preview can tell *0* apart from *unset*.
-- Qt Quick Controls → **Semi.Avalonia + Ursa** for the whole chrome; the settings-center look is a custom `Cell`/`CellGroup` pair (pseudo-classes `:expanded`/`:over-detail` to keep interactive rows from firing when you click inside their detail area), and drag-to-reorder is a custom `ReorderableItemsControl`.
+- Qt Quick Controls → **Semi.Avalonia + Ursa** for the whole chrome; the settings-center look started as a custom `Cell`/`CellGroup` pair (pseudo-classes `:expanded`/`:over-detail` to keep interactive rows from firing when you click inside their detail area) and was later upstreamed into Ursa 2.3's `SettingsCard`/`SettingsCardGroup` — the app now consumes the upstream controls directly; drag-to-reorder remains a custom `ReorderableItemsControl`.
 - Cross-platform font enumeration goes through Avalonia's `FontManager`; hotkeys capture through Ursa's `KeyGestureInput`, with a converter that translates RIME's `Caps_Lock`/`Shift_L` tokens into per-platform display names and back.
 - **Avalonia 12 notes for fellow porters**: `IClipboard.SetTextAsync` moved to an extension in `Avalonia.Input.Platform`; `UrsaWindow` does **not** auto-install toast/notification managers (mount `WindowToastManager` on your main window or every toast silently disappears — our most embarrassing bug, now under test).
 

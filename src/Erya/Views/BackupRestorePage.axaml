@@ -19,15 +19,15 @@
         <!--  备份 / 恢复两组。结果反馈走 Toast；busy 由按钮文案与禁用表达，页面不放状态条  -->
         <StackPanel Spacing="20" IsVisible="{Binding HasUserDir}">
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_backupTitle}}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_backupTitle}}"
                          Description="{Translate {x:Static loc:LanguageManager+Keys.backup_backupDesc}}">
-                <c:Cell Icon="{StaticResource SemiIconSaveStroked}"
+                <u:SettingsCard Icon="{StaticResource SemiIconSaveStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.backup_backupLabel}}">
-                    <c:Cell.Note>
+                    <u:SettingsCard.Note>
                         <TextBlock Text="{Binding UserDirSummary}" FontSize="13" Opacity="0.75"
                                    VerticalAlignment="Center" />
-                    </c:Cell.Note>
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.Note>
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <u:IconButton Command="{Binding OpenUserDirCommand}"
                                           Theme="{DynamicResource SolidIconButton}"
@@ -38,21 +38,21 @@
                                     IsEnabled="{Binding CanBackup}"
                                     Click="OnBackupClick" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreTitle}}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreTitle}}"
                          Description="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreDesc}}">
-                <c:Cell Icon="{StaticResource SemiIconRestoreStroked}"
+                <u:SettingsCard Icon="{StaticResource SemiIconRestoreStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreLabel}}">
-                    <c:Cell.Note>
+                    <u:SettingsCard.Note>
                         <TextBlock Text="{Binding RestoreNote}" FontSize="13" Opacity="0.75"
                                    TextTrimming="CharacterEllipsis" MaxWidth="280"
                                    VerticalAlignment="Center"
                                    ToolTip.Tip="{Binding RestoreSourcePath}" />
-                    </c:Cell.Note>
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.Note>
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button MinWidth="108" Content="{Translate {x:Static loc:LanguageManager+Keys.backup_pickBackupFile}}"
                                     IsEnabled="{Binding !IsBusy}"
@@ -62,9 +62,9 @@
                                     IsEnabled="{Binding CanRestore}"
                                     Command="{Binding RestoreCommand}" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
         </StackPanel>
 
         <!--  未检测到 RIME：与概览页英雄卡空态同语言的整页空态  -->

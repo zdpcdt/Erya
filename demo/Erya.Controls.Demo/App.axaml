@@ -9,8 +9,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/StrokedIcons.axaml" />
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
-                <!--  Cell / CellGroup / ValidationErrorIcon 主题（Semi 风格）  -->
-                <ResourceInclude Source="avares://Erya.Controls/CellTheme.axaml" />
+                <!--  ValidationErrorIcon 主题（Semi 风格）  -->
+                <ResourceInclude Source="avares://Erya.Controls/ValidationErrorTheme.axaml" />
                 <!--  ReorderableItemsControl / DragHandle 主题（Semi 风格）  -->
                 <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -19,7 +19,7 @@
 
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
-        <!--  行间分隔线 / 方位圆角 / silent-errors  -->
-        <StyleInclude Source="avares://Erya.Controls/CellStyles.axaml" />
+        <!--  输入控件 silent-errors（配合 ValidationErrorIcon）  -->
+        <StyleInclude Source="avares://Erya.Controls/InputStyles.axaml" />
     </Application.Styles>
 </Application>

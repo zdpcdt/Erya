@@ -21,78 +21,78 @@
             <ContentControl Content="{Binding Preview}"
                             ContentTemplate="{StaticResource CandidateWindowTemplate}" />
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_infoGroup}}">
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_nameLabel}}">
-                    <c:Cell.RightContent>
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_infoGroup}}">
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_nameLabel}}">
+                    <u:SettingsCard.RightContent>
                         <TextBox Text="{Binding Scheme.Name, Mode=TwoWay}" Width="260" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
 
             <!--  颜色：一排色块，点击弹取色面板（对比度主题式）  -->
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorsGroup}}">
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorBackCandidate}}">
-                    <c:Cell.RightContent>
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorsGroup}}">
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorBackCandidate}}">
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.BackColor, Mode=TwoWay}" />
                             <views:ColorSwatch RimeHex="{Binding Scheme.CandidateTextColor, Mode=TwoWay}" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorHilitedBackText}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorHilitedBackText}}">
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.HilitedBackColor, Mode=TwoWay}" />
                             <views:ColorSwatch RimeHex="{Binding Scheme.HilitedTextColor, Mode=TwoWay}" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorComment}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorComment}}">
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.CommentTextColor, Mode=TwoWay}" />
                             <views:ColorSwatch RimeHex="{Binding Scheme.HilitedCommentTextColor, Mode=TwoWay}" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorPreedit}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorPreedit}}">
+                    <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <views:ColorSwatch RimeHex="{Binding Scheme.TextColor, Mode=TwoWay}" />
                             <views:ColorSwatch RimeHex="{Binding Scheme.HilitedPreeditColor, Mode=TwoWay}" />
                         </StackPanel>
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
 
             <!--  皮肤级字体/排版：鼠须管专属（SquirrelTheme 皮肤键覆盖全局 style），
                   小狼毫从皮肤只读颜色——显示即是 placebo。  -->
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLayoutGroup}}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLayoutGroup}}"
                          IsVisible="{Binding IsSquirrel}">
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLabel}}">
-                    <c:Cell.RightContent>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLabel}}">
+                    <u:SettingsCard.RightContent>
                         <!--  固定宽：回退长串不能挤爆对话框  -->
                         <ComboBox ItemsSource="{Binding Scheme.FontOptions}"
                                   SelectedItem="{Binding Scheme.SelectedFontFace, Mode=TwoWay}"
                                   Width="240" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontPointLabel}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontPointLabel}}">
+                    <u:SettingsCard.RightContent>
                         <TextBox Text="{Binding Scheme.FontPointText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_cornerRadiusLabel}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_cornerRadiusLabel}}">
+                    <u:SettingsCard.RightContent>
                         <TextBox Text="{Binding Scheme.CornerRadiusText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_lineSpacingLabel}}">
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_lineSpacingLabel}}">
+                    <u:SettingsCard.RightContent>
                         <TextBox Text="{Binding Scheme.LineSpacingText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
