@@ -121,7 +121,7 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 - **切换流程**：`ApplyLanguage` → `LanguageManager.Instance.UpdateCulture(...)` + `CoreLoc.Language = ...` + `AppPreferences.Save()` → `RebuildNav()` + `RebuildPages()`（页面 VM 在构造期取串，schema 也要带新语言重载）+ `MainViewModel.RefreshLocalizedTexts()`；启动时先应用持久化语言再建页面。
 - 嵌入资源的 `WithCulture="false"` 红线与「三份语言文件必须写全」的原因见 AGENTS.md 的 i18n 一节。
 
-主题：`App.axaml` 挂 `SemiTheme` + `UrsaSemiTheme` + AvaloniaEdit / ColorPicker 的 Semi 变体，合并 `Erya.Controls` 的 `CellTheme.axaml` / `ReorderTheme.axaml` / `CellStyles.axaml` 与 Lingua 的 `Generic.axaml`；`MainWindow` 是 `UrsaWindow`，**必须显式安装 `WindowToastManager` / `WindowNotificationManager`**（Ursa 不会自动挂），否则 `AppNotifications` 全部静默失效。
+主题：`App.axaml` 挂 `SemiTheme` + `UrsaSemiTheme` + AvaloniaEdit / ColorPicker 的 Semi 变体，合并 `Erya.Controls` 的 `ValidationErrorTheme.axaml` / `ReorderTheme.axaml` 与 Lingua 的 `Generic.axaml`；设置行控件是 Ursa 2.3+ 的 `SettingsCard` / `SettingsCardGroup`（自研 `Cell` / `CellGroup` 已上游化退役，样式由 `UrsaSemiTheme` 自带）；`MainWindow` 是 `UrsaWindow`，**必须显式安装 `WindowToastManager` / `WindowNotificationManager`**（Ursa 不会自动挂），否则 `AppNotifications` 全部静默失效。
 
 ---
 
@@ -129,12 +129,11 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 
 公开控件（`src/Erya.Controls/`）：
 
-- `Cell : Button` —— 设置中心风格的一行：`Icon` / `Content`（标题）/ `Trailing`（如「已修改」徽标）/ `Description` / `Note`（当前值）/ `RightContent`（编辑控件）/ `Detail`（可展开区，`:expanded` 伪类）/ `ShowChevron` / `Command`；只有可展开 / 可导航的行才有 hover / 按压反馈。
-- `CellGroup : HeaderedItemsControl` —— Semi 风格圆角卡片，自动分隔线，圆角经 `CornerRadiusMixerConverter` 传给首末行。
+- 设置行控件已退役：自研 `Cell` / `CellGroup` 于 Ursa 2.3 上游化为 `SettingsCard` / `SettingsCardGroup`（API 与伪类同构，含裸模型自动包装），全部 View 直接用 `u:SettingsCard*`，样式随 `UrsaSemiTheme` 分发。
 - `ReorderableItemsControl : ItemsControl` —— 拖拽排序，attached `IsDragHandle` 指定把手，实时移动绑定的 `ObservableCollection`，Esc 取消。
-- `DragHandle` / `ReorderableItem`（容器，`:dragging` 伪类）/ `ValidationErrorIcon`（配合 `Classes="silent-errors"` 的行内校验红叹号）。
+- `DragHandle` / `ReorderableItem`（容器，`:dragging` 伪类）/ `ValidationErrorIcon`（配合 `Classes="silent-errors"` 的行内校验红叹号，主题在 `ValidationErrorTheme.axaml`；`InputStyles.axaml` 提供输入控件的 silent-errors 覆盖）。
 
-消费方只有主应用（设置页 `SettingsSectionsView` 把 section 渲染成 `CellGroup` + 按类型 DataTemplate 的 `Cell`，61 处 `Cell`；方案管理用 `ReorderableItemsControl`）与 UiTests。`demo/Erya.Controls.Demo` 是脱离 RIME 的可视化演示 / 回归台（拖拽排序 + CellGroup 假数据）。
+消费方只有主应用（设置页 `SettingsSectionsView` 把 section 渲染成 `SettingsCardGroup` + 按类型 DataTemplate 的 `SettingsCard`；方案管理用 `ReorderableItemsControl`）与 UiTests。`demo/Erya.Controls.Demo` 是脱离 RIME 的可视化演示 / 回归台（拖拽排序 + 校验图标假数据）。
 
 ---
 
@@ -144,7 +143,7 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 
 - **`tests/Erya.Core.Tests`（xunit v2）**：配置读写 round-trip（三种 patch 形态、注释保留、写入迁移）、schema 白名单与 overlay 校验、发行版探测（env 覆盖沙盒化）、部署等待（注入时钟，二进制从不真跑）、备份、在线安装与小狼毫一键安装（手写 `HttpMessageHandler`，假 tar.gz / 假 release JSON，无网络；切 `CoreLoc.Language` 的三类测试共享串行 Collection）。
 - **`tests/Erya.UiTests`（xunit.v3 + Avalonia.Headless）**：
-  - 引导：`[assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]`（`ShellNavTests.cs:18`），`TestAppBuilder` 用 `AppBuilder.Configure<App>()` 挂载**真实 App**（Semi 主题、图标、Cell 主题全部生效）+ `UseHeadlessDrawing = false` + `UseSkia` —— 真 CPU Skia 渲染，测试里才能 `RenderTargetBitmap` 导出截图。
+  - 引导：`[assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]`（`ShellNavTests.cs:18`），`TestAppBuilder` 用 `AppBuilder.Configure<App>()` 挂载**真实 App**（Semi 主题、图标、Ursa SettingsCard 样式全部生效）+ `UseHeadlessDrawing = false` + `UseSkia` —— 真 CPU Skia 渲染，测试里才能 `RenderTargetBitmap` 导出截图。
   - 输入模拟约定：Flyout 必须走真实指针路径（`window.MouseMove/MouseDown/MouseUp` 到控件中心，路由 `Click` 事件打不开 Flyout）；Popup 内容经 `Flyout.Content` 取，不在视觉树里找；每步之后 `Dispatcher.UIThread.RunJobs()`。
   - `DocsScreenshotGenerator.cs`：一条 `[AvaloniaFact]`，对真实 RIME 前端逐页截图写入 `docs/screenshots/`（README 画廊 = 测试产物 = 视觉验收门）。本机没装 RIME 时静默跳过（`MainViewModel { Distribution: not null }` 不满足即 return），CI 永远绿。本地跑 UiTests 请排除（filter 见 AGENTS.md）。
 - 两个被测项目都开了 `InternalsVisibleTo` 给对应测试程序集。

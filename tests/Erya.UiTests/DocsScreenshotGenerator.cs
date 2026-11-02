@@ -91,7 +91,7 @@ public sealed class DocsScreenshotGenerator
     /// <summary>键位映射等多选行展开一点，画面信息量更高。</summary>
     private static void ExpandDetailRows(Window window)
     {
-        foreach (var cell in window.GetVisualDescendants().OfType<Erya.Controls.Cell>()
+        foreach (var cell in window.GetVisualDescendants().OfType<Ursa.Controls.SettingsCard>()
                      .Where(c => c.Detail is not null).Take(3))
         {
             cell.IsExpanded = true;

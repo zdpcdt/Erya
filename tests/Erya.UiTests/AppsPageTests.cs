@@ -8,7 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Erya.Controls;
+using Ursa.Controls;
 using Erya.Core.Distributions;
 using Erya.Services;
 using Erya.ViewModels.Settings;
@@ -87,9 +87,9 @@ public sealed class AppsPageTests : IDisposable
         var (vm, page, window) = await ShowAsync(new StubUiDistribution(_dir, "squirrel.yaml"));
 
         // 每应用一张卡片：摘要随勾选联动（Terminal 默认英文、iTerm2 Vim 模式）。
-        var cells = page.GetVisualDescendants().OfType<Cell>()
+        var cards = page.GetVisualDescendants().OfType<SettingsCard>()
             .Where(c => c.DataContext is AppOptionsRowViewModel).ToList();
-        Assert.Equal(2, cells.Count);
+        Assert.Equal(2, cards.Count);
         Assert.True(vm.HasAnyApp);
         Assert.False(vm.SearchMiss);
         Assert.Equal("默认英文",
@@ -137,7 +137,7 @@ public sealed class AppsPageTests : IDisposable
             .Any(t => t.Text == "还没有应用规则" && t.IsVisible));
         Assert.True(page.GetVisualDescendants().OfType<TextBlock>()
             .Any(t => t.Text.Contains("直接敲英文") && t.IsVisible));
-        Assert.DoesNotContain(page.GetVisualDescendants(), c => c is Cell { DataContext: AppOptionsRowViewModel });
+        Assert.DoesNotContain(page.GetVisualDescendants(), c => c is SettingsCard { DataContext: AppOptionsRowViewModel });
         Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(),
             b => b.DataContext is AddAppEntry); // 弹层没打开，运行中列表的条目按钮不在页面上
         window.Close();

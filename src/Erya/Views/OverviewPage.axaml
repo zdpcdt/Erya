@@ -64,38 +64,38 @@
         <!--  未检测到 RIME 时的安装引导卡：一键直装（仅 Windows）/ 打开下载页 / 重新检测  -->
         <StackPanel Spacing="12" IsVisible="{Binding IsMissing}">
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_setupTitle}}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_setupTitle}}"
                          Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupDesc}}">
-                <c:Cell Icon="{StaticResource SemiIconDownload}"
+                <u:SettingsCard Icon="{StaticResource SemiIconDownload}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallDesc}}"
                         IsVisible="{Binding SupportsInAppSetup}">
-                    <c:Cell.RightContent>
+                    <u:SettingsCard.RightContent>
                         <Button Classes="Primary" MinWidth="112"
                                 Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallButton}}"
                                 Command="{Binding DownloadAndInstallCommand}"
                                 IsEnabled="{Binding !IsDownloadingInstaller}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Icon="{StaticResource SemiIconExternalOpenStroked}"
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Icon="{StaticResource SemiIconExternalOpenStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageDesc}}">
-                    <c:Cell.RightContent>
+                    <u:SettingsCard.RightContent>
                         <Button MinWidth="112"
                                 Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageButton}}"
                                 Command="{Binding OpenDownloadPageCommand}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Icon="{StaticResource SemiIconRefresh}"
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Icon="{StaticResource SemiIconRefresh}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectDesc}}">
-                    <c:Cell.RightContent>
+                    <u:SettingsCard.RightContent>
                         <Button MinWidth="112"
                                 Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectButton}}"
                                 Command="{Binding RedetectCommand}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
 
             <!--  下载进度 + 阶段状态行：状态非空即显示，进度条随下载态出现  -->
             <StackPanel Spacing="6" Margin="4,0,4,0"
@@ -109,13 +109,13 @@
         <!--  环境 + 维护两组；未检测到 RIME 时整块隐藏  -->
         <StackPanel Spacing="20" IsVisible="{Binding !IsMissing}">
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_envTitle}}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_envTitle}}"
                          Description="{Translate {x:Static loc:LanguageManager+Keys.overview_envDesc}}">
-                <c:Cell Icon="{StaticResource SemiIconComponentStroked}"
+                <u:SettingsCard Icon="{StaticResource SemiIconComponentStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_frontendLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_frontendDesc}}"
                         IsVisible="{Binding HasMultipleDistributions}">
-                    <c:Cell.RightContent>
+                    <u:SettingsCard.RightContent>
                         <ComboBox ItemsSource="{Binding AvailableDistributions}"
                                   SelectedItem="{Binding Distribution, Mode=TwoWay}"
                                   MinWidth="240"
@@ -126,44 +126,44 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                    </c:Cell.RightContent>
-                </c:Cell>
-                <c:Cell Icon="{StaticResource SemiIconFolderStroked}"
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+                <u:SettingsCard Icon="{StaticResource SemiIconFolderStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_installDirLabel}}"
                         IsVisible="{Binding InstallDirDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                    <c:Cell.Note>
+                    <u:SettingsCard.Note>
                         <TextBlock Text="{Binding InstallDirDisplay}" FontSize="13" Opacity="0.75"
                                    TextTrimming="CharacterEllipsis" MaxWidth="360"
                                    VerticalAlignment="Center" ToolTip.Tip="{Binding InstallDirDisplay}" />
-                    </c:Cell.Note>
-                </c:Cell>
-                <c:Cell Icon="{StaticResource SemiIconFolderOpenStroked}"
+                    </u:SettingsCard.Note>
+                </u:SettingsCard>
+                <u:SettingsCard Icon="{StaticResource SemiIconFolderOpenStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_userDirLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_userDirDesc}}">
-                    <c:Cell.Note>
+                    <u:SettingsCard.Note>
                         <TextBlock Text="{Binding UserDir}" FontSize="13" Opacity="0.75"
                                    TextTrimming="CharacterEllipsis" MaxWidth="360"
                                    VerticalAlignment="Center" ToolTip.Tip="{Binding UserDir}" />
-                    </c:Cell.Note>
-                    <c:Cell.RightContent>
+                    </u:SettingsCard.Note>
+                    <u:SettingsCard.RightContent>
                         <u:IconButton Command="{Binding OpenUserDirCommand}"
                                       Theme="{DynamicResource SolidIconButton}"
                                       Icon="{StaticResource SemiIconFolderOpen}"
                                       ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.overview_openUserDirTip}}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
 
-            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_maintTitle}}">
-                <c:Cell Icon="{StaticResource SemiIconRedoStroked}"
+            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_maintTitle}}">
+                <u:SettingsCard Icon="{StaticResource SemiIconRedoStroked}"
                         Content="{Translate {x:Static loc:LanguageManager+Keys.overview_deployLabel}}"
                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_deployDesc}}">
-                    <c:Cell.RightContent>
+                    <u:SettingsCard.RightContent>
                         <Button Content="{Translate {x:Static loc:LanguageManager+Keys.overview_deployLabel}}" Classes="Primary" MinWidth="96"
                                 Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
-                    </c:Cell.RightContent>
-                </c:Cell>
-            </c:CellGroup>
+                    </u:SettingsCard.RightContent>
+                </u:SettingsCard>
+            </u:SettingsCardGroup>
         </StackPanel>
     </StackPanel>
 </UserControl>

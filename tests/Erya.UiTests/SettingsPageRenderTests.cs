@@ -6,7 +6,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Erya.Controls;
+using Ursa.Controls;
 using Erya.Core.Distributions;
 using Erya.ViewModels.Settings;
 using Erya.Views;
@@ -15,7 +15,7 @@ using Xunit;
 namespace Erya.UiTests;
 
 /// <summary>
-/// 设置页（Cell 版）的端到端渲染：schema 字段渲染成分组卡片里的 Cell 行、
+/// 设置页（SettingsCard 版）的端到端渲染：schema 字段渲染成分组卡片里的 Cell 行、
 /// 补丁徽标出现、Detail 行可展开，皮肤库渲染为预览行 + 点开编辑。
 /// </summary>
 public sealed class SettingsPageRenderTests : IDisposable
@@ -95,45 +95,45 @@ public sealed class SettingsPageRenderTests : IDisposable
 
         var (_, page, window) = Show(vm);
 
-        // 每个 schema 分节一张卡片；字段渲染成 Cell 行。
+        // 每个 schema 分节一张卡片；字段渲染成 SettingsCard 行。
         // （皮肤库容器在 default 目标下由父 StackPanel 折叠，需按“有效可见”过滤。）
-        var groups = page.GetVisualDescendants().OfType<CellGroup>()
+        var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>()
             .Where(IsEffectivelyVisible).ToList();
         Assert.Equal(vm.Sections.Count, groups.Count);
-        var cells = page.GetVisualDescendants().OfType<Cell>().ToList();
-        Assert.Equal(vm.Sections.Sum(s => s.Fields.Count), cells.Count);
-        Assert.True(cells.Count >= 10);
+        var cards = page.GetVisualDescendants().OfType<SettingsCard>().ToList();
+        Assert.Equal(vm.Sections.Sum(s => s.Fields.Count), cards.Count);
+        Assert.True(cards.Count >= 10);
 
         // Detail 行：展开后详情可见，行内点击收起。
-        var detailCell = cells.First(c => c.Detail is not null);
-        detailCell.IsExpanded = true;
+        var detailCard = cards.First(c => c.Detail is not null);
+        detailCard.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.True(detailCell.GetVisualDescendants()
+        Assert.True(detailCard.GetVisualDescendants()
             .OfType<Border>().Single(b => b.Name == "PART_DetailHost").IsVisible);
 
         // 快捷键行：视觉顺序与字段顺序一致，展开后用 KeyGestureInput 录入。
         var fields = vm.Sections.SelectMany(s => s.Fields).ToList();
-        var hotkeyCell = cells[fields.FindIndex(f => f is ListFieldViewModel)];
-        hotkeyCell.IsExpanded = true;
+        var hotkeyCard = cards[fields.FindIndex(f => f is ListFieldViewModel)];
+        hotkeyCard.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.Contains(hotkeyCell.GetVisualDescendants(), d => d is Ursa.Controls.KeyGestureInput);
+        Assert.Contains(hotkeyCard.GetVisualDescendants(), d => d is Ursa.Controls.KeyGestureInput);
 
         // 记忆选项行也展开，截屏才能拍到编辑区。
-        cells[fields.FindIndex(f => f is CheckListFieldViewModel)].IsExpanded = true;
+        cards[fields.FindIndex(f => f is CheckListFieldViewModel)].IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
 
         // 键位映射：左列按键名按快捷键输入框同款风格显示（Caps_Lock → CapsLock），
         // 不再出现 RIME 原始 token。
-        var mappingCell = cells[fields.FindIndex(f => f is KeyMappingFieldViewModel)];
-        mappingCell.IsExpanded = true;
+        var mappingCard = cards[fields.FindIndex(f => f is KeyMappingFieldViewModel)];
+        mappingCard.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
-        var keyTexts = mappingCell.GetVisualDescendants().OfType<TextBlock>()
+        var keyTexts = mappingCard.GetVisualDescendants().OfType<TextBlock>()
             .Where(t => !string.IsNullOrEmpty(t.Text)).Select(t => t.Text!).ToList();
         Assert.Contains("CapsLock", keyTexts);
         Assert.DoesNotContain("Caps_Lock", keyTexts);
 
         // 滚到键位映射行：它在分节里最靠下，滚到它，上方的快捷键/记忆选项也在视野内。
-        mappingCell.BringIntoView();
+        mappingCard.BringIntoView();
         Dispatcher.UIThread.RunJobs();
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);
@@ -187,12 +187,12 @@ public sealed class SettingsPageRenderTests : IDisposable
             Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
 
         // 分组渲染：排版字段都在；皮肤选择/应用行为不在本页
-        // （「亮色皮肤」文字同时是预览带标签，字段按 Cell 判别）。
+        // （「亮色皮肤」文字同时是预览带标签，字段按 SettingsCard 判别）。
         Assert.Contains(texts, t => t == "排列方式");
         Assert.Contains(texts, t => t == "间距");
-        var cells = page.GetVisualDescendants().OfType<Cell>().Select(c => c.Content as string).ToList();
-        Assert.Contains("候选字体", cells);
-        Assert.DoesNotContain(cells, t => t == "亮色皮肤" || t == "应用列表");
+        var cards = page.GetVisualDescendants().OfType<SettingsCard>().Select(c => c.Content as string).ToList();
+        Assert.Contains("候选字体", cards);
+        Assert.DoesNotContain(cards, t => t == "亮色皮肤" || t == "应用列表");
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-preview-light.png"), ThemeVariant.Light);
         window.Close();
@@ -225,21 +225,21 @@ public sealed class SettingsPageRenderTests : IDisposable
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // 画廊：两套皮肤缩略卡 + 亮/暗主题两个 Cell（带图标，Note 不再重复显示皮肤名）。
+        // 画廊：两套皮肤缩略卡 + 亮/暗主题两个 SettingsCard（带图标，Note 不再重复显示皮肤名）。
         var cards = page.GetVisualDescendants().OfType<Button>()
             .Where(b => (ToolTip.GetTip(b) as string) == "应用为亮色主题").ToList();
         Assert.Equal(2, cards.Count);
-        var lightCell = page.GetVisualDescendants().OfType<Cell>().Single(c => (c.Content as string) == "亮色主题");
-        var darkCell = page.GetVisualDescendants().OfType<Cell>().Single(c => (c.Content as string) == "暗色主题");
-        Assert.Null(lightCell.Note); // Note 不再重复显示皮肤名（下拉里已有）
-        Assert.Null(darkCell.Note);
+        var lightCard = page.GetVisualDescendants().OfType<SettingsCard>().Single(c => (c.Content as string) == "亮色主题");
+        var darkCard = page.GetVisualDescendants().OfType<SettingsCard>().Single(c => (c.Content as string) == "暗色主题");
+        Assert.Null(lightCard.Note); // Note 不再重复显示皮肤名（下拉里已有）
+        Assert.Null(darkCard.Note);
 
         // 固定区：预览宿主与槽位行不在滚动区里——滚画廊不动锚点。
         Assert.All(page.GetVisualDescendants().OfType<ContentControl>()
             .Where(cc => cc.Content is CandidatePreviewViewModel),
             h => Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
-        Assert.DoesNotContain(lightCell.GetVisualAncestors(), a => a is ScrollViewer);
-        Assert.DoesNotContain(darkCell.GetVisualAncestors(), a => a is ScrollViewer);
+        Assert.DoesNotContain(lightCard.GetVisualAncestors(), a => a is ScrollViewer);
+        Assert.DoesNotContain(darkCard.GetVisualAncestors(), a => a is ScrollViewer);
 
         // 点卡片 = 应用为亮色主题（待保存编辑）；角上 ☾ = 应用为暗色；角色角标联动。
         var userDark = editor.SchemeLibrary!.Schemes.Single(s => s.Name == "user_dark");

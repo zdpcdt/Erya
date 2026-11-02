@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <!-- CornerRadiusMixerConverter（方位圆角遮罩）等共享设施 -->
-    <PackageReference Include="Irihi.Avalonia.Shared" />
   </ItemGroup>
 
 </Project>

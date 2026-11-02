@@ -1,0 +1,31 @@
+<!--
+    ValidationErrorIcon 的 Semi 风格默认样式。颜色取自 Semi 主题 token，
+    跟随浅色/深色变体自动切换。使用方需要在 Application 资源中合并本字典。
+    （Cell / CellGroup 已退役，由 Ursa 2.3+ 的 SettingsCard / SettingsCardGroup 提供。）
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Erya.Controls">
+    <Design.PreviewWith>
+        <StackPanel Width="420" Margin="20" Spacing="16">
+            <TextBox Text="清空我试试" />
+            <c:ValidationErrorIcon />
+        </StackPanel>
+    </Design.PreviewWith>
+
+    <!--  校验错误指示器：无错时零占位，有错时显示红色感叹号 + Tooltip  -->
+    <ControlTheme x:Key="{x:Type c:ValidationErrorIcon}" TargetType="c:ValidationErrorIcon">
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:ValidationErrorIcon">
+                <Border Name="PART_Root"
+                        Background="Transparent"
+                        IsVisible="{TemplateBinding HasErrors}"
+                        ToolTip.Tip="{TemplateBinding Message}">
+                    <PathIcon Theme="{DynamicResource InnerPathIcon}"
+                              Data="{DynamicResource SemiIconAlertCircle}"
+                              Foreground="{DynamicResource SemiColorDanger}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

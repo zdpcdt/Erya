@@ -17,8 +17,8 @@
                 <!-- Semi 图标几何：PathIcon Data={StaticResource SemiIcon*} 使用 -->
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/StrokedIcons.axaml" />
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
-                <!-- Cell / CellGroup（设置中心风格行控件，Semi 风格；示例见 demo/Erya.Controls.Demo） -->
-                <ResourceInclude Source="avares://Erya.Controls/CellTheme.axaml" />
+                <!-- ValidationErrorIcon（配合 silent-errors 的输入校验指示器） -->
+                <ResourceInclude Source="avares://Erya.Controls/ValidationErrorTheme.axaml" />
                 <!-- ReorderableItemsControl / DragHandle（拖拽排序列表，Semi 风格） -->
                 <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -109,7 +109,7 @@
         <semi:AvaloniaEditSemiTheme />
         <!--  ColorPicker（皮肤库取色）的 Semi 主题  -->
         <semi:ColorPickerSemiTheme />
-        <StyleInclude Source="avares://Erya.Controls/CellStyles.axaml" />
+        <StyleInclude Source="avares://Erya.Controls/InputStyles.axaml" />
         <!--  Ursa NumericUpDown 的静默校验（错误改由 ValidationErrorIcon 显示；控件库不依赖 Ursa，故置于应用层）  -->
         <Style Selector="u|NumericUpDown.silent-errors /template/ DataValidationErrors">
             <Setter Property="Theme" Value="{DynamicResource SilentDataValidationErrors}" />

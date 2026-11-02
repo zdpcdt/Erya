@@ -32,7 +32,7 @@
 | 项目 | 职责 | 依赖 |
 |---|---|---|
 | `src/Erya.Core` | RIME 的一切磁盘事务：前端探测、YAML base+patch 模型、补丁写入、部署触发、备份恢复、在线装方案、设置 schema。**零 Avalonia 依赖**，自带轻量 i18n（`CoreLoc`） | YamlDotNet |
-| `src/Erya.Controls` | Semi 风格可复用控件：`Cell` / `CellGroup` / `ReorderableItemsControl` / `DragHandle` / `ValidationErrorIcon` 及其主题 | Avalonia、Irihi.Avalonia.Shared |
+| `src/Erya.Controls` | Semi 风格可复用控件：`ReorderableItemsControl` / `DragHandle` / `ValidationErrorIcon` 及其主题（设置行控件用 Ursa 2.3+ 的 `SettingsCard` / `SettingsCardGroup`） | Avalonia |
 | `src/Erya` | 主应用：MVVM 外壳、schema 驱动的设置页、皮肤编辑 + 候选窗实时预览、应用服务、Lingua 三语 | Core + Controls |
 | `demo/Erya.Controls.Demo` | Controls 库的可视化演示 / 回归台，假数据，不碰 RIME | Controls |
 | `tests/Erya.Core.Tests` | 纯单元测试（**xunit v2**） | Core（`InternalsVisibleTo`） |

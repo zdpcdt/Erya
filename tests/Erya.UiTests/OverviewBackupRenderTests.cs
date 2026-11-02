@@ -4,11 +4,10 @@ using Avalonia.Styling;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Erya.Controls;
+using Ursa.Controls;
 using Erya.Core.Distributions;
 using Erya.ViewModels;
 using Erya.Views;
-using Ursa.Controls;
 using Xunit;
 
 namespace Erya.UiTests;
@@ -64,10 +63,10 @@ public sealed class OverviewBackupRenderTests : IDisposable
     private static IEnumerable<TextBlock> VisibleTexts(Control root)
         => root.GetVisualDescendants().OfType<TextBlock>().Where(IsEffectivelyVisible);
 
-    /// <summary>只取普通按钮：Cell 与 IconButton 也派生自 Button，会混进断言。</summary>
+    /// <summary>只取普通按钮：SettingsCard 与 IconButton 也派生自 Button，会混进断言。</summary>
     private static IEnumerable<Button> PlainButtons(Control root)
         => root.GetVisualDescendants().OfType<Button>()
-            .Where(b => b is not Cell && b is not IconButton);
+            .Where(b => b is not SettingsCard && b is not IconButton);
 
     [AvaloniaFact]
     public void Overview_detected_renders_hero_card_and_groups()
@@ -95,10 +94,10 @@ public sealed class OverviewBackupRenderTests : IDisposable
         Assert.NotSame(lightSource, logo.Source);
         Application.Current.RequestedThemeVariant = ThemeVariant.Default;
         Dispatcher.UIThread.RunJobs();
-        var groups = page.GetVisualDescendants().OfType<CellGroup>().Where(IsEffectivelyVisible).ToList();
+        var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>().Where(IsEffectivelyVisible).ToList();
         Assert.Equal(2, groups.Count);
-        var cells = page.GetVisualDescendants().OfType<Cell>().Where(IsEffectivelyVisible).ToList();
-        Assert.Equal(3, cells.Count); // 安装目录 / 用户目录 / 重新部署
+        var cards = page.GetVisualDescendants().OfType<SettingsCard>().Where(IsEffectivelyVisible).ToList();
+        Assert.Equal(3, cards.Count); // 安装目录 / 用户目录 / 重新部署
 
         var deploy = PlainButtons(page)
             .Single(b => IsEffectivelyVisible(b) && b.Content as string == "重新部署");
@@ -121,9 +120,9 @@ public sealed class OverviewBackupRenderTests : IDisposable
         var (page, window) = Show(new OverviewPage { DataContext = vm });
 
         Assert.Contains(VisibleTexts(page), t => t.Text == "未检测到");
-        // 环境/维护分组让位给安装引导卡：唯一可见的 CellGroup 上有常驻的
+        // 环境/维护分组让位给安装引导卡：唯一可见的 SettingsCardGroup 上有常驻的
         // 打开下载页与重新检测动作（一键直装仅 Windows 出现，不在此断言）。
-        var groups = page.GetVisualDescendants().OfType<CellGroup>().Where(IsEffectivelyVisible).ToList();
+        var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>().Where(IsEffectivelyVisible).ToList();
         Assert.Single(groups);
         var buttons = PlainButtons(page).Where(IsEffectivelyVisible).ToList();
         Assert.Contains(buttons, b => b.Content as string == "打开下载页");
@@ -143,7 +142,7 @@ public sealed class OverviewBackupRenderTests : IDisposable
 
         var (page, window) = Show(new BackupRestorePage { DataContext = vm });
 
-        var groups = page.GetVisualDescendants().OfType<CellGroup>().Where(IsEffectivelyVisible).ToList();
+        var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>().Where(IsEffectivelyVisible).ToList();
         Assert.Equal(2, groups.Count); // 备份 / 恢复
 
         // 右侧按钮：备份（busy 文案入口）、选择备份文件、从备份恢复（未选文件时禁用）。
@@ -181,7 +180,7 @@ public sealed class OverviewBackupRenderTests : IDisposable
 
         var (page, window) = Show(new BackupRestorePage { DataContext = vm });
 
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<CellGroup>(), IsEffectivelyVisible);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<SettingsCardGroup>(), IsEffectivelyVisible);
         Assert.Contains(VisibleTexts(page), t => t.Text == "未检测到 RIME 发行版");
         Assert.Empty(page.GetVisualDescendants().OfType<PathPicker>());
         window.Close();

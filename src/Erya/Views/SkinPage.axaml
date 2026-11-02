@@ -44,30 +44,30 @@
                     </StackPanel>
                 </StackPanel>
 
-                <c:CellGroup IsVisible="{Binding HasSchemeLibrary}">
-                    <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeLabel}}"
+                <u:SettingsCardGroup IsVisible="{Binding HasSchemeLibrary}">
+                    <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeLabel}}"
                             Description="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeDesc}}">
-                        <c:Cell.Icon>
+                        <u:SettingsCard.Icon>
                             <tdicon:Sunny Width="20" Height="20" />
-                        </c:Cell.Icon>
-                        <c:Cell.RightContent>
+                        </u:SettingsCard.Icon>
+                        <u:SettingsCard.RightContent>
                             <ComboBox ItemsSource="{Binding LightSchemeField.Options}"
                                       SelectedItem="{Binding LightSchemeField.SelectedOption, Mode=TwoWay}"
                                       MinWidth="220" />
-                        </c:Cell.RightContent>
-                    </c:Cell>
-                    <c:Cell Content="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeLabel}}"
+                        </u:SettingsCard.RightContent>
+                    </u:SettingsCard>
+                    <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeLabel}}"
                             Description="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeDesc}}">
-                        <c:Cell.Icon>
+                        <u:SettingsCard.Icon>
                             <tdicon:Moon Width="20" Height="20" />
-                        </c:Cell.Icon>
-                        <c:Cell.RightContent>
+                        </u:SettingsCard.Icon>
+                        <u:SettingsCard.RightContent>
                             <ComboBox ItemsSource="{Binding DarkSchemeField.Options}"
                                       SelectedItem="{Binding DarkSchemeField.SelectedOption, Mode=TwoWay}"
                                       MinWidth="220" />
-                        </c:Cell.RightContent>
-                    </c:Cell>
-                </c:CellGroup>
+                        </u:SettingsCard.RightContent>
+                    </u:SettingsCard>
+                </u:SettingsCardGroup>
             </StackPanel>
 
             <!--  滚动区：皮肤画廊整块  -->
