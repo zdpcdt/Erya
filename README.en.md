@@ -88,6 +88,8 @@ dotnet run --project src/Erya
 
 Packaging: `pwsh packaging/publish.ps1 -Rid win-x64 [-Aot]` produces `dist/Erya_<version>_<platform>[_aot].zip` (Native AOT cannot cross-compile, so each RID builds on its native OS); `packaging/linux/dist.sh` emits the three Linux bundles in one run. GitHub Actions runs the full test suite on all three OSes for every push/PR; packaging is a manual Run workflow, and filling in `release_tag` auto-publishes a GitHub Release with every artifact.
 
+Contributing (or hacking on this with an AI agent): start with [AGENTS.md](AGENTS.md) (collaboration rules + command cheat sheet, in Chinese) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (architecture map and data flow).
+
 ## How it works: making friends with patch semantics
 
 All user modifications in RIME land in a `patch:` map inside `<file>.custom.yaml`, and **a patch key replaces, it does not merge**. Erya's read/write model follows from that:

@@ -88,6 +88,8 @@ dotnet run --project src/Erya
 
 打包：`pwsh packaging/publish.ps1 -Rid win-x64 [-Aot]` 产出 `dist/Erya_<版本>_<平台>[_aot].zip`（Native AOT 不可交叉编译，各 RID 需在原生系统构建）；Linux 三件套由 `packaging/linux/dist.sh` 一次产出。GitHub Actions 在 push/PR 跑三平台全量测试，打包在 Actions 页手动 Run workflow，`release_tag` 填版本号即自动创建 Release 并挂全部产物。
 
+参与开发（或用 AI 协作改代码）：先读 [AGENTS.md](AGENTS.md)（协作约定与命令速查）和 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（架构地图与数据流）。
+
 ## 工作原理：和补丁语义做朋友
 
 RIME 的用户修改全部落在 `<文件>.custom.yaml` 的 `patch:` 里，且**补丁键是整体替换、不是合并**。尔雅的读写模型由此而来：
