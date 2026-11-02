@@ -56,6 +56,8 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 
 `UiConfigFile == null`（Linux）→ 应用不显示外观三页（皮肤 / 排版 / 应用行为），这是有意设计。`LinuxPackageProbe` 经 dpkg/rpm/pacman 探测版本并 memoize。
 
+`Distributions/Weasel/WeaselSetup.cs`（`IWeaselSetup`）：空态引导用的一键装前端——问 GitHub latest release API 要 `*-installer.exe` 资产，流式下载到临时目录（进度回调 + 512 MB 安全上限 + 安装包文件名消毒）；启动安装器与提权交给 OS shell，此类只负责取字节。`HttpMessageHandler` 与下载目录均可注入，测试走假 handler 零网络。
+
 ### `Settings/`：schema 驱动的设置页
 
 - 三个嵌入式基础 schema：`settings.default.json`（`default.yaml`，三前端通用的引擎键）、`settings.squirrel.json`、`settings.weasel.json`；每个都有 `.en` / `.zh-Hans` / `.zh-Hant` 语言覆盖（只改文案）。
@@ -77,9 +79,13 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 
 ### 启动组合
 
-1. `src/Erya/App.axaml.cs`（组合根，仓库里唯一合法的 `OperatingSystem.IsXxx()` 出现地）按 OS 装配 Locator：Windows → `WeaselLocator`；Linux → `Fcitx5RimeLocator` + `IbusRimeLocator`；macOS → `SquirrelLocator`；然后 `new ShellViewModel(new DistributionManager(locators), AppPreferences.Load(), showAppearance: !IsLinux)`。
+1. `src/Erya/App.axaml.cs`（组合根，仓库里唯一合法的 `OperatingSystem.IsXxx()` 出现地）按 OS 装配 Locator：Windows → `WeaselLocator`；Linux → `Fcitx5RimeLocator` + `IbusRimeLocator`；macOS → `SquirrelLocator`；然后 `new ShellViewModel(new DistributionManager(locators), AppPreferences.Load(), showAppearance: !IsLinux, supportsInAppSetup: IsWindows)`。
 2. `ShellViewModel`（`src/Erya/ViewModels/ShellViewModel.cs`）构造 `MainViewModel`（`LocateAll()` 并按偏好选定 `Distribution`），`BuildPages()`（`ShellViewModel.cs:134`）装配页面 VM：方案管理、`SettingsEditorViewModel(dist, "default")`、共享的一个 `SettingsEditorViewModel(dist, "ui")`（被皮肤 / 排版 / 应用行为三页按 `group` 切片复用）、高级设置、备份恢复、关于。页面首次导航才加载；`DistributionChanged` → `RebuildPages()`。
 3. `MainWindow.axaml` 用 `ContentControl.DataTemplates` 按 VM 类型路由到页面视图，导航是 Ursa `NavMenu`。
+
+### 空态引导（首启，本机没有 RIME 时）
+
+`MainViewModel.IsMissing` 时总览页给安装引导卡，三个动作：一键装小狼毫（`supportsInAppSetup`，组合根只在 Windows 开）、打开官方下载页（`AppShell.OpenUrl`）、重新检测。一键流程 = `WeaselSetup` 查最新版 → 带进度下载 → 交 OS shell 启动安装器（UAC 由安装器自理）→ 轮询 `DistributionManager.Locate()`（40 × 3s 窗口，安装向导慢或被取消则超时给提示）直到新装的 Weasel 出现。检测统一走 `ApplyAutoDetection()`：重跑全部 Locator，同 id 只刷新信息字段，异 id 才换 `Distribution`（整页重建、丢未保存编辑），且不写偏好——`RedetectCommand` 与安装后的自动点亮共用它，换前端无需重启。
 
 ### 读（merged 生效值）
 
@@ -136,7 +142,7 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 
 两套测试都在任何 OS 上无头运行（CI 三平台矩阵），没有显示器要求：
 
-- **`tests/Erya.Core.Tests`（xunit v2）**：配置读写 round-trip（三种 patch 形态、注释保留、写入迁移）、schema 白名单与 overlay 校验、发行版探测（env 覆盖沙盒化）、部署等待（注入时钟，二进制从不真跑）、备份、在线安装（手写 `HttpMessageHandler` 假 tar.gz，无网络）。
+- **`tests/Erya.Core.Tests`（xunit v2）**：配置读写 round-trip（三种 patch 形态、注释保留、写入迁移）、schema 白名单与 overlay 校验、发行版探测（env 覆盖沙盒化）、部署等待（注入时钟，二进制从不真跑）、备份、在线安装与小狼毫一键安装（手写 `HttpMessageHandler`，假 tar.gz / 假 release JSON，无网络；切 `CoreLoc.Language` 的三类测试共享串行 Collection）。
 - **`tests/Erya.UiTests`（xunit.v3 + Avalonia.Headless）**：
   - 引导：`[assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]`（`ShellNavTests.cs:18`），`TestAppBuilder` 用 `AppBuilder.Configure<App>()` 挂载**真实 App**（Semi 主题、图标、Cell 主题全部生效）+ `UseHeadlessDrawing = false` + `UseSkia` —— 真 CPU Skia 渲染，测试里才能 `RenderTargetBitmap` 导出截图。
   - 输入模拟约定：Flyout 必须走真实指针路径（`window.MouseMove/MouseDown/MouseUp` 到控件中心，路由 `Click` 事件打不开 Flyout）；Popup 内容经 `Flyout.Content` 取，不在视觉树里找；每步之后 `Dispatcher.UIThread.RunJobs()`。
