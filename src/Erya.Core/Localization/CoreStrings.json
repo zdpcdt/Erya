@@ -41,5 +41,14 @@
   "distName_weasel": "小狼毫 Weasel",
   "distName_fcitx5": "fcitx5 中州韵",
   "distName_ibus": "ibus 中州韵",
-  "distName_squirrel": "鼠鬚管 Squirrel"
+  "distName_squirrel": "鼠鬚管 Squirrel",
+  "setup_queryFailed": "查询小狼毫最新版本失败：{0}",
+  "setup_queryTimeout": "查询小狼毫最新版本超时，请检查网络后重试。",
+  "setup_httpError": "GitHub 接口返回 HTTP {0}，无法获取小狼毫下载地址。",
+  "setup_badResponse": "GitHub 接口返回了无法解析的内容。",
+  "setup_noInstallerAsset": "最新 Release（{0}）中未找到 *-installer.exe 安装包。",
+  "setup_downloadFailed": "下载小狼毫安装包失败：{0}",
+  "setup_downloadTimeout": "下载小狼毫安装包超时，请检查网络后重试。",
+  "setup_downloadHttpError": "下载安装包失败：HTTP {0}。",
+  "setup_tooLarge": "安装包体积超出安全上限（512 MB），已中止。"
 }

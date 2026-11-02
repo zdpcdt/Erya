@@ -61,7 +61,52 @@
             </Grid>
         </Border>
 
-        <!--  环境 + 维护两组；未检测到 RIME 时整块隐藏，页面只剩英雄卡空态  -->
+        <!--  未检测到 RIME 时的安装引导卡：一键直装（仅 Windows）/ 打开下载页 / 重新检测  -->
+        <StackPanel Spacing="12" IsVisible="{Binding IsMissing}">
+
+            <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_setupTitle}}"
+                         Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupDesc}}">
+                <c:Cell Icon="{StaticResource SemiIconDownload}"
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallDesc}}"
+                        IsVisible="{Binding SupportsInAppSetup}">
+                    <c:Cell.RightContent>
+                        <Button Classes="Primary" MinWidth="112"
+                                Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupInstallButton}}"
+                                Command="{Binding DownloadAndInstallCommand}"
+                                IsEnabled="{Binding !IsDownloadingInstaller}" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Icon="{StaticResource SemiIconExternalOpenStroked}"
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageDesc}}">
+                    <c:Cell.RightContent>
+                        <Button MinWidth="112"
+                                Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupOpenPageButton}}"
+                                Command="{Binding OpenDownloadPageCommand}" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+                <c:Cell Icon="{StaticResource SemiIconRefresh}"
+                        Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectLabel}}"
+                        Description="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectDesc}}">
+                    <c:Cell.RightContent>
+                        <Button MinWidth="112"
+                                Content="{Translate {x:Static loc:LanguageManager+Keys.overview_setupRedetectButton}}"
+                                Command="{Binding RedetectCommand}" />
+                    </c:Cell.RightContent>
+                </c:Cell>
+            </c:CellGroup>
+
+            <!--  下载进度 + 阶段状态行：状态非空即显示，进度条随下载态出现  -->
+            <StackPanel Spacing="6" Margin="4,0,4,0"
+                        IsVisible="{Binding SetupStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <ProgressBar Value="{Binding SetupProgress}" Maximum="100"
+                             IsVisible="{Binding IsDownloadingInstaller}" />
+                <TextBlock Text="{Binding SetupStatus}" FontSize="12" Opacity="0.65" TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--  环境 + 维护两组；未检测到 RIME 时整块隐藏  -->
         <StackPanel Spacing="20" IsVisible="{Binding !IsMissing}">
 
             <c:CellGroup Header="{Translate {x:Static loc:LanguageManager+Keys.overview_envTitle}}"

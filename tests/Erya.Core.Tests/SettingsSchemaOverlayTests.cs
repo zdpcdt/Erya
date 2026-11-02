@@ -3,7 +3,12 @@ using Erya.Core.Settings;
 
 namespace Erya.Core.Tests;
 
-/// <summary>设置 schema 的语言 overlay：结构来自 base，文案跟随 CoreLoc 语言。</summary>
+/// <summary>
+/// 设置 schema 的语言 overlay：结构来自 base，文案跟随 CoreLoc 语言。
+/// 与 CoreLocTests / SchemaPackageTests 共享串行 Collection：本类切换
+/// CoreLoc.Language，不能与依赖特定语言的断言并行。
+/// </summary>
+[Collection("core-loc")]
 public sealed class SettingsSchemaOverlayTests : IDisposable
 {
     private readonly string _originalLanguage = CoreLoc.Language;

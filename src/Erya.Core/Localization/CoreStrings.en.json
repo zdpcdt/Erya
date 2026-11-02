@@ -41,5 +41,14 @@
   "distName_weasel": "Weasel (小狼毫)",
   "distName_fcitx5": "fcitx5 Zhongyun",
   "distName_ibus": "ibus Zhongyun",
-  "distName_squirrel": "Squirrel (鼠鬚管)"
+  "distName_squirrel": "Squirrel (鼠鬚管)",
+  "setup_queryFailed": "Failed to query the latest Weasel release: {0}",
+  "setup_queryTimeout": "Timed out querying the latest Weasel release; check the network and retry.",
+  "setup_httpError": "The GitHub API returned HTTP {0}; cannot resolve the Weasel download.",
+  "setup_badResponse": "The GitHub API returned content that could not be parsed.",
+  "setup_noInstallerAsset": "The latest release ({0}) carries no *-installer.exe asset.",
+  "setup_downloadFailed": "Failed to download the Weasel installer: {0}",
+  "setup_downloadTimeout": "Timed out downloading the Weasel installer; check the network and retry.",
+  "setup_downloadHttpError": "Download failed: HTTP {0}.",
+  "setup_tooLarge": "The installer exceeds the safety cap (512 MB); aborted."
 }

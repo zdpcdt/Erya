@@ -110,7 +110,7 @@ public sealed class OverviewBackupRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Overview_missing_shows_hero_empty_state_only()
+    public void Overview_missing_shows_hero_empty_state_and_setup_card()
     {
         var vm = new MainViewModel(new DistributionManager());
 
@@ -121,7 +121,13 @@ public sealed class OverviewBackupRenderTests : IDisposable
         var (page, window) = Show(new OverviewPage { DataContext = vm });
 
         Assert.Contains(VisibleTexts(page), t => t.Text == "未检测到");
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<CellGroup>(), IsEffectivelyVisible);
+        // 环境/维护分组让位给安装引导卡：唯一可见的 CellGroup 上有常驻的
+        // 打开下载页与重新检测动作（一键直装仅 Windows 出现，不在此断言）。
+        var groups = page.GetVisualDescendants().OfType<CellGroup>().Where(IsEffectivelyVisible).ToList();
+        Assert.Single(groups);
+        var buttons = PlainButtons(page).Where(IsEffectivelyVisible).ToList();
+        Assert.Contains(buttons, b => b.Content as string == "打开下载页");
+        Assert.Contains(buttons, b => b.Content as string == "重新检测");
         Assert.Contains(VisibleTexts(page), t => t.Text == vm.HeroHint);
         window.Close();
     }

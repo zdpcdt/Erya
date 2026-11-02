@@ -8,6 +8,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Erya.Core.Distributions;
+using Erya.Core.Distributions.Weasel;
 using Erya.Core.Localization;
 using Erya.Localization;
 using Erya.Services;
@@ -80,11 +81,11 @@ public partial class ShellViewModel : ObservableObject
     private void Deploy() => _overview.DeployCommand.Execute(null);
 
     public ShellViewModel(DistributionManager distributions, AppPreferences? preferences = null,
-        bool showAppearance = true)
+        bool showAppearance = true, IWeaselSetup? weaselSetup = null, bool supportsInAppSetup = false)
     {
         _showAppearance = showAppearance;
         _preferences = preferences;
-        _overview = new MainViewModel(distributions, preferences);
+        _overview = new MainViewModel(distributions, preferences, weaselSetup, supportsInAppSetup);
         BuildPages();
         // A frontend switch rebuilds every page against the new distribution;
         // unsaved edits on other pages are deliberately dropped (rare action).
