@@ -200,6 +200,9 @@
         <Style Selector="^:interactive:pressed:not(:over-detail) /template/ Border#PART_Root">
             <Setter Property="Background" Value="{DynamicResource SemiColorFill1}" />
         </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
         <Style Selector="^[ShowChevron=True] /template/ PathIcon#PART_Chevron">
             <Setter Property="IsVisible" Value="True" />
         </Style>

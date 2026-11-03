@@ -39,6 +39,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Irihi.Avalonia.Shared" />
     <PackageReference Include="Irihi.Branding" />
     <PackageReference Include="Irihi.Iconica.TDesign" />
     <PackageReference Include="Irihi.Iconica.IconPark" />
