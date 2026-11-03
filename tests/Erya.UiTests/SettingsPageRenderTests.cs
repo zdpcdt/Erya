@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -105,11 +106,13 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.True(cards.Count >= 10);
 
         // Detail 行：展开后详情可见，行内点击收起。
+        // （按 TemplatedParent 过滤：详情里嵌套的 SettingsCard 各自带一个同名宿主。）
         var detailCard = cards.First(c => c.Detail is not null);
         detailCard.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
         Assert.True(detailCard.GetVisualDescendants()
-            .OfType<Border>().Single(b => b.Name == "PART_DetailHost").IsVisible);
+            .OfType<ContentPresenter>().Single(p => p.Name == "PART_DetailHost"
+                                                     && ReferenceEquals(p.TemplatedParent, detailCard)).IsVisible);
 
         // 快捷键行：视觉顺序与字段顺序一致，展开后用 KeyGestureInput 录入。
         var fields = vm.Sections.SelectMany(s => s.Fields).ToList();

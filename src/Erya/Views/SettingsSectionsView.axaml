@@ -22,15 +22,16 @@
         <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="sf:SettingsSectionViewModel">
                 <u:SettingsCardGroup Header="{Binding Title}" Description="{Binding Description}"
-                             ItemsSource="{Binding Fields}">
+                                     ItemsSource="{Binding Fields}">
                     <u:SettingsCardGroup.ItemTemplate>
                         <DataTemplate x:DataType="sf:SettingsFieldViewModel">
                             <ContentControl Content="{Binding}">
                                 <ContentControl.DataTemplates>
 
                                     <DataTemplate x:DataType="sf:ToggleFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <ToggleSwitch Theme="{DynamicResource SimpleToggleSwitch}"
@@ -41,9 +42,10 @@
                                     </DataTemplate>
 
                                     <DataTemplate x:DataType="sf:NumberFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}"
-                                                Note="{Binding Note}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}"
+                                            Note="{Binding Note}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <StackPanel Orientation="Horizontal" Spacing="8"
@@ -51,11 +53,12 @@
                                                         <u:NumericDoubleUpDown x:Name="Nu" Classes="silent-errors"
                                                                                Width="130"
                                                                                Value="{Binding Value}"
-                                                                               Minimum="{Binding Min}" Maximum="{Binding Max}"
+                                                                               Minimum="{Binding Min}"
+                                                                               Maximum="{Binding Max}"
                                                                                Step="{Binding Step}"
                                                                                FormatString="{Binding Format}" />
                                                         <c:ValidationErrorIcon Target="{Binding #Nu}"
-                                                                                VerticalAlignment="Center" />
+                                                                               VerticalAlignment="Center" />
                                                     </StackPanel>
                                                     <Slider Width="180" IsVisible="{Binding IsSlider}"
                                                             Minimum="{Binding Min}" Maximum="{Binding Max}"
@@ -72,8 +75,9 @@
                                           必须排在 TextFieldViewModel 模板之前：模板按顺序取
                                           第一个可匹配项，而 FontFieldViewModel 兼容其基类。  -->
                                     <DataTemplate x:DataType="sf:FontFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <ComboBox ItemsSource="{Binding Options}"
@@ -87,8 +91,9 @@
                                     <!--  hotkey：单键标量字段（以词定字等）。派生自 TextField，
                                           必须排在基类模板之前，否则先被文本框模板吃掉  -->
                                     <DataTemplate x:DataType="sf:HotkeyFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <u:KeyGestureInput Width="280"
@@ -100,11 +105,13 @@
                                     </DataTemplate>
 
                                     <DataTemplate x:DataType="sf:TextFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                                    <TextBox Text="{Binding Text}" PlaceholderText="{Binding Placeholder}"
+                                                    <TextBox Text="{Binding Text}"
+                                                             PlaceholderText="{Binding Placeholder}"
                                                              Width="240" />
                                                 </StackPanel>
                                             </u:SettingsCard.RightContent>
@@ -112,8 +119,9 @@
                                     </DataTemplate>
 
                                     <DataTemplate x:DataType="sf:ChoiceFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <ComboBox ItemsSource="{Binding Options}"
@@ -129,47 +137,49 @@
                                           内边距、右侧对齐与外层一致）；删除命令经 $parent[ItemsControl]
                                           取回字段 VM；新增行在列表尾（它是操作行，不是记录）  -->
                                     <DataTemplate x:DataType="sf:ListFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}">
                                             <u:SettingsCard.Note>
-                                                <FormatTranslate FormatKey="{x:Static loc:LanguageManager+Keys.settings_hotkeyCountNote}">
+                                                <FormatTranslate
+                                                    FormatKey="{x:Static loc:LanguageManager+Keys.settings_hotkeyCountNote}">
                                                     <TranslateEntry Binding="{Binding Items.Count}" />
                                                 </FormatTranslate>
                                             </u:SettingsCard.Note>
                                             <u:SettingsCard.Detail>
-                                                <StackPanel Spacing="10">
+                                                <StackPanel>
                                                     <ItemsControl ItemsSource="{Binding Items}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="sf:HotkeyRowViewModel">
                                                                 <u:SettingsCard>
-                                                                    <u:SettingsCard.RightContent>
-                                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                            <u:KeyGestureInput Width="280"
-                                                                                               Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                                               ToolTip.Tip="{Binding Value}" />
-                                                                            <u:IconButton Classes="Danger"
-                                                                                          Theme="{DynamicResource SolidIconButton}"
-                                                                                          Icon="{StaticResource SemiIconDelete}"
-                                                                                          VerticalAlignment="Center"
-                                                                                          Command="{Binding $parent[ItemsControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
-                                                                                          CommandParameter="{Binding}"
-                                                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_removeHotkeyTip}}" />
-                                                                        </StackPanel>
-                                                                    </u:SettingsCard.RightContent>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                        <u:KeyGestureInput Width="280"
+                                                                                Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                                ToolTip.Tip="{Binding Value}" />
+                                                                        <u:IconButton Classes="Danger"
+                                                                                Theme="{DynamicResource SolidIconButton}"
+                                                                                Icon="{StaticResource SemiIconDelete}"
+                                                                                VerticalAlignment="Center"
+                                                                                Command="{Binding $parent[ItemsControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_removeHotkeyTip}}" />
+                                                                    </StackPanel>
                                                                 </u:SettingsCard>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <u:KeyGestureInput Width="280"
-                                                                           Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                           ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_newHotkeyTip}}" />
-                                                        <u:IconButton Theme="{DynamicResource SolidIconButton}"
-                                                                      Icon="{StaticResource SemiIconPlus}"
-                                                                      VerticalAlignment="Center"
-                                                                      Command="{Binding AddItemCommand}"
-                                                                      ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_addHotkeyTip}}" />
-                                                    </StackPanel>
+                                                    <u:SettingsCard>
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <u:KeyGestureInput Width="280"
+                                                                               Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                               ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_newHotkeyTip}}" />
+                                                            <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                                          Icon="{StaticResource SemiIconPlus}"
+                                                                          VerticalAlignment="Center"
+                                                                          Command="{Binding AddItemCommand}"
+                                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_addHotkeyTip}}" />
+                                                        </StackPanel>
+                                                    </u:SettingsCard>
                                                 </StackPanel>
                                             </u:SettingsCard.Detail>
                                         </u:SettingsCard>
@@ -178,18 +188,21 @@
                                     <!--  keyMapping：点开每键一行下拉。按键名经 RimeHotkey 转成与
                                           快捷键输入框一致的显示（Caps_Lock → CapsLock）作行标题  -->
                                     <DataTemplate x:DataType="sf:KeyMappingFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}"
-                                                Note="{Binding Summary}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}"
+                                            Note="{Binding Summary}">
                                             <u:SettingsCard.Detail>
                                                 <ItemsControl ItemsSource="{Binding Rows}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="sf:KeyMappingRowViewModel">
-                                                            <u:SettingsCard Content="{Binding Key, Converter={x:Static views:Converters.RimeHotkey}}">
+                                                            <u:SettingsCard
+                                                                Content="{Binding Key, Converter={x:Static views:Converters.RimeHotkey}}">
                                                                 <u:SettingsCard.RightContent>
-                                                                    <ComboBox ItemsSource="{Binding $parent[ItemsControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
-                                                                              SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
-                                                                              Width="200" />
+                                                                    <ComboBox
+                                                                        ItemsSource="{Binding $parent[ItemsControl].((sf:KeyMappingFieldViewModel)DataContext).Options}"
+                                                                        SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                                        Width="200" />
                                                                 </u:SettingsCard.RightContent>
                                                             </u:SettingsCard>
                                                         </DataTemplate>
@@ -201,17 +214,18 @@
 
                                     <!--  checkList：点开每项一行卡（标题左、勾选右）  -->
                                     <DataTemplate x:DataType="sf:CheckListFieldViewModel">
-                                        <u:SettingsCard Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                                Content="{Binding Label}" Description="{Binding Description}"
-                                                Note="{Binding EnabledSummary}">
+                                        <u:SettingsCard
+                                            Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
+                                            Content="{Binding Label}" Description="{Binding Description}"
+                                            Note="{Binding EnabledSummary}">
                                             <u:SettingsCard.Detail>
                                                 <ItemsControl ItemsSource="{Binding Options}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="sf:CheckOptionViewModel">
-                                                            <u:SettingsCard Content="{Binding Value}">
-                                                                <u:SettingsCard.RightContent>
-                                                                    <CheckBox IsChecked="{Binding IsChecked}" />
-                                                                </u:SettingsCard.RightContent>
+                                                            <u:SettingsCard>
+                                                                <CheckBox
+                                                                    Content="{Binding Value}"
+                                                                    IsChecked="{Binding IsChecked}" />
                                                             </u:SettingsCard>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
