@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
-             xmlns:c="clr-namespace:Erya.Controls;assembly=Erya.Controls"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
              xmlns:loc="clr-namespace:Erya.Localization"
@@ -29,37 +28,50 @@
                 </u:SettingsCard>
             </u:SettingsCardGroup>
 
-            <!--  颜色：一排色块，点击弹取色面板（对比度主题式）  -->
+            <!--  颜色：一排取色器（内置 ColorPicker 下拉面板），值经 RimeColor 转 BGR 十六进制  -->
             <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorsGroup}}">
+                <u:SettingsCardGroup.Styles>
+                    <Style Selector="ColorPicker">
+                        <Setter Property="IsAlphaVisible" Value="False" />
+                    </Style>
+                </u:SettingsCardGroup.Styles>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorBackCandidate}}">
                     <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <views:ColorSwatch RimeHex="{Binding Scheme.BackColor, Mode=TwoWay}" />
-                            <views:ColorSwatch RimeHex="{Binding Scheme.CandidateTextColor, Mode=TwoWay}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.BackColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.CandidateTextColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
                         </StackPanel>
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorHilitedBackText}}">
                     <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <views:ColorSwatch RimeHex="{Binding Scheme.HilitedBackColor, Mode=TwoWay}" />
-                            <views:ColorSwatch RimeHex="{Binding Scheme.HilitedTextColor, Mode=TwoWay}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.HilitedBackColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.HilitedTextColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
                         </StackPanel>
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorComment}}">
                     <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <views:ColorSwatch RimeHex="{Binding Scheme.CommentTextColor, Mode=TwoWay}" />
-                            <views:ColorSwatch RimeHex="{Binding Scheme.HilitedCommentTextColor, Mode=TwoWay}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.CommentTextColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.HilitedCommentTextColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
                         </StackPanel>
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorPreedit}}">
                     <u:SettingsCard.RightContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <views:ColorSwatch RimeHex="{Binding Scheme.TextColor, Mode=TwoWay}" />
-                            <views:ColorSwatch RimeHex="{Binding Scheme.HilitedPreeditColor, Mode=TwoWay}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.TextColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
+                            <ColorPicker
+                                Color="{Binding Scheme.HilitedPreeditColor, Mode=TwoWay, Converter={x:Static views:Converters.RimeColor}}" />
                         </StackPanel>
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
@@ -68,7 +80,7 @@
             <!--  皮肤级字体/排版：鼠须管专属（SquirrelTheme 皮肤键覆盖全局 style），
                   小狼毫从皮肤只读颜色——显示即是 placebo。  -->
             <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLayoutGroup}}"
-                         IsVisible="{Binding IsSquirrel}">
+                                 IsVisible="{Binding IsSquirrel}">
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontLabel}}">
                     <u:SettingsCard.RightContent>
                         <!--  固定宽：回退长串不能挤爆对话框  -->
@@ -79,17 +91,20 @@
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_fontPointLabel}}">
                     <u:SettingsCard.RightContent>
-                        <TextBox Text="{Binding Scheme.FontPointText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
+                        <TextBox Text="{Binding Scheme.FontPointText, Mode=TwoWay}" Width="120"
+                                 PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_cornerRadiusLabel}}">
                     <u:SettingsCard.RightContent>
-                        <TextBox Text="{Binding Scheme.CornerRadiusText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
+                        <TextBox Text="{Binding Scheme.CornerRadiusText, Mode=TwoWay}" Width="120"
+                                 PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
                 <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_lineSpacingLabel}}">
                     <u:SettingsCard.RightContent>
-                        <TextBox Text="{Binding Scheme.LineSpacingText, Mode=TwoWay}" Width="120" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
+                        <TextBox Text="{Binding Scheme.LineSpacingText, Mode=TwoWay}" Width="120"
+                                 PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.schemas_notSetPlaceholder}}" />
                     </u:SettingsCard.RightContent>
                 </u:SettingsCard>
             </u:SettingsCardGroup>

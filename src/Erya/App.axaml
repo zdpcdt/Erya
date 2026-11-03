@@ -4,8 +4,6 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:ip="https://irihi.tech/iconica/iconpark"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
-             xmlns:views="clr-namespace:Erya.Views"
-             xmlns:colorpicker="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ColorPicker"
              x:Class="Erya.App"
              RequestedThemeVariant="Default">
              <!-- 显式初始变体：ThemeToggleButton 的两态循环依赖非 Default 的起点，
@@ -76,29 +74,6 @@
                     </StackPanel>
                 </Border>
             </DataTemplate>
-
-            <!--  颜色色块（对比度主题式）：圆角矩形显色，点击弹扁平取色面板（ColorView 直出）  -->
-            <ControlTheme x:Key="{x:Type views:ColorSwatch}" TargetType="views:ColorSwatch">
-                <Setter Property="Template">
-                    <ControlTemplate>
-                        <Button Padding="0" Background="Transparent" BorderThickness="0"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                VerticalContentAlignment="Stretch" MinWidth="48" Height="28">
-                            <Border x:Name="PART_Swatch" CornerRadius="6"
-                                    BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1" />
-                            <Button.Flyout>
-                                <Flyout Placement="Bottom">
-                                    <colorpicker:ColorView Width="300"
-                                                           IsAccentColorsVisible="False"
-                                                           IsColorPaletteVisible="False"
-                                                           IsColorModelVisible="False"
-                                                           Color="{Binding SwatchColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
-                    </ControlTemplate>
-                </Setter>
-            </ControlTheme>
         </ResourceDictionary>
     </Application.Resources>
 
