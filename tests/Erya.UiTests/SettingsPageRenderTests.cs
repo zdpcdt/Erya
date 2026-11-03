@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -328,31 +329,28 @@ public sealed class SettingsPageRenderTests : IDisposable
         var host = new Window { Width = 640, Height = 760, Content = control };
         host.Show();
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(8, control.GetVisualDescendants().OfType<ColorSwatch>().Count());
+        Assert.Equal(8, control.GetVisualDescendants().OfType<ColorPicker>().Count());
         Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").StartsWith("0x"));
         Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("作者"));
         Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
         Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("字体与排版"));
-        // 色块显示当前色（BGR 十六进制 → RGB 画刷），改值实时反映。
-        var swatch = control.GetVisualDescendants().OfType<ColorSwatch>().First();
-        var swatchBorder = swatch.GetVisualDescendants().OfType<Border>()
-            .Single(b => b.Name == "PART_Swatch");
-        var swatchColor = Assert.IsAssignableFrom<ISolidColorBrush>(swatchBorder.Background).Color;
-        Assert.Equal(0x1E, swatchColor.R); // user_dark back_color 0x1C1C1E（BGR）→ R=1E
+        // 取色器显示当前色（BGR 十六进制 → RGB Color，经 RimeColor 转换器），改值实时反映。
+        var picker = control.GetVisualDescendants().OfType<ColorPicker>().First();
+        Assert.Equal(Color.FromRgb(0x1E, 0x1C, 0x1C), picker.Color); // user_dark back_color 0x1C1C1E（BGR）→ R=1E
         dialog2.Scheme.BackColor = "FFFFFF";
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(0xFF, Assert.IsAssignableFrom<ISolidColorBrush>(swatchBorder.Background).Color.R);
+        Assert.Equal(Color.FromRgb(0xFF, 0xFF, 0xFF), picker.Color);
 
-        // 真实点击色块弹出扁平取色面板（ColorView，Popup 挂在窗口 OverlayPopupHost），
-        // 在面板里改色实时写回皮肤（BGR 十六进制）。
-        var swatchButton = swatch.GetVisualDescendants().OfType<Button>().First();
-        var at = swatchButton.TranslatePoint(new Point(swatchButton.Bounds.Width / 2, swatchButton.Bounds.Height / 2), host)!.Value;
+        // 真实点击弹出下拉取色面板（Popup 挂在窗口 OverlayPopupHost），
+        // 在面板色谱上选色实时写回皮肤（BGR 十六进制）。
+        var dropDown = picker.GetVisualDescendants().OfType<DropDownButton>().First();
+        var at = dropDown.TranslatePoint(new Point(dropDown.Bounds.Width / 2, dropDown.Bounds.Height / 2), host)!.Value;
         host.MouseDown(at, Avalonia.Input.MouseButton.Left);
         host.MouseUp(at, Avalonia.Input.MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
-        var picker = host.GetVisualDescendants().OfType<ColorView>().FirstOrDefault();
-        Assert.NotNull(picker);
-        picker!.Color = Avalonia.Media.Color.FromRgb(0x11, 0x22, 0x33);
+        var spectrum = host.GetVisualDescendants().OfType<ColorSpectrum>().FirstOrDefault();
+        Assert.NotNull(spectrum);
+        spectrum!.HsvColor = new HsvColor(1, 210, 2.0 / 3, 0.2); // ≈ RGB(11,22,33)
         Dispatcher.UIThread.RunJobs();
         Assert.Equal("332211", dialog2.Scheme.BackColor); // RGB(11,22,33) → BGR 十六进制 332211
         host.Close();
