@@ -274,7 +274,12 @@ public sealed class RimeHotkeyConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not KeyGesture gesture) return BindingOperations.DoNothing;
+        // Clear（Escape / 只按修饰键后松开）写回空串 = 只清空该行的值，
+        // 行本身由 HotkeyRowDelete 转译的鼠标 × 点击删除。
+        if (value is not KeyGesture gesture) return "";
+        // 修饰键挂起态（Key.None，还没按主键）是录入中间态，不是一次值提交，
+        // 不写回——否则按住 Shift 的瞬间 VM 会被写成 "none" 之类的脏值。
+        if (gesture.Key == Key.None) return BindingOperations.DoNothing;
         var name = KeyToName.TryGetValue(gesture.Key, out var mapped)
             ? mapped
             : gesture.Key.ToString().ToLowerInvariant();

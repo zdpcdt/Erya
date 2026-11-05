@@ -97,8 +97,7 @@
                                             <u:SettingsCard.RightContent>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <u:KeyGestureInput Width="280"
-                                                                       Gesture="{Binding Text, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                       ToolTip.Tip="{Binding Text}" />
+                                                                       Gesture="{Binding Text, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}" />
                                                 </StackPanel>
                                             </u:SettingsCard.RightContent>
                                         </u:SettingsCard>
@@ -132,55 +131,40 @@
                                         </u:SettingsCard>
                                     </DataTemplate>
 
-                                    <!--  hotkeyList / hotkeyPairList：行内摘要 + 点开录入按键组合。
-                                          记录列表用 ItemsControl，每条记录一张 SettingsCard（行高、
-                                          内边距、右侧对齐与外层一致）；删除命令经 $parent[ItemsControl]
-                                          取回字段 VM；新增行在列表尾（它是操作行，不是记录）  -->
+                                    <!--  hotkeyList / hotkeyPairList：行内摘要 + ➕ 新增。
+                                          外层右侧 ➕ 在 Detail 追加一排空行并展开（已有空行时不叠行），
+                                          聚焦行内录入即成；每条记录一张 SettingsCard，行内 ClearButton × /
+                                          清空 = 删行，重复值标 ⚠  -->
                                     <DataTemplate x:DataType="sf:ListFieldViewModel">
                                         <u:SettingsCard
                                             Icon="{Binding IconName, Converter={x:Static views:Converters.FieldIcon}}"
-                                            Content="{Binding Label}" Description="{Binding Description}">
-                                            <u:SettingsCard.Note>
-                                                <FormatTranslate
-                                                    FormatKey="{x:Static loc:LanguageManager+Keys.settings_hotkeyCountNote}">
-                                                    <TranslateEntry Binding="{Binding Items.Count}" />
-                                                </FormatTranslate>
-                                            </u:SettingsCard.Note>
+                                            Content="{Binding Label}" Description="{Binding Description}"
+                                            Note="{Binding NoteText}"
+                                            IsExpanded="{Binding IsDetailExpanded, Mode=TwoWay}">
+                                            <u:SettingsCard.RightContent>
+                                                <u:IconButton Theme="{DynamicResource SolidIconButton}"
+                                                              Icon="{StaticResource SemiIconPlus}"
+                                                              VerticalAlignment="Center"
+                                                              Command="{Binding AddHotkeyRowCommand}"
+                                                              ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_addHotkeyTip}}" />
+                                            </u:SettingsCard.RightContent>
                                             <u:SettingsCard.Detail>
-                                                <StackPanel>
-                                                    <ItemsControl ItemsSource="{Binding Items}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="sf:HotkeyRowViewModel">
-                                                                <u:SettingsCard>
-                                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                        <u:KeyGestureInput Width="280"
-                                                                                Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                                ToolTip.Tip="{Binding Value}" />
-                                                                        <u:IconButton Classes="Danger"
-                                                                                Theme="{DynamicResource SolidIconButton}"
-                                                                                Icon="{StaticResource SemiIconDelete}"
-                                                                                VerticalAlignment="Center"
-                                                                                Command="{Binding $parent[ItemsControl].((sf:ListFieldViewModel)DataContext).RemoveItemCommand}"
-                                                                                CommandParameter="{Binding}"
-                                                                                ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_removeHotkeyTip}}" />
-                                                                    </StackPanel>
-                                                                </u:SettingsCard>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <u:SettingsCard>
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <u:KeyGestureInput Width="280"
-                                                                               Gesture="{Binding NewItem, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
-                                                                               ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_newHotkeyTip}}" />
-                                                            <u:IconButton Theme="{DynamicResource SolidIconButton}"
-                                                                          Icon="{StaticResource SemiIconPlus}"
-                                                                          VerticalAlignment="Center"
-                                                                          Command="{Binding AddItemCommand}"
-                                                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.settings_addHotkeyTip}}" />
-                                                        </StackPanel>
-                                                    </u:SettingsCard>
-                                                </StackPanel>
+                                                <ItemsControl ItemsSource="{Binding Items}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="sf:HotkeyRowViewModel">
+                                                            <u:SettingsCard>
+                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                    <u:KeyGestureInput Width="280" Classes="ClearButton"
+                                                                            Gesture="{Binding Value, Converter={x:Static views:Converters.RimeHotkey}, Mode=TwoWay}"
+                                                                            views:HotkeyRowDelete.DeleteCommand="{Binding $parent[ItemsControl].((sf:ListFieldViewModel)DataContext).DeleteRowCommand}"
+                                                                            views:HotkeyRowFocus.FocusOnAttach="{Binding IsFresh}" />
+                                                                    <c:ValidationErrorIcon Error="{Binding DuplicateError}"
+                                                                            VerticalAlignment="Center" />
+                                                                </StackPanel>
+                                                            </u:SettingsCard>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </u:SettingsCard.Detail>
                                         </u:SettingsCard>
                                     </DataTemplate>

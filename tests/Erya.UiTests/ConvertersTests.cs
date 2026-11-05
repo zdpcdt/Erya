@@ -65,7 +65,13 @@ public class ConvertersTests
     public void Rime_hotkey_unparseable_shows_empty_and_keeps_original()
     {
         Assert.Null(HotkeyConv.Convert("KP_Add", typeof(KeyGesture), null, C));
-        Assert.Equal(BindingOperations.DoNothing, HotkeyConv.ConvertBack(null, typeof(string), null, C));
+        // Clear（Escape / 只按修饰键松开）写回空串 = 只清该行的值；行由鼠标
+        // × 删除。返回 DoNothing 会让 VM 保留旧值，显示已空、保存却写旧键。
+        Assert.Equal("", HotkeyConv.ConvertBack(null, typeof(string), null, C));
+        // 修饰键挂起态（Key.None，还没按主键）是录入中间态，不写回——否则
+        // 按住 Shift 的瞬间 VM 会被写成 "none" 之类的脏值。
+        Assert.Equal(BindingOperations.DoNothing,
+            HotkeyConv.ConvertBack(new KeyGesture(Key.None, KeyModifiers.Shift), typeof(string), null, C));
     }
 
     [Fact]

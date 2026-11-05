@@ -1,6 +1,7 @@
 using Avalonia.Headless.XUnit;
 using Erya.Core.Distributions;
 using Erya.Core.Distributions.Linux;
+using Erya.Localization;
 using Erya.ViewModels.Settings;
 using Xunit;
 
@@ -104,6 +105,91 @@ public sealed class SettingsEditorTests : IDisposable
         await vm.SaveAndDeployCommand.ExecuteAsync(null);
         Assert.False(new Erya.Core.Configuration.RimeConfigStore(_dir)
             .ReadPatchValues("default.yaml").ContainsKey("key_binder/select_first_character"));
+    }
+
+    [AvaloniaFact]
+    public async Task Hotkey_list_add_button_appends_row_and_duplicate_rows_flagged()
+    {
+        Write("default.yaml", """
+            switcher:
+              hotkeys:
+                - Control+grave
+            """);
+        var distribution = new Fcitx5RimeDistribution(_dir, _sharedDir, null);
+        var vm = new SettingsEditorViewModel(distribution, "default");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        ListFieldViewModel List() => Assert.IsType<ListFieldViewModel>(
+            vm.Sections.SelectMany(s => s.Fields).Single(f => f.KeyPath == "switcher/hotkeys"));
+        var list = List();
+        Assert.Equal(["Control+grave"], list.Items.Select(i => i.Value));
+
+        // ➕ 追加一排空行并自动展开；空行还没录入，不算改动。
+        list.AddHotkeyRowCommand.Execute(null);
+        Assert.True(list.IsDetailExpanded);
+        Assert.Equal(["Control+grave", ""], list.Items.Select(i => i.Value));
+        Assert.False(list.HasPendingEdits);
+
+        // 已有空行时再点 ➕ 不叠行。
+        list.AddHotkeyRowCommand.Execute(null);
+        Assert.Equal(["Control+grave", ""], list.Items.Select(i => i.Value));
+
+        // 空行里录入 → 变脏。
+        list.Items[1].Value = "F4";
+        Assert.True(list.HasPendingEdits);
+
+        // 行内录到与其他行相同的值：涉事行都标 ⚠（仅提示，保存仍照写）。
+        list.AddHotkeyRowCommand.Execute(null);
+        list.Items[2].Value = "F4";
+        Assert.NotNull(list.Items[1].DuplicateError);
+        Assert.NotNull(list.Items[2].DuplicateError);
+        Assert.Null(list.Items[0].DuplicateError);
+
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+        var custom = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
+        Assert.Contains("F4", custom);
+    }
+
+    [AvaloniaFact]
+    public async Task Hotkey_list_mouse_delete_keeps_last_row_and_clear_all_writes_empty_patch()
+    {
+        Write("default.yaml", """
+            switcher:
+              hotkeys:
+                - Control+grave
+                - F4
+            """);
+        var distribution = new Fcitx5RimeDistribution(_dir, _sharedDir, null);
+        var vm = new SettingsEditorViewModel(distribution, "default");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        ListFieldViewModel List() => Assert.IsType<ListFieldViewModel>(
+            vm.Sections.SelectMany(s => s.Fields).Single(f => f.KeyPath == "switcher/hotkeys"));
+        var list = List();
+        Assert.Equal(
+            Loc.Format(LanguageManager.Instance.settings_hotkeyCountNote, 2), list.NoteText);
+
+        // 键盘清空（Escape / 只按修饰键松开 → 值清空）：只清值，行保留等重录。
+        list.Items[0].Value = "";
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(["", "F4"], list.Items.Select(i => i.Value));
+
+        // 鼠标点 ×（HotkeyRowDelete 转译 DeleteRow）：删整行；至少保一行。
+        list.DeleteRowCommand.Execute(list.Items[0]);
+        Assert.Equal(["F4"], list.Items.Select(i => i.Value));
+        list.DeleteRowCommand.Execute(list.Items[0]);
+        Assert.Single(list.Items); // 最后一行删不掉
+
+        // 全删语义 = 清空最后一行的值后保存 → 写空列表，不再回落发行版默认。
+        list.Items[0].Value = "";
+        Assert.True(list.HasPendingEdits);
+        Assert.Empty(Assert.IsAssignableFrom<System.Collections.Generic.IReadOnlyList<object?>>(list.PendingValue()!));
+        Assert.Equal(
+            Loc.Get(LanguageManager.Instance.settings_hotkeyEmptyNote), list.NoteText);
+
+        await vm.SaveAndDeployCommand.ExecuteAsync(null);
+        var custom = File.ReadAllText(Path.Combine(_dir, "default.custom.yaml"));
+        Assert.Matches(@"switcher/hotkeys:\s*\[\]", custom);
     }
 
     [AvaloniaFact]

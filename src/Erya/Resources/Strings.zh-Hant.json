@@ -211,8 +211,6 @@
     "reloadTip": "重新讀取設定",
     "saveDeployTip": "儲存並部署",
     "loadingText": "正在讀取設定…",
-    "removeHotkeyTip": "刪除此快速鍵",
-    "newHotkeyTip": "聚焦後按下新的組合鍵",
     "addHotkeyTip": "新增快速鍵",
     "addAppSearchWatermark": "搜尋或輸入應用程式識別碼…",
     "addAppRunning": "執行中",
@@ -231,7 +229,9 @@
     "savedDeployFailedTitle": "設定已儲存，但重新部署失敗",
     "savedDeployFailedDetail": "已寫入 {0}。{1} 稍後可按 Ctrl+R 重試。",
     "saveFailed": "儲存失敗：{0}",
-    "hotkeyCountNote": "已設 {0} 項"
+    "hotkeyCountNote": "已設 {0} 項",
+    "hotkeyEmptyNote": "未設定快速鍵，方案選單將無法喚出",
+    "hotkeyDuplicateError": "與其他快速鍵重複"
   },
   "skin": {
     "lightThemeLabel": "淺色主題",

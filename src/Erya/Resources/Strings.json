@@ -211,8 +211,6 @@
     "reloadTip": "重新读取设置",
     "saveDeployTip": "保存并部署",
     "loadingText": "正在读取设置…",
-    "removeHotkeyTip": "删除此快捷键",
-    "newHotkeyTip": "聚焦后按下新的组合键",
     "addHotkeyTip": "添加快捷键",
     "addAppSearchWatermark": "搜索或输入应用标识…",
     "addAppRunning": "正在运行",
@@ -231,7 +229,9 @@
     "savedDeployFailedTitle": "设置已保存，但重新部署失败",
     "savedDeployFailedDetail": "已写入 {0}。{1} 稍后可按 Ctrl+R 重试。",
     "saveFailed": "保存失败：{0}",
-    "hotkeyCountNote": "已设 {0} 项"
+    "hotkeyCountNote": "已设 {0} 项",
+    "hotkeyEmptyNote": "未设置快捷键，方案选单将无法唤出",
+    "hotkeyDuplicateError": "与其他快捷键重复"
   },
   "skin": {
     "lightThemeLabel": "亮色主题",
