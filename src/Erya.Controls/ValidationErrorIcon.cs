@@ -17,7 +17,12 @@ namespace Erya.Controls;
 ///   &lt;NumericUpDown Name="nu" Classes="silent-errors" Value="{Binding N}" /&gt;
 ///   &lt;c:ValidationErrorIcon Target="{Binding #nu}" /&gt;
 /// &lt;/StackPanel&gt;
-/// </code>
+/// &lt;/code&gt;
+/// 业务级校验（ViewModel 判定，不经绑定错误管道）可改用直接模式：
+/// <code>
+/// &lt;c:ValidationErrorIcon Error="{Binding MyBusinessError}" /&gt;
+/// &lt;/code&gt;
+/// Error 非 null 时强制显示并以之作 Tooltip，优先于 Target 的校验错误。
 /// </summary>
 [TemplatePart(PART_Root, typeof(Border))]
 public class ValidationErrorIcon : TemplatedControl
@@ -32,6 +37,16 @@ public class ValidationErrorIcon : TemplatedControl
     {
         get => GetValue(TargetProperty);
         set => SetValue(TargetProperty, value);
+    }
+
+    public static readonly StyledProperty<string?> ErrorProperty =
+        AvaloniaProperty.Register<ValidationErrorIcon, string?>(nameof(Error));
+
+    /// <summary>直接模式：非 null 时无视 Target 显示此错误；null 时回退校验错误管道。</summary>
+    public string? Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
     }
 
     public static readonly StyledProperty<bool> HasErrorsProperty =
@@ -62,10 +77,12 @@ public class ValidationErrorIcon : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property != TargetProperty) return;
-        if (change.OldValue is Control old) old.PropertyChanged -= OnTargetPropertyChanged;
-        if (change.NewValue is Control neu) neu.PropertyChanged += OnTargetPropertyChanged;
-        Refresh();
+        if (change.Property == TargetProperty)
+        {
+            if (change.OldValue is Control old) old.PropertyChanged -= OnTargetPropertyChanged;
+            if (change.NewValue is Control neu) neu.PropertyChanged += OnTargetPropertyChanged;
+        }
+        if (change.Property == TargetProperty || change.Property == ErrorProperty) Refresh();
     }
 
     private void OnTargetPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -79,6 +96,12 @@ public class ValidationErrorIcon : TemplatedControl
 
     private void Refresh()
     {
+        if (Error is { } direct)
+        {
+            HasErrors = true;
+            Message = direct;
+            return;
+        }
         HasErrors = Target is { } target && DataValidationErrors.GetHasErrors(target);
         Message = (DataValidationErrors.GetErrors(Target) as IEnumerable)?.OfType<object>()
             .Select(e => e is Exception ex ? ex.Message : e.ToString())

@@ -105,6 +105,22 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Fact]
+    public void Empty_list_patch_writes_flow_empty_list_and_overrides_base()
+    {
+        // 全删快捷键的所见即所得语义：写 <key>: [] 整体替换 base 值，
+        // 而不是「不写=回落发行版默认」。
+        Store().WritePatch("default.yaml", new Dictionary<string, object?>
+        {
+            ["switcher/hotkeys"] = new List<object?>(),
+        });
+
+        Assert.Contains("switcher/hotkeys: []", File.ReadAllText(CustomPath));
+        var merged = Assert.IsAssignableFrom<IReadOnlyList<object?>>(
+            Store().ReadMergedValue("default.yaml", "switcher/hotkeys"));
+        Assert.Empty(merged);
+    }
+
+    [Fact]
     public void Values_render_with_correct_yaml_types()
     {
         Store().WritePatch("default.yaml", new Dictionary<string, object?>

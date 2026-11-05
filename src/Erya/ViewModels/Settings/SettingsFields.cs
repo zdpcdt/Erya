@@ -281,9 +281,24 @@ public sealed partial class HotkeyRowViewModel : ObservableObject
 {
     [ObservableProperty]
     private string _value = "";
+
+    /// <summary>与其他行值重复时的提示文案（由 ListFieldViewModel 刷新）；null = 不重复。</summary>
+    [ObservableProperty]
+    private string? _duplicateError;
+
+    /// <summary>➕ 刚加出的空行标记：进视觉树后由 HotkeyRowFocus 聚焦一次并复位。</summary>
+    [ObservableProperty]
+    private bool _isFresh;
 }
 
-/// <summary>hotkeyList / hotkeyPairList: an editable list of key-combo rows.</summary>
+/// <summary>
+/// hotkeyList / hotkeyPairList: an editable list of key-combo rows.
+/// 新增：外层 ➕ 按钮在 Detail 追加一排空行并展开（有空行时不叠行）；
+/// 删除：鼠标点行内 ×（HotkeyRowDelete 转译）删整行、至少保一行，
+/// 键盘清空（Escape / 只按修饰键松开）只清值不删行；与其他行重复标 ⚠
+/// （仅提示）。清空全部行的值后保存写空列表补丁（所见即所得）；空行不
+/// 参与写入与脏判定；固定槽位的 pair 模式保留空槽、维持旧行为。
+/// </summary>
 public sealed partial class ListFieldViewModel : SettingsFieldViewModel
 {
     private IReadOnlyList<string> _loaded = [];
@@ -294,8 +309,21 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
 
     public IReadOnlyList<string>? ItemLabels => Field.ItemLabels;
 
+    /// <summary>Detail 展开态：点 ➕ 新增时自动展开，平时跟随用户点击。</summary>
     [ObservableProperty]
-    private string _newItem = "";
+    private bool _isDetailExpanded;
+
+    /// <summary>行摘要：已设 N 项；全空时警示方案选单无法唤出。</summary>
+    public string NoteText
+    {
+        get
+        {
+            var count = Items.Count(i => i.Value.Length > 0);
+            return count > 0
+                ? Loc.Format(LanguageManager.Instance.settings_hotkeyCountNote, count)
+                : Loc.Get(LanguageManager.Instance.settings_hotkeyEmptyNote);
+        }
+    }
 
     public override void Load(object? mergedValue)
     {
@@ -304,52 +332,100 @@ public sealed partial class ListFieldViewModel : SettingsFieldViewModel
         // Fixed pairs always keep their slots so the file keeps the pair shape.
         if (ItemLabels is { } labels)
         {
-            foreach (var item in _loaded) AddRow(item);
-            for (int i = _loaded.Count; i < labels.Count; i++) AddRow("");
+            foreach (var item in _loaded) InsertRow(item);
+            for (int i = _loaded.Count; i < labels.Count; i++) InsertRow("");
         }
         else
         {
-            foreach (var item in _loaded) AddRow(item);
+            foreach (var item in _loaded) InsertRow(item);
         }
+        RefreshDuplicates();
+        OnPropertyChanged(nameof(NoteText));
         HasPendingEdits = false;
     }
 
-    public override object? PendingValue() => !HasPendingEdits || Items.Count == 0
-        ? null
-        : Items.Select(i => (object?)i.Value).ToList();
-
-    [RelayCommand]
-    private void AddItem()
+    /// <summary>
+    /// 全删返回空列表 → 保存写 &lt;key&gt;: []（用户选定的所见即所得语义；
+    /// 全删不再是「不动补丁=回落发行版默认」）。pair 固定槽位维持旧语义。
+    /// </summary>
+    public override object? PendingValue()
     {
-        var item = NewItem.Trim();
-        if (item.Length == 0 || Items.Any(i => i.Value == item)) return;
-        NewItem = "";
-        AddRow(item);
-        RecomputeDirty();
+        if (!HasPendingEdits) return null;
+        if (ItemLabels is not null && Items.Count == 0) return null;
+        return Items.Where(i => i.Value.Length > 0)
+            .Select(i => (object?)i.Value)
+            .ToList();
     }
 
+    /// <summary>
+    /// 外层 ➕：Detail 追加一排空行、展开并聚焦到新行，直接录入即成；
+    /// 已有未录入的空行时不叠行，改为聚焦回那排（等价「继续录」，
+    /// 空行常在焦点却丢了的情况下，➕ 就是回到它的入口）。
+    /// </summary>
     [RelayCommand]
-    private void RemoveItem(HotkeyRowViewModel row)
+    private void AddHotkeyRow()
     {
-        row.PropertyChanged -= OnRowChanged;
-        Items.Remove(row);
-        RecomputeDirty();
+        IsDetailExpanded = true;
+        if (ItemLabels is null && Items.FirstOrDefault(i => i.Value.Length == 0) is { } empty)
+            empty.IsFresh = true;
+        else
+            InsertRow("").IsFresh = true;
+        AfterMutation();
     }
 
-    private void AddRow(string value)
+    private HotkeyRowViewModel InsertRow(string value)
     {
         var row = new HotkeyRowViewModel { Value = value };
         row.PropertyChanged += OnRowChanged;
         Items.Add(row);
+        return row;
+    }
+
+    /// <summary>
+    /// 鼠标点行内 ×（HotkeyRowDelete 转译）删除整行；键盘清空（Escape / 只按
+    /// 修饰键松开）只清值不删行。至少保一行——全部删空的语义是「清空最后一行
+    /// 的值后保存」，写空列表补丁，不在这发生。
+    /// </summary>
+    [RelayCommand]
+    private void DeleteRow(HotkeyRowViewModel row)
+    {
+        if (Items.Count <= 1) return;
+        row.PropertyChanged -= OnRowChanged;
+        Items.Remove(row);
+        AfterMutation();
     }
 
     private void OnRowChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(HotkeyRowViewModel.Value))
-            RecomputeDirty();
+            AfterMutation();
     }
 
-    private void RecomputeDirty() => HasPendingEdits = !_loaded.SequenceEqual(Items.Select(i => i.Value));
+    private void AfterMutation()
+    {
+        RefreshDuplicates();
+        RecomputeDirty();
+        OnPropertyChanged(nameof(NoteText));
+    }
+
+    /// <summary>非空值出现多于一次的行全部标注重复提示（保存仍照写，仅提示）。</summary>
+    private void RefreshDuplicates()
+    {
+        var message = Loc.Get(LanguageManager.Instance.settings_hotkeyDuplicateError);
+        var duplicated = Items
+            .Where(i => i.Value.Length > 0)
+            .GroupBy(i => i.Value)
+            .Where(g => g.Count() > 1)
+            .SelectMany(g => g)
+            .ToHashSet();
+        foreach (var row in Items)
+            row.DuplicateError = duplicated.Contains(row) ? message : null;
+    }
+
+    // 空行不参与对比：点 ➕ 加一排还没录的行不算改动（pair 的空槽同理，
+    // 顺带修掉空槽导致 pair 字段永久显示脏的旧问题）。
+    private void RecomputeDirty() => HasPendingEdits =
+        !_loaded.SequenceEqual(Items.Where(i => i.Value.Length > 0).Select(i => i.Value));
 }
 
 public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel

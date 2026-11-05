@@ -88,6 +88,10 @@ public sealed class SettingsPageRenderTests : IDisposable
               good_old_caps_lock: true
               switch_key:
                 Caps_Lock: commit_code
+            switcher:
+              hotkeys:
+                - Control+grave
+                - F4
             """);
         Write("default.custom.yaml", "patch:\n  menu/page_size: 9\n");
 
@@ -115,10 +119,11 @@ public sealed class SettingsPageRenderTests : IDisposable
             .OfType<ContentPresenter>().Single(p => p.Name == "PART_DetailHost"
                                                      && ReferenceEquals(p.TemplatedParent, detailCard)).IsVisible);
 
-        // 快捷键行：视觉顺序与字段顺序一致，展开后用 KeyGestureInput 录入。
+        // 快捷键行：视觉顺序与字段顺序一致；➕ 追加一排空行并自动展开
+        // （IsExpanded 绑定 IsDetailExpanded），行内用 KeyGestureInput 录入。
         var fields = vm.Sections.SelectMany(s => s.Fields).ToList();
         var hotkeyCard = cards[fields.FindIndex(f => f is ListFieldViewModel)];
-        hotkeyCard.IsExpanded = true;
+        fields.OfType<ListFieldViewModel>().Single().AddHotkeyRowCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
         Assert.Contains(hotkeyCard.GetVisualDescendants(), d => d is Ursa.Controls.KeyGestureInput);
 
@@ -142,6 +147,99 @@ public sealed class SettingsPageRenderTests : IDisposable
 
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-light.png"), ThemeVariant.Light);
         Capture(window, Path.Combine(Path.GetTempPath(), "erya-settings-input-dark.png"), ThemeVariant.Dark);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Clicking_add_hotkey_button_appends_row_and_keeps_detail_expanded()
+    {
+        Write("default.yaml", """
+            switcher:
+              hotkeys:
+                - Control+grave
+            """);
+        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "default");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        var (_, page, window) = Show(vm);
+        var list = vm.Sections.SelectMany(s => s.Fields)
+            .OfType<ListFieldViewModel>().Single();
+
+        void ClickAdd()
+        {
+            // 真实指针路径点外层 ➕：header 内嵌按钮的事件不得被卡片的展开/收起
+            // toggle 抢走（点 ➕ 必须加行并展开，而不是翻转收起）。
+            var add = page.GetVisualDescendants().OfType<Ursa.Controls.IconButton>()
+                .Single(b => ReferenceEquals(b.Command, list.AddHotkeyRowCommand));
+            var center = add.TranslatePoint(new Point(add.Bounds.Width / 2, add.Bounds.Height / 2), window)!.Value;
+            window.MouseMove(center);
+            window.MouseDown(center, Avalonia.Input.MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+            window.MouseUp(center, Avalonia.Input.MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        string FocusedRowValue() =>
+            Assert.IsType<Erya.ViewModels.Settings.HotkeyRowViewModel>(
+                page.GetVisualDescendants().OfType<Ursa.Controls.KeyGestureInput>()
+                    .Single(g => g.IsFocused).DataContext).Value;
+
+        // 第一次点 ➕：追加空行、展开并聚焦。
+        ClickAdd();
+        Assert.Equal(["Control+grave", ""], list.Items.Select(i => i.Value));
+        Assert.True(list.IsDetailExpanded);
+        Assert.Equal("", FocusedRowValue());
+        Assert.False(list.Items[^1].IsFresh); // 聚焦标志已复位
+
+        // 第二次点 ➕（空行还在）：不叠行，聚焦回那排空行（「继续录」入口）。
+        ClickAdd();
+        Assert.Equal(["Control+grave", ""], list.Items.Select(i => i.Value));
+        Assert.Equal("", FocusedRowValue());
+
+        // 录入后再点 ➕：加第三行并聚焦新行。
+        list.Items[1].Value = "F4";
+        ClickAdd();
+        Assert.Equal(["Control+grave", "F4", ""], list.Items.Select(i => i.Value));
+        Assert.Equal("", FocusedRowValue());
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Clicking_row_clear_button_deletes_that_row()
+    {
+        Write("default.yaml", """
+            switcher:
+              hotkeys:
+                - Control+grave
+                - F4
+            """);
+        var vm = new SettingsEditorViewModel(new StubDistribution(_dir), "default");
+        await vm.LoadCommand.ExecuteAsync(null);
+
+        var (_, page, window) = Show(vm);
+        var list = vm.Sections.SelectMany(s => s.Fields)
+            .OfType<ListFieldViewModel>().Single();
+        list.IsDetailExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        // 鼠标点行内 ×（PART_ClearButton，hover 才显示）：HotkeyRowDelete 拦截
+        // Click → DeleteRow 删整行。这条链路依赖 Ursa 主题 part 名，part 改名
+        // 时此测试先红，避免删行功能静默退化成只有键盘清空。
+        var firstRow = page.GetVisualDescendants().OfType<Ursa.Controls.KeyGestureInput>()
+            .First(g => g.DataContext is Erya.ViewModels.Settings.HotkeyRowViewModel { Value: "Control+grave" });
+        var hover = firstRow.TranslatePoint(new Point(firstRow.Bounds.Width / 2, firstRow.Bounds.Height / 2), window)!.Value;
+        window.MouseMove(hover); // pointerover → × 显示并布局
+        Dispatcher.UIThread.RunJobs();
+        var clear = firstRow.GetVisualDescendants().OfType<Button>()
+            .Single(b => b.Name == "PART_ClearButton");
+        var center = clear.TranslatePoint(new Point(clear.Bounds.Width / 2, clear.Bounds.Height / 2), window)!.Value;
+        window.MouseMove(center);
+        window.MouseDown(center, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseUp(center, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["F4"], list.Items.Select(i => i.Value));
         window.Close();
     }
 

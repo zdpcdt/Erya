@@ -211,8 +211,6 @@
     "reloadTip": "Reload settings",
     "saveDeployTip": "Save and deploy",
     "loadingText": "Loading settings…",
-    "removeHotkeyTip": "Remove this hotkey",
-    "newHotkeyTip": "Press a new key combination while focused",
     "addHotkeyTip": "Add hotkey",
     "addAppSearchWatermark": "Search or type an app identifier…",
     "addAppRunning": "Running",
@@ -231,7 +229,9 @@
     "savedDeployFailedTitle": "Settings saved, but redeploy failed",
     "savedDeployFailedDetail": "Written to {0}. {1} You can retry with Ctrl+R later.",
     "saveFailed": "Save failed: {0}",
-    "hotkeyCountNote": "{0} set"
+    "hotkeyCountNote": "{0} set",
+    "hotkeyEmptyNote": "No hotkey set — the schema menu cannot be summoned",
+    "hotkeyDuplicateError": "Duplicates another hotkey"
   },
   "skin": {
     "lightThemeLabel": "Light theme",
