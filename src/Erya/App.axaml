@@ -17,8 +17,6 @@
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
                 <!-- ValidationErrorIcon（配合 silent-errors 的输入校验指示器） -->
                 <ResourceInclude Source="avares://Erya.Controls/ValidationErrorTheme.axaml" />
-                <!-- Ursa SettingsCard 主题本地副本（组无容器、行独立圆角；见文件头改动清单） -->
-                <ResourceInclude Source="avares://Erya/Themes/SettingsCard.axaml" />
                 <!-- ReorderableItemsControl / DragHandle（拖拽排序列表，Semi 风格） -->
                 <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>

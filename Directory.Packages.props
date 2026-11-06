@@ -18,13 +18,12 @@
   </ItemGroup>
 
   <ItemGroup Label="Irihi / Semi 生态">
-    <PackageVersion Include="Irihi.Avalonia.Shared" Version="0.5.0" />
     <PackageVersion Include="Irihi.Branding" Version="0.2.0" />
     <PackageVersion Include="Irihi.Iconica.TDesign" Version="1.0.0" />
     <PackageVersion Include="Irihi.Iconica.IconPark" Version="2.1.0" />
     <PackageVersion Include="Irihi.Lingua" Version="1.1.0" />
-    <PackageVersion Include="Irihi.Ursa" Version="2.3.0" />
-    <PackageVersion Include="Irihi.Ursa.Themes.Semi" Version="2.3.0" />
+    <PackageVersion Include="Irihi.Ursa" Version="2.3.1" />
+    <PackageVersion Include="Irihi.Ursa.Themes.Semi" Version="2.3.1" />
     <PackageVersion Include="Semi.Avalonia" Version="12.1.0.1" />
     <PackageVersion Include="Semi.Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="Semi.Avalonia.ColorPicker" Version="12.1.0.1" />
