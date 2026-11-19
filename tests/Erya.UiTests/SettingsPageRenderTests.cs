@@ -282,15 +282,12 @@ public sealed class SettingsPageRenderTests : IDisposable
                 hostTexts.Where(t => t is "你好" or "拟好" or "尼奥"));
         }
         var texts = page.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Contains("亮色皮肤", texts);
-        Assert.Contains("暗色皮肤", texts);
 
         // 预览带固定在设置区之外：预览宿主不在任何 ScrollViewer 里。
         Assert.All(previewHosts, h =>
             Assert.DoesNotContain(h.GetVisualAncestors(), a => a is ScrollViewer));
 
-        // 分组渲染：排版字段都在；皮肤选择/应用行为不在本页
-        // （「亮色皮肤」文字同时是预览带标签，字段按 SettingsCard 判别）。
+        // 分组渲染：排版字段都在；皮肤选择/应用行为不在本页（字段按 SettingsCard 判别）。
         Assert.Contains(texts, t => t == "排列方式");
         Assert.Contains(texts, t => t == "间距");
         var cards = page.GetVisualDescendants().OfType<SettingsCard>().Select(c => c.Content as string).ToList();
@@ -335,7 +332,7 @@ public sealed class SettingsPageRenderTests : IDisposable
         var lightCard = page.GetVisualDescendants().OfType<SettingsCard>().Single(c => (c.Content as string) == "亮色主题");
         var darkCard = page.GetVisualDescendants().OfType<SettingsCard>().Single(c => (c.Content as string) == "暗色主题");
         Assert.Null(lightCard.Note); // Note 不再重复显示皮肤名（下拉里已有）
-        Assert.Null(darkCard.Note);
+        Assert.Equal("未设置时跟随亮色", darkCard.Note); // 回退语义长在未设置状态上
 
         // 固定区：预览宿主与槽位行不在滚动区里——滚画廊不动锚点。
         Assert.All(page.GetVisualDescendants().OfType<ContentControl>()

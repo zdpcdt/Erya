@@ -20,13 +20,11 @@
             <ContentControl Content="{Binding Preview}"
                             ContentTemplate="{StaticResource CandidateWindowTemplate}" />
 
-            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_infoGroup}}">
-                <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_nameLabel}}">
-                    <u:SettingsCard.RightContent>
-                        <TextBox Text="{Binding Scheme.Name, Mode=TwoWay}" Width="260" />
-                    </u:SettingsCard.RightContent>
-                </u:SettingsCard>
-            </u:SettingsCardGroup>
+            <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.schemas_nameLabel}}">
+                <u:SettingsCard.RightContent>
+                    <TextBox Text="{Binding Scheme.Name, Mode=TwoWay}" Width="260" />
+                </u:SettingsCard.RightContent>
+            </u:SettingsCard>
 
             <!--  颜色：一排取色器（内置 ColorPicker 下拉面板），值经 RimeColor 转 BGR 十六进制  -->
             <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_colorsGroup}}">

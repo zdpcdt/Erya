@@ -99,9 +99,9 @@ public sealed class OverviewBackupRenderTests : IDisposable
         var cards = page.GetVisualDescendants().OfType<SettingsCard>().Where(IsEffectivelyVisible).ToList();
         Assert.Equal(3, cards.Count); // 安装目录 / 用户目录 / 重新部署
 
-        var deploy = PlainButtons(page)
-            .Single(b => IsEffectivelyVisible(b) && b.Content as string == "重新部署");
-        Assert.True(deploy.IsEnabled); // CanDeploy=true
+        var deploy = cards.Single(c => c.Content as string == "重新部署");
+        var deployButton = deploy.GetVisualDescendants().OfType<IconButton>().Single();
+        Assert.True(deployButton.IsEnabled); // CanDeploy=true（动作是图标按钮，不再与卡标题重文案）
 
         // 零 Banner：页面不再有常驻色块。
         Assert.Empty(page.GetVisualDescendants().OfType<Banner>());
@@ -109,7 +109,7 @@ public sealed class OverviewBackupRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Overview_missing_shows_hero_empty_state_and_setup_card()
+    public void Overview_missing_shows_hero_empty_state_and_inline_setup_actions()
     {
         var vm = new MainViewModel(new DistributionManager());
 
@@ -120,19 +120,19 @@ public sealed class OverviewBackupRenderTests : IDisposable
         var (page, window) = Show(new OverviewPage { DataContext = vm });
 
         Assert.Contains(VisibleTexts(page), t => t.Text == "未检测到");
-        // 环境/维护分组让位给安装引导卡：唯一可见的 SettingsCardGroup 上有常驻的
-        // 打开下载页与重新检测动作（一键直装仅 Windows 出现，不在此断言）。
+        // 安装引导拍平进英雄卡：不再有 SettingsCardGroup，动作行直接长在卡上
+        // （一键直装仅 Windows 出现，不在此断言）。
         var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>().Where(IsEffectivelyVisible).ToList();
-        Assert.Single(groups);
+        Assert.Empty(groups);
         var buttons = PlainButtons(page).Where(IsEffectivelyVisible).ToList();
-        Assert.Contains(buttons, b => b.Content as string == "打开下载页");
+        Assert.Contains(buttons, b => b.Content as string == "rime.im/download");
         Assert.Contains(buttons, b => b.Content as string == "重新检测");
         Assert.Contains(VisibleTexts(page), t => t.Text == vm.HeroHint);
         window.Close();
     }
 
     [AvaloniaFact]
-    public void Backup_page_renders_two_groups_with_quiet_rows()
+    public void Backup_page_renders_two_quiet_cards()
     {
         var vm = new BackupRestoreViewModel(new StubDistribution(_dir));
         vm.LoadCommand.Execute(null);
@@ -142,8 +142,11 @@ public sealed class OverviewBackupRenderTests : IDisposable
 
         var (page, window) = Show(new BackupRestorePage { DataContext = vm });
 
+        // 备份 / 恢复就是两张裸卡（组壳与说明已去，覆盖警告在恢复确认对话框里）。
         var groups = page.GetVisualDescendants().OfType<SettingsCardGroup>().Where(IsEffectivelyVisible).ToList();
-        Assert.Equal(2, groups.Count); // 备份 / 恢复
+        Assert.Empty(groups);
+        var cards = page.GetVisualDescendants().OfType<SettingsCard>().Where(IsEffectivelyVisible).ToList();
+        Assert.Equal(2, cards.Count);
 
         // 右侧按钮：备份（busy 文案入口）、选择备份文件、从备份恢复（未选文件时禁用）。
         var buttons = PlainButtons(page).Where(IsEffectivelyVisible).ToList();

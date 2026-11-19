@@ -14,12 +14,9 @@
 
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-            <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_headerHint}}" Opacity="0.6" />
-                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_headerHintDetail}}"
-                           Opacity="0.6" FontSize="12" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+            <TextBlock Grid.Column="0" Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_headerHint}}"
+                       Opacity="0.6" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <u:IconButton Command="{Binding LoadCommand}"
                               Icon="{StaticResource SemiIconRefresh}"
                               ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_rescanTip}}" />
@@ -41,8 +38,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,5">
                                     <!-- 拖拽把手：按住上下拖动调整顺序（对所有行开放；未启用行的位置不落盘） -->
                                     <c:DragHandle Data="{DynamicResource SemiIconHandle}"
-                                                  VerticalAlignment="Center"
-                                                  ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.schemas_dragTip}}" />
+                                                  VerticalAlignment="Center" />
                                     <CheckBox IsChecked="{Binding IsSelected}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
@@ -56,11 +52,10 @@
                     </c:ReorderableItemsControl>
 
                     <!-- 在线方案：社区配置包一键安装（GUI 版的东风破配方）。
-                          展开后每包一张行卡：名称+主页、描述+状态、右侧安装/删除 -->
+                          展开后每包一张行卡：名称+主页、描述+状态、右侧安装/删除；
+                          覆盖写入/自动备份的说明在安装与删除按钮的 tooltip 里 -->
                     <Expander Margin="0,14,0,0" Header="{Translate {x:Static loc:LanguageManager+Keys.schemas_onlineHeader}}">
                         <StackPanel Spacing="10" Margin="0,10,0,0">
-                            <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.schemas_onlineDesc}}"
-                                       Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
                             <ItemsControl ItemsSource="{Binding OnlinePackages}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>

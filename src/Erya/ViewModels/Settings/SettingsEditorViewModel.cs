@@ -107,9 +107,6 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = "";
 
-    [ObservableProperty]
-    private string _subtitle = "";
-
     public bool HasError => ErrorMessage.Length > 0;
 
     public bool IsSupported => UnsupportedReason.Length == 0;
@@ -169,9 +166,6 @@ public sealed partial class SettingsEditorViewModel : ObservableObject
                 Sections.Add(sectionVm);
             }
             OnPropertyChanged(nameof(Sections)); // 子页经 SectionsFor 重新取列表
-
-            Subtitle = Loc.Format(LanguageManager.Instance.settings_subtitleFormat,
-                Path.GetFileName(_store.CustomPath(targetFile)));
 
             if (_target == "ui")
             {

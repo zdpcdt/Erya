@@ -11,60 +11,53 @@
              x:Class="Erya.Views.BackupRestorePage"
              x:DataType="vm:BackupRestoreViewModel">
 
-    <StackPanel Spacing="20">
+    <StackPanel Spacing="12">
 
-        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.backup_intro}}"
-                   Opacity="0.6" TextWrapping="Wrap" />
+        <!--  备份 / 恢复两张卡。结果反馈走 Toast；busy 由按钮文案与禁用表达，
+              页面不放状态条；覆盖警告在恢复确认对话框里说  -->
+        <StackPanel Spacing="12" IsVisible="{Binding HasUserDir}">
 
-        <!--  备份 / 恢复两组。结果反馈走 Toast；busy 由按钮文案与禁用表达，页面不放状态条  -->
-        <StackPanel Spacing="20" IsVisible="{Binding HasUserDir}">
+            <u:SettingsCard Icon="{StaticResource SemiIconSaveStroked}"
+                    Content="{Translate {x:Static loc:LanguageManager+Keys.backup_backupLabel}}"
+                    Description="{Translate {x:Static loc:LanguageManager+Keys.backup_backupDesc}}">
+                <u:SettingsCard.Note>
+                    <TextBlock Text="{Binding UserDirSummary}" FontSize="13" Opacity="0.75"
+                               VerticalAlignment="Center" />
+                </u:SettingsCard.Note>
+                <u:SettingsCard.RightContent>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <u:IconButton Command="{Binding OpenUserDirCommand}"
+                                      Theme="{DynamicResource SolidIconButton}"
+                                      Icon="{StaticResource SemiIconFolderOpen}"
+                                      ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.backup_openUserDirTip}}" />
+                        <Button Classes="Primary" MinWidth="120"
+                                Content="{Binding BackupButtonText}"
+                                IsEnabled="{Binding CanBackup}"
+                                Click="OnBackupClick" />
+                    </StackPanel>
+                </u:SettingsCard.RightContent>
+            </u:SettingsCard>
 
-            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_backupTitle}}"
-                         Description="{Translate {x:Static loc:LanguageManager+Keys.backup_backupDesc}}">
-                <u:SettingsCard Icon="{StaticResource SemiIconSaveStroked}"
-                        Content="{Translate {x:Static loc:LanguageManager+Keys.backup_backupLabel}}">
-                    <u:SettingsCard.Note>
-                        <TextBlock Text="{Binding UserDirSummary}" FontSize="13" Opacity="0.75"
-                                   VerticalAlignment="Center" />
-                    </u:SettingsCard.Note>
-                    <u:SettingsCard.RightContent>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <u:IconButton Command="{Binding OpenUserDirCommand}"
-                                          Theme="{DynamicResource SolidIconButton}"
-                                          Icon="{StaticResource SemiIconFolderOpen}"
-                                          ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.backup_openUserDirTip}}" />
-                            <Button Classes="Primary" MinWidth="120"
-                                    Content="{Binding BackupButtonText}"
-                                    IsEnabled="{Binding CanBackup}"
-                                    Click="OnBackupClick" />
-                        </StackPanel>
-                    </u:SettingsCard.RightContent>
-                </u:SettingsCard>
-            </u:SettingsCardGroup>
-
-            <u:SettingsCardGroup Header="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreTitle}}"
-                         Description="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreDesc}}">
-                <u:SettingsCard Icon="{StaticResource SemiIconRestoreStroked}"
-                        Content="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreLabel}}">
-                    <u:SettingsCard.Note>
-                        <TextBlock Text="{Binding RestoreNote}" FontSize="13" Opacity="0.75"
-                                   TextTrimming="CharacterEllipsis" MaxWidth="280"
-                                   VerticalAlignment="Center"
-                                   ToolTip.Tip="{Binding RestoreSourcePath}" />
-                    </u:SettingsCard.Note>
-                    <u:SettingsCard.RightContent>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button MinWidth="108" Content="{Translate {x:Static loc:LanguageManager+Keys.backup_pickBackupFile}}"
-                                    IsEnabled="{Binding !IsBusy}"
-                                    Click="OnPickRestoreClick" />
-                            <Button Classes="Primary" MinWidth="108"
-                                    Content="{Binding RestoreButtonText}"
-                                    IsEnabled="{Binding CanRestore}"
-                                    Command="{Binding RestoreCommand}" />
-                        </StackPanel>
-                    </u:SettingsCard.RightContent>
-                </u:SettingsCard>
-            </u:SettingsCardGroup>
+            <u:SettingsCard Icon="{StaticResource SemiIconRestoreStroked}"
+                    Content="{Translate {x:Static loc:LanguageManager+Keys.backup_restoreLabel}}">
+                <u:SettingsCard.Note>
+                    <TextBlock Text="{Binding RestoreNote}" FontSize="13" Opacity="0.75"
+                               TextTrimming="CharacterEllipsis" MaxWidth="280"
+                               VerticalAlignment="Center"
+                               ToolTip.Tip="{Binding RestoreSourcePath}" />
+                </u:SettingsCard.Note>
+                <u:SettingsCard.RightContent>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button MinWidth="108" Content="{Translate {x:Static loc:LanguageManager+Keys.backup_pickBackupFile}}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Click="OnPickRestoreClick" />
+                        <Button Classes="Primary" MinWidth="108"
+                                Content="{Binding RestoreButtonText}"
+                                IsEnabled="{Binding CanRestore}"
+                                Command="{Binding RestoreCommand}" />
+                    </StackPanel>
+                </u:SettingsCard.RightContent>
+            </u:SettingsCard>
         </StackPanel>
 
         <!--  未检测到 RIME：与概览页英雄卡空态同语言的整页空态  -->

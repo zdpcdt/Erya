@@ -15,39 +15,34 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                <u:IconButton Icon="{StaticResource SemiIconRefresh}"
-                              Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
-                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
-                              Icon="{StaticResource SemiIconSave}"
-                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
-            </StackPanel>
-        </Grid>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <u:IconButton Icon="{StaticResource SemiIconRefresh}"
+                          Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
+            <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                          Icon="{StaticResource SemiIconSave}"
+                          Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
+        </StackPanel>
 
         <!-- Body：工具行固定，卡片列表滚动 -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,12" IsVisible="{Binding IsSupported}">
 
             <!--  工具行：添加应用 + 搜索  -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                <TextBlock Grid.Column="0" Text="{Translate {x:Static loc:LanguageManager+Keys.apps_introHint}}"
-                           Opacity="0.55" TextWrapping="Wrap" VerticalAlignment="Center" />
-                <Button x:Name="AddButton" Grid.Column="1" Content="{Translate {x:Static loc:LanguageManager+Keys.apps_addButton}}" Classes="Primary" Margin="0,0,12,0">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button x:Name="AddButton" Content="{Translate {x:Static loc:LanguageManager+Keys.apps_addButton}}" Classes="Primary">
                     <Button.Flyout>
                         <Flyout Placement="Bottom">
                             <views:AddAppFlyout DataContext="{Binding Picker}" />
                         </Flyout>
                     </Button.Flyout>
                 </Button>
-                <TextBox Grid.Column="2" Text="{Binding SearchText, Mode=TwoWay}"
+                <TextBox Text="{Binding SearchText, Mode=TwoWay}"
                          Classes="ClearButton" PlaceholderText="{Translate {x:Static loc:LanguageManager+Keys.apps_searchPlaceholder}}"
                          Width="200" VerticalAlignment="Center">
                     <TextBox.InnerLeftContent>
                         <PathIcon Data="{StaticResource SemiIconSearch}" Theme="{DynamicResource InnerPathIcon}" />
                     </TextBox.InnerLeftContent>
                 </TextBox>
-            </Grid>
+            </StackPanel>
 
             <!--  滚动区  -->
             <ScrollViewer Grid.Row="1" Margin="0,12,0,0">

@@ -39,9 +39,13 @@
 
         <!-- Status -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,4,0,0">
-            <TextBlock Grid.Column="0" Text="{Translate {x:Static loc:LanguageManager+Keys.advanced_dirtyIndicator}}" FontSize="12"
-                       Foreground="{DynamicResource SemiColorWarning}"
-                       IsVisible="{Binding IsDirty}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                        IsVisible="{Binding IsDirty}" VerticalAlignment="Center">
+                <Ellipse Width="8" Height="8" Fill="{DynamicResource SemiColorWarning}"
+                         VerticalAlignment="Center" />
+                <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.advanced_dirtyIndicator}}" FontSize="12"
+                           Foreground="{DynamicResource SemiColorWarning}" VerticalAlignment="Center" />
+            </StackPanel>
             <u:Banner Grid.Column="1" Type="Error" Content="{Binding ErrorMessage}" ShowIcon="True"
                       IsVisible="{Binding HasError}" Margin="10,0,0,0" />
         </Grid>

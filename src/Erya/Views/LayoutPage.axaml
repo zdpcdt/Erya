@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:tdicon="https://irihi.tech/iconica/tdesign"
              xmlns:views="clr-namespace:Erya.Views"
              xmlns:sf="clr-namespace:Erya.ViewModels.Settings"
              xmlns:loc="clr-namespace:Erya.Localization"
@@ -13,29 +14,26 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                <u:IconButton Icon="{StaticResource SemiIconRefresh}"
-                              Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
-                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
-                              Icon="{StaticResource SemiIconSave}"
-                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
-            </StackPanel>
-        </Grid>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <u:IconButton Icon="{StaticResource SemiIconRefresh}"
+                          Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
+            <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                          Icon="{StaticResource SemiIconSave}"
+                          Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
+        </StackPanel>
 
         <!-- Body：亮/暗候选窗预览固定在顶部，排版设置滚动 -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*" IsVisible="{Binding IsSupported}">
             <StackPanel Grid.Row="0" IsVisible="{Binding HasCandidatePreview}"
                         Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40"
                         Margin="0,4,0,4">
-                <StackPanel Spacing="2">
-                    <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_lightSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                <StackPanel Spacing="4">
+                    <tdicon:Sunny Width="16" Height="16" HorizontalAlignment="Center" Opacity="0.6" />
                     <ContentControl Content="{Binding CandidatePreview}"
                                     ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                 </StackPanel>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_darkSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                <StackPanel Spacing="4">
+                    <tdicon:Moon Width="16" Height="16" HorizontalAlignment="Center" Opacity="0.6" />
                     <ContentControl Content="{Binding CandidatePreviewDark}"
                                     ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                 </StackPanel>

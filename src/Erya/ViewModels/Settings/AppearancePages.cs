@@ -45,8 +45,6 @@ public abstract partial class AppearancePageViewModel : ObservableObject
 
     public bool HasError => Editor.HasError;
 
-    public string Subtitle => Editor.Subtitle;
-
     public bool IsDirty => Editor.IsDirty;
 
     public ColorSchemeLibraryViewModel? SchemeLibrary => Editor.SchemeLibrary;
@@ -100,6 +98,11 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
     public ChoiceFieldViewModel? LightSchemeField => FieldOf("style/color_scheme");
 
     public ChoiceFieldViewModel? DarkSchemeField => FieldOf("style/color_scheme_dark");
+
+    /// <summary>暗色槽位未设置时的行内 Note——回退语义长在控件状态上，不写死成说明文字。</summary>
+    public string? DarkFallbackNote => DarkSchemeField?.Selected is null
+        ? Loc.Get(LanguageManager.Instance.skin_darkFollowLightNote)
+        : null;
 
     private ChoiceFieldViewModel? FieldOf(string keyPath)
         => Sections.FirstOrDefault(s => s.Group == "skin")?.Fields
@@ -248,6 +251,7 @@ public sealed partial class SkinPageViewModel : AppearancePageViewModel
             scheme.IsCurrentLight = string.Equals(scheme.Name, light, StringComparison.OrdinalIgnoreCase);
             scheme.IsCurrentDark = string.Equals(scheme.Name, dark, StringComparison.OrdinalIgnoreCase);
         }
+        OnPropertyChanged(nameof(DarkFallbackNote));
     }
 }
 

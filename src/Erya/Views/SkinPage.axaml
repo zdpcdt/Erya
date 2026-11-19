@@ -14,39 +14,35 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="{Binding Subtitle}" Opacity="0.6" TextWrapping="Wrap" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-                <u:IconButton Icon="{StaticResource SemiIconRefresh}"
-                              Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
-                <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
-                              Icon="{StaticResource SemiIconSave}"
-                              Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
-            </StackPanel>
-        </Grid>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <u:IconButton Icon="{StaticResource SemiIconRefresh}"
+                          Command="{Binding LoadCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_reloadTip}}" />
+            <u:IconButton Theme="{DynamicResource SolidIconButton}" Classes="Primary"
+                          Icon="{StaticResource SemiIconSave}"
+                          Command="{Binding SaveAndDeployCommand}" ToolTip.Tip="{Translate {x:Static loc:LanguageManager+Keys.appearance_saveTip}}" />
+        </StackPanel>
 
         <!-- Body：顶部锚点固定（亮/暗预览 + 槽位行不随滚动），下方整块是皮肤画廊 -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,12" IsVisible="{Binding IsSupported}">
 
-            <!--  固定区：亮/暗候选窗预览 + 亮/暗主题槽位行  -->
+            <!--  固定区：亮/暗候选窗预览（日/月图标标注）+ 亮/暗主题槽位行  -->
             <StackPanel Grid.Row="0" Spacing="16">
                 <StackPanel IsVisible="{Binding HasCandidatePreview}"
                             Orientation="Horizontal" HorizontalAlignment="Center" Spacing="40">
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_lightSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                    <StackPanel Spacing="4">
+                        <tdicon:Sunny Width="16" Height="16" HorizontalAlignment="Center" Opacity="0.6" />
                         <ContentControl Content="{Binding CandidatePreview}"
                                         ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                     </StackPanel>
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.appearance_darkSkinLabel}}" HorizontalAlignment="Center" FontSize="12" Opacity="0.75" />
+                    <StackPanel Spacing="4">
+                        <tdicon:Moon Width="16" Height="16" HorizontalAlignment="Center" Opacity="0.6" />
                         <ContentControl Content="{Binding CandidatePreviewDark}"
                                         ContentTemplate="{StaticResource CandidateWindowTemplate}" />
                     </StackPanel>
                 </StackPanel>
 
                 <u:SettingsCardGroup IsVisible="{Binding HasSchemeLibrary}">
-                    <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeLabel}}"
-                            Description="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeDesc}}">
+                    <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.skin_lightThemeLabel}}">
                         <u:SettingsCard.Icon>
                             <tdicon:Sunny Width="20" Height="20" />
                         </u:SettingsCard.Icon>
@@ -57,7 +53,7 @@
                         </u:SettingsCard.RightContent>
                     </u:SettingsCard>
                     <u:SettingsCard Content="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeLabel}}"
-                            Description="{Translate {x:Static loc:LanguageManager+Keys.skin_darkThemeDesc}}">
+                            Note="{Binding DarkFallbackNote}">
                         <u:SettingsCard.Icon>
                             <tdicon:Moon Width="20" Height="20" />
                         </u:SettingsCard.Icon>
@@ -87,7 +83,7 @@
                         </TextBox>
                     </Grid>
                     <TextBlock Text="{Translate {x:Static loc:LanguageManager+Keys.skin_galleryHint}}"
-                               Opacity="0.55" TextWrapping="Wrap" />
+                               Opacity="0.55" FontSize="12" />
                     <ItemsControl ItemsSource="{Binding FilteredSchemes}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

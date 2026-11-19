@@ -50,11 +50,6 @@
                                    Opacity="0.4" VerticalAlignment="Bottom" Margin="0,0,0,5" />
                     </StackPanel>
                 </u:NavMenu.Header>
-
-                <u:NavMenu.Footer>
-                    <TextBlock Text="Avalonia Port Challenge 2026"
-                               Opacity="0.35" FontSize="11" Margin="20,14" />
-                </u:NavMenu.Footer>
             </u:NavMenu>
 
             <!-- Content：内容画布（Background0）压在窗口底色上，朝侧栏一侧倒圆角，
