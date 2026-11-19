@@ -63,6 +63,12 @@ public sealed class SettingsField
     /// <summary>Static choices for enum/segmented/checkList/keyMapping value lists.</summary>
     public List<string>? Choices { get; set; }
 
+    /// <summary>
+    /// 枚举值的本地化显示名（value → 文案，base 即简中）；UI 下拉/复选显示此文案，
+    /// 落盘仍写 <see cref="Choices"/> 原值。缺项时直接显示原值。
+    /// </summary>
+    public Dictionary<string, string>? ChoiceLabels { get; set; }
+
     /// <summary>Path in the merged config whose children keys become choices (color schemes).</summary>
     public string? ChoicesRef { get; set; }
 

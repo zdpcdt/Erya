@@ -63,7 +63,7 @@ public sealed class SettingsEditorTests : IDisposable
 
         // Edit: page size → 9, Shift_L → inline_ascii.
         pageSize.Value = 9;
-        switchKey.First(r => r.Key == "Shift_L").SelectedOption = "inline_ascii";
+        switchKey.First(r => r.Key == "Shift_L").SelectedOption = new ChoiceOption("inline_ascii", "inline_ascii");
         Assert.True(vm.IsDirty);
 
         await vm.SaveAndDeployCommand.ExecuteAsync(null);
@@ -232,9 +232,10 @@ public sealed class SettingsEditorTests : IDisposable
 
         var scheme = Choice(vm, "style/color_scheme");
         Assert.Equal("macos_light", scheme.Selected);
-        Assert.Contains("macos_light", scheme.Options);
-        Assert.Contains("macos_dark", scheme.Options);
-        Assert.Equal("未设置", scheme.Options[0]); // explicit unset entry
+        var optionValues = scheme.Options.Select(o => o.Value).ToList();
+        Assert.Contains("macos_light", optionValues);
+        Assert.Contains("macos_dark", optionValues);
+        Assert.Null(optionValues[0]); // explicit unset entry (Value = null)
 
         // app_options rows load from merged config.
         var apps = vm.Sections.SelectMany(s => s.Fields).OfType<AppOptionsFieldViewModel>().Single();

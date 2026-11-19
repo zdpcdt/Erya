@@ -208,7 +208,7 @@
                                                         <DataTemplate x:DataType="sf:CheckOptionViewModel">
                                                             <u:SettingsCard>
                                                                 <CheckBox
-                                                                    Content="{Binding Value}"
+                                                                    Content="{Binding Display}"
                                                                     IsChecked="{Binding IsChecked}" />
                                                             </u:SettingsCard>
                                                         </DataTemplate>

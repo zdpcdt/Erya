@@ -5,7 +5,6 @@
       "id": "skinChoice",
       "group": "skin",
       "title": "当前皮肤",
-      "description": "候选窗配色方案。亮色用于系统浅色模式，暗色用于深色模式。",
       "fields": [
         {
           "id": "colorScheme",
@@ -18,7 +17,6 @@
         {
           "id": "colorSchemeDark",
           "label": "暗色皮肤",
-          "description": "系统深色模式下使用的皮肤",
           "type": "enum",
           "icon": "td:Moon",
           "keyPath": "style/color_scheme_dark",
@@ -30,12 +28,10 @@
       "id": "layoutBehavior",
       "group": "layout",
       "title": "排列与行为",
-      "description": "候选窗的横竖排与交互行为。键名已对照小狼毫 0.17 源码逐一校验。",
       "fields": [
         {
           "id": "layoutType",
           "label": "排列方式",
-          "description": "horizontal 横排 / vertical 竖排 / vertical_text 竖排文本（逐字竖书）。此键优先级最高，覆盖 horizontal 等旧键。",
           "type": "segmented",
           "icon": "td:Layout",
           "keyPath": "style/layout/type",
@@ -43,12 +39,16 @@
             "horizontal",
             "vertical",
             "vertical_text"
-          ]
+          ],
+          "choiceLabels": {
+            "horizontal": "横排",
+            "vertical": "竖排",
+            "vertical_text": "竖排文本"
+          }
         },
         {
           "id": "inlinePreedit",
           "label": "内嵌编码",
-          "description": "在应用光标处显示输入中的编码",
           "type": "toggle",
           "icon": "td:Text",
           "keyPath": "style/inline_preedit"
@@ -56,7 +56,6 @@
         {
           "id": "preeditType",
           "label": "编码区内容",
-          "description": "composition 显示输入编码；preview 在光标处显示首选候选（相当于鼠须管的内嵌候选）；preview_all 内嵌显示全部候选",
           "type": "enum",
           "icon": "td:Text",
           "keyPath": "style/preedit_type",
@@ -64,12 +63,16 @@
             "composition",
             "preview",
             "preview_all"
-          ]
+          ],
+          "choiceLabels": {
+            "composition": "显示编码",
+            "preview": "内嵌首选",
+            "preview_all": "内嵌全部候选"
+          }
         },
         {
           "id": "labelFormat",
-          "label": "序号格式",
-          "description": "如 \"%s.\"；%s 代表数字",
+          "label": "序号格式（%s 代表数字）",
           "type": "text",
           "icon": "td:Text",
           "keyPath": "style/label_format"
@@ -77,7 +80,6 @@
         {
           "id": "markText",
           "label": "标记字符",
-          "description": "高亮候选前的标记，如 \"·\"",
           "type": "text",
           "icon": "td:Text",
           "keyPath": "style/mark_text"
@@ -85,14 +87,12 @@
         {
           "id": "pagingOnScroll",
           "label": "滚轮翻页",
-          "description": "在候选窗上滚动鼠标滚轮翻页",
           "type": "toggle",
           "keyPath": "style/paging_on_scroll"
         },
         {
           "id": "hoverType",
           "label": "悬停响应",
-          "description": "鼠标悬停在候选词上的效果：none 无 / semi_light 浮现半透明高亮 / hilite 完整高亮",
           "type": "enum",
           "icon": "td:Cursor",
           "keyPath": "style/hover_type",
@@ -100,12 +100,16 @@
             "none",
             "semi_light",
             "hilite"
-          ]
+          ],
+          "choiceLabels": {
+            "none": "无",
+            "semi_light": "半透明高亮",
+            "hilite": "完整高亮"
+          }
         },
         {
           "id": "candidateAbbreviateLength",
-          "label": "候选缩略",
-          "description": "候选词超过此字数时中间缩略为省略号，0 表示不缩略",
+          "label": "候选缩略（字数，0 = 不缩略）",
           "type": "stepper",
           "icon": "td:Text",
           "keyPath": "style/candidate_abbreviate_length",
@@ -119,12 +123,10 @@
       "id": "verticalText",
       "group": "layout",
       "title": "竖排细节",
-      "description": "排列方式为 vertical / vertical_text 时生效。",
       "fields": [
         {
           "id": "verticalTextLeftToRight",
           "label": "竖排从左到右",
-          "description": "竖排文本（vertical_text）的列序改为从左到右，默认从右到左",
           "type": "toggle",
           "icon": "td:Vertical",
           "keyPath": "style/vertical_text_left_to_right"
@@ -132,7 +134,6 @@
         {
           "id": "verticalTextWithWrap",
           "label": "竖排自动换列",
-          "description": "竖排文本（vertical_text）超出一列时自动换列",
           "type": "toggle",
           "icon": "td:Vertical",
           "keyPath": "style/vertical_text_with_wrap"
@@ -140,7 +141,6 @@
         {
           "id": "verticalAutoReverse",
           "label": "竖排自动换向",
-          "description": "根据候选窗在屏幕上的位置自动反转竖排方向",
           "type": "toggle",
           "icon": "td:Vertical",
           "keyPath": "style/vertical_auto_reverse"
@@ -155,7 +155,6 @@
         {
           "id": "antialiasMode",
           "label": "字体抗锯齿",
-          "description": "DirectWrite 文字渲染的抗锯齿方式：default 跟随系统、cleartype、grayscale 灰度、aliased 关闭",
           "type": "enum",
           "keyPath": "style/antialias_mode",
           "choices": [
@@ -163,12 +162,17 @@
             "cleartype",
             "grayscale",
             "aliased"
-          ]
+          ],
+          "choiceLabels": {
+            "default": "跟随系统",
+            "cleartype": "ClearType",
+            "grayscale": "灰度",
+            "aliased": "关闭"
+          }
         },
         {
           "id": "asciiTipFollowCursor",
           "label": "提示跟随光标",
-          "description": "中西文切换提示显示在应用光标处",
           "type": "toggle",
           "icon": "td:Cursor",
           "keyPath": "style/ascii_tip_follow_cursor"
@@ -176,7 +180,7 @@
         {
           "id": "fullscreen",
           "label": "全屏应用",
-          "description": "在全屏应用（游戏、播放器）中显示候选窗；开启后自动关闭内嵌编码并解除最大宽度限制",
+          "description": "开启后自动关闭内嵌编码，并解除候选窗最大宽度限制",
           "type": "toggle",
           "keyPath": "style/fullscreen"
         },
@@ -196,7 +200,6 @@
         {
           "id": "fontFace",
           "label": "候选字体",
-          "description": "从系统已安装字体中选择，如 微软雅黑 (Microsoft YaHei)",
           "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/font_face"
@@ -283,7 +286,6 @@
         {
           "id": "hilitePadding",
           "label": "高亮扩张",
-          "description": "高亮候选背景向四周扩张的像素",
           "type": "stepper",
           "keyPath": "style/layout/hilite_padding",
           "min": 0,
@@ -329,7 +331,7 @@
         {
           "id": "borderWidth",
           "label": "边框宽度",
-          "description": "候选窗描边像素；颜色取自配色方案的 border_color",
+          "description": "颜色取自配色方案的 border_color",
           "type": "stepper",
           "icon": "td:Frame",
           "keyPath": "style/layout/border_width",
@@ -340,7 +342,6 @@
         {
           "id": "marginX",
           "label": "横向边距",
-          "description": "候选窗内容与窗口边缘的左右留白",
           "type": "stepper",
           "icon": "td:Frame",
           "keyPath": "style/layout/margin_x",
@@ -351,7 +352,6 @@
         {
           "id": "marginY",
           "label": "纵向边距",
-          "description": "候选窗内容与窗口边缘的上下留白",
           "type": "stepper",
           "icon": "td:Frame",
           "keyPath": "style/layout/margin_y",
@@ -365,12 +365,11 @@
       "id": "layoutShadow",
       "group": "layout",
       "title": "阴影",
-      "description": "需配色方案提供非透明的 shadow_color 才可见。",
       "fields": [
         {
           "id": "shadowRadius",
           "label": "阴影圆角",
-          "description": "候选窗阴影模糊半径",
+          "description": "需配色方案提供非透明的 shadow_color 才可见",
           "type": "stepper",
           "keyPath": "style/layout/shadow_radius",
           "min": 0,
@@ -400,8 +399,7 @@
     {
       "id": "layoutSize",
       "group": "layout",
-      "title": "宽高限制",
-      "description": "0 表示不限制。",
+      "title": "宽高限制（0 = 不限制）",
       "fields": [
         {
           "id": "minWidth",
@@ -449,19 +447,22 @@
         {
           "id": "alignType",
           "label": "垂直对齐",
-          "description": "候选行内文字的对齐基准（上 / 中 / 下）",
           "type": "segmented",
           "keyPath": "style/layout/align_type",
           "choices": [
             "top",
             "center",
             "bottom"
-          ]
+          ],
+          "choiceLabels": {
+            "top": "上",
+            "center": "中",
+            "bottom": "下"
+          }
         },
         {
           "id": "baseline",
-          "label": "基线微调",
-          "description": "以候选字号的百分比微调文字基线，0 为不调整",
+          "label": "基线微调（%，0 = 不调整）",
           "type": "stepper",
           "keyPath": "style/layout/baseline",
           "min": -50,
@@ -474,7 +475,6 @@
       "id": "appOptions",
       "group": "apps",
       "title": "应用程序",
-      "description": "为指定应用设置输入行为（按程序 exe 名，如在终端中默认使用英文）。应用行为页以卡片列表编辑本节；修改保存到补丁后重新部署生效。",
       "fields": [
         {
           "id": "appsTable",

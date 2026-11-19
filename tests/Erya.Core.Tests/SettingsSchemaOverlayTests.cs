@@ -35,6 +35,13 @@ public sealed class SettingsSchemaOverlayTests : IDisposable
         var menu = en.Sections.Single(s => s.Id == "menu");
         Assert.Equal("Candidate Menu", menu.Title);
         Assert.Equal("Candidates per page", menu.Fields.Single(f => f.Id == "pageSize").Label);
+
+        // 选项显示名随语言切换（choices 值本身不变——落盘仍写原值）。
+        var zhSwitchKey = zh.Sections.Single(s => s.Id == "asciiComposer").Fields.Single(f => f.Id == "switchKey");
+        var enSwitchKey = en.Sections.Single(s => s.Id == "asciiComposer").Fields.Single(f => f.Id == "switchKey");
+        Assert.Equal("上屏编码", zhSwitchKey.ChoiceLabels!["commit_code"]);
+        Assert.Equal("Commit raw input", enSwitchKey.ChoiceLabels!["commit_code"]);
+        Assert.Contains("commit_code", enSwitchKey.Choices!);
     }
 
     [Fact]

@@ -64,6 +64,13 @@ public static class SettingsSchemas
                 if (map.TryGetValue($"{section.Id}.{field.Id}.description", out var fieldDescription)
                     && fieldDescription.Length > 0)
                     field.Description = fieldDescription;
+                if (field.ChoiceLabels is { } labels)
+                {
+                    foreach (var value in field.Choices ?? [])
+                        if (map.TryGetValue($"{section.Id}.{field.Id}.choices.{value}", out var choiceLabel)
+                            && choiceLabel.Length > 0)
+                            labels[value] = choiceLabel;
+                }
             }
         }
     }
@@ -89,6 +96,11 @@ public static class SettingsSchemas
                 if (field.Min is { } min && field.Max is { } max && min > max)
                     throw new InvalidOperationException(
                         $"{resourceName}: 字段 {section.Id}/{field.Id} 的 min 大于 max。");
+                if (field.ChoiceLabels is { } labels && field.Choices is { } choices)
+                    foreach (var key in labels.Keys)
+                        if (!choices.Contains(key))
+                            throw new InvalidOperationException(
+                                $"{resourceName}: 字段 {section.Id}/{field.Id} 的 choiceLabels 含未知选项 {key}。");
             }
         }
     }

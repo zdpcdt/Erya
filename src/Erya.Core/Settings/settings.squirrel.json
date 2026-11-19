@@ -5,7 +5,6 @@
       "id": "skinChoice",
       "group": "skin",
       "title": "当前皮肤",
-      "description": "候选窗配色方案。亮色用于系统浅色模式，暗色用于深色模式。",
       "fields": [
         {
           "id": "colorScheme",
@@ -18,7 +17,6 @@
         {
           "id": "colorSchemeDark",
           "label": "暗色皮肤",
-          "description": "系统深色模式下使用的皮肤",
           "type": "enum",
           "icon": "td:Moon",
           "keyPath": "style/color_scheme_dark",
@@ -30,19 +28,21 @@
       "id": "layoutBehavior",
       "group": "layout",
       "title": "排列与显示",
-      "description": "鼠须管候选窗的排列与显示效果。",
       "fields": [
         {
           "id": "candidateLayout",
           "label": "排列方式",
-          "description": "stacked 为竖排，linear 为横排",
           "type": "segmented",
           "icon": "td:Layout",
           "keyPath": "style/candidate_list_layout",
           "choices": [
             "stacked",
             "linear"
-          ]
+          ],
+          "choiceLabels": {
+            "stacked": "竖排",
+            "linear": "横排"
+          }
         },
         {
           "id": "textOrientation",
@@ -53,12 +53,16 @@
           "choices": [
             "horizontal",
             "vertical"
-          ]
+          ],
+          "choiceLabels": {
+            "horizontal": "横向",
+            "vertical": "纵向"
+          }
         },
         {
           "id": "candidateFormat",
           "label": "候选格式",
-          "description": "候选行模板：[label] 序号、[candidate] 候选、[comment] 注释，默认 \"[label]. [candidate] [comment]\"",
+          "description": "候选行模板：[label] 序号、[candidate] 候选、[comment] 注释",
           "type": "text",
           "icon": "ip:Format",
           "keyPath": "style/candidate_format"
@@ -66,7 +70,6 @@
         {
           "id": "inlinePreedit",
           "label": "内嵌编码",
-          "description": "在应用光标处显示输入中的编码",
           "type": "toggle",
           "icon": "td:Text",
           "keyPath": "style/inline_preedit"
@@ -74,7 +77,6 @@
         {
           "id": "inlineCandidate",
           "label": "内嵌候选",
-          "description": "首选词直接内嵌在应用光标处",
           "type": "toggle",
           "keyPath": "style/inline_candidate"
         },
@@ -88,7 +90,6 @@
         {
           "id": "memorizeSize",
           "label": "贴靠屏幕边缘",
-          "description": "候选窗贴近屏幕边缘显示，减少输入时的窗口跳动",
           "type": "toggle",
           "icon": "ip:MemoryOne",
           "keyPath": "style/memorize_size"
@@ -96,14 +97,13 @@
         {
           "id": "mutualExclusive",
           "label": "色彩不叠加",
-          "description": "多个透明色块不相互叠加（背景/高亮各自独立着色）",
           "type": "toggle",
           "keyPath": "style/mutual_exclusive"
         },
         {
           "id": "translucency",
           "label": "磨砂效果",
-          "description": "使用系统磨砂半透明背景；仅当皮肤背景色带透明度时可见",
+          "description": "仅当皮肤背景色带透明度时可见",
           "type": "toggle",
           "keyPath": "style/translucency"
         }
@@ -117,7 +117,6 @@
         {
           "id": "fontFace",
           "label": "候选字体",
-          "description": "从系统已安装字体中选择，如 PingFang SC",
           "type": "font",
           "icon": "semi:SemiIconFont",
           "keyPath": "style/font_face"
@@ -142,8 +141,7 @@
         },
         {
           "id": "labelFontPoint",
-          "label": "序号字号",
-          "description": "未设置时跟随候选字号",
+          "label": "序号字号（空 = 跟随候选）",
           "type": "stepper",
           "icon": "ip:FontSize",
           "keyPath": "style/label_font_point",
@@ -160,8 +158,7 @@
         },
         {
           "id": "commentFontPoint",
-          "label": "注释字号",
-          "description": "未设置时跟随候选字号",
+          "label": "注释字号（空 = 跟随候选）",
           "type": "stepper",
           "icon": "ip:FontSize",
           "keyPath": "style/comment_font_point",
@@ -178,8 +175,7 @@
         },
         {
           "id": "preeditFontPoint",
-          "label": "编码字号",
-          "description": "未设置时跟随候选字号",
+          "label": "编码字号（空 = 跟随候选）",
           "type": "stepper",
           "icon": "ip:FontSize",
           "keyPath": "style/preedit_font_point",
@@ -189,8 +185,7 @@
         },
         {
           "id": "baseOffset",
-          "label": "基线偏移",
-          "description": "文字相对基线的上下微调（像素），序号/注释与候选对齐不齐时可调",
+          "label": "基线偏移（像素）",
           "type": "stepper",
           "keyPath": "style/base_offset",
           "min": -10,
@@ -207,7 +202,6 @@
         {
           "id": "spacing",
           "label": "编码-候选间距",
-          "description": "非内嵌模式下编码行与候选区的间距",
           "type": "stepper",
           "keyPath": "style/spacing",
           "min": 0,
@@ -217,7 +211,6 @@
         {
           "id": "lineSpacing",
           "label": "候选行距",
-          "description": "竖排时候选行之间的间距",
           "type": "stepper",
           "icon": "td:LineHeight",
           "keyPath": "style/line_spacing",
@@ -228,7 +221,6 @@
         {
           "id": "surroundingExtraExpansion",
           "label": "非高亮背景扩张",
-          "description": "非高亮候选背景块向四周扩张的像素",
           "type": "stepper",
           "keyPath": "style/surrounding_extra_expansion",
           "min": 0,
@@ -264,7 +256,6 @@
         {
           "id": "borderHeight",
           "label": "纵向留白",
-          "description": "内容与窗口边缘的垂直留白；与横向留白中较小者兼作描边宽度（默认 -2，可为负）",
           "type": "stepper",
           "keyPath": "style/border_height",
           "min": -5,
@@ -274,7 +265,6 @@
         {
           "id": "borderWidth",
           "label": "横向留白",
-          "description": "内容与窗口边缘的水平留白；与纵向留白中较小者兼作描边宽度（默认 -2，可为负）",
           "type": "stepper",
           "icon": "td:Frame",
           "keyPath": "style/border_width",
@@ -292,7 +282,6 @@
         {
           "id": "alpha",
           "label": "透明度",
-          "description": "整窗不透明度，1 为完全不透明",
           "type": "slider",
           "icon": "td:Alpha",
           "keyPath": "style/alpha",
@@ -304,7 +293,6 @@
         {
           "id": "shadowSize",
           "label": "高亮阴影",
-          "description": "高亮候选块周围的阴影模糊半径（0 为无阴影）",
           "type": "stepper",
           "keyPath": "style/shadow_size",
           "min": 0,
@@ -327,7 +315,11 @@
           "choices": [
             "last",
             "default"
-          ]
+          ],
+          "choiceLabels": {
+            "last": "记住上次",
+            "default": "系统默认"
+          }
         },
         {
           "id": "chordDuration",
@@ -349,12 +341,16 @@
             "always",
             "never",
             "appropriate"
-          ]
+          ],
+          "choiceLabels": {
+            "always": "总是",
+            "never": "从不",
+            "appropriate": "适当时机"
+          }
         },
         {
           "id": "statusIcon",
           "label": "菜单栏图标",
-          "description": "在菜单栏显示输入法状态图标",
           "type": "toggle",
           "keyPath": "status_icon/show"
         }
@@ -364,7 +360,6 @@
       "id": "appOptions",
       "group": "apps",
       "title": "应用程序",
-      "description": "为指定应用设置输入行为（按应用 Bundle ID，如在终端中默认使用英文）。应用行为页以卡片列表编辑本节；修改保存到补丁后重新部署生效。",
       "fields": [
         {
           "id": "appsTable",

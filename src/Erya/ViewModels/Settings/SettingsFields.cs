@@ -62,6 +62,14 @@ public abstract partial class SettingsFieldViewModel : ObservableObject
 
     protected static bool AsBool(object? value) => value is true;
 
+    /// <summary>枚举值 → 本地化显示名（schema choiceLabels），无映射时原样返回。</summary>
+    protected string DisplayOf(string value)
+        => Field.ChoiceLabels is { } labels
+            && labels.TryGetValue(value, out var label)
+            && label.Length > 0
+                ? label
+                : value;
+
     protected static IReadOnlyList<string> ToStringList(object? value)
         => value as IReadOnlyList<object?> is { } list
             ? list.Select(v => v?.ToString() ?? "").Where(s => s.Length > 0).ToList()
@@ -227,6 +235,16 @@ public sealed partial class HotkeyFieldViewModel : TextFieldViewModel
     public HotkeyFieldViewModel(SettingsField field) : base(field) { }
 }
 
+/// <summary>
+/// enum 下拉的一项：<see cref="Value"/> 是落盘原值（可能为 null = 未设置），
+/// <see cref="Display"/> 是本地化显示名。ToString 返回 Display，ComboBox
+/// 不加 ItemTemplate 也能直接渲染。
+/// </summary>
+public sealed record ChoiceOption(string? Value, string Display)
+{
+    public override string ToString() => Display;
+}
+
 /// <summary>enum / segmented: a choice list where null means “跟随默认（未设置）”。</summary>
 public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
 {
@@ -236,7 +254,9 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
     {
         Choices = choices;
         AllowUnset = allowUnset;
-        Options = allowUnset ? [UnsetLabel, .. choices] : choices;
+        var options = choices.Select(ToOption).ToList();
+        if (allowUnset) options.Insert(0, new ChoiceOption(null, UnsetLabel));
+        Options = options;
     }
 
     public IReadOnlyList<string> Choices { get; }
@@ -246,21 +266,26 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
     public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
     /// <summary>Combo list including the explicit unset entry.</summary>
-    public IReadOnlyList<string> Options { get; }
+    public IReadOnlyList<ChoiceOption> Options { get; private set; }
 
     [ObservableProperty]
     private string? _selected;
 
     /// <summary>Bind target for ComboBox — maps the unset entry to/from null.</summary>
-    public string? SelectedOption
+    public ChoiceOption? SelectedOption
     {
-        get => Selected is null ? UnsetLabel : Selected;
-        set => Selected = value == UnsetLabel ? null : value;
+        get => Selected is null
+            ? (AllowUnset ? new ChoiceOption(null, UnsetLabel) : null)
+            : Options.FirstOrDefault(o => o.Value == Selected) ?? ToOption(Selected);
+        set => Selected = value?.Value;
     }
 
     public override void Load(object? mergedValue)
     {
         _loaded = AsString(mergedValue);
+        // YAML 里出现 choices 之外的值时保底追加为可选项，避免 ComboBox 匹配不上而写回 null。
+        if (_loaded is not null && !Choices.Contains(_loaded))
+            Options = [.. Options, ToOption(_loaded)];
         Selected = _loaded;
         HasPendingEdits = false;
     }
@@ -274,6 +299,8 @@ public sealed partial class ChoiceFieldViewModel : SettingsFieldViewModel
         HasPendingEdits = value != _loaded;
         OnPropertyChanged(nameof(SelectedOption));
     }
+
+    private ChoiceOption ToOption(string value) => new(value, DisplayOf(value));
 }
 
 /// <summary>hotkeyList 中的一行：可观察，供 KeyGestureInput 双向绑定写回。</summary>
@@ -434,7 +461,7 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
     {
         foreach (var key in field.Keys ?? [])
         {
-            var row = new KeyMappingRowViewModel(key);
+            var row = new KeyMappingRowViewModel(key, DisplayOf);
             row.PropertyChanged += OnRowChanged;
             Rows.Add(row);
         }
@@ -446,7 +473,8 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
 
     public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
 
-    public IReadOnlyList<string> Options => [UnsetLabel, .. Choices];
+    public IReadOnlyList<ChoiceOption> Options =>
+        [new ChoiceOption(null, UnsetLabel), .. Choices.Select(v => new ChoiceOption(v, DisplayOf(v)))];
 
     /// <summary>行右侧摘要：已自定义的键位数。</summary>
     public string Summary
@@ -484,7 +512,7 @@ public sealed partial class KeyMappingFieldViewModel : SettingsFieldViewModel
     }
 }
 
-public sealed partial class KeyMappingRowViewModel(string key) : ObservableObject
+public sealed partial class KeyMappingRowViewModel(string key, Func<string, string> display) : ObservableObject
 {
     public string Key { get; } = key;
 
@@ -502,10 +530,10 @@ public sealed partial class KeyMappingRowViewModel(string key) : ObservableObjec
     }
 
     /// <summary>Bind target for ComboBox — maps the unset entry to/from null.</summary>
-    public string? SelectedOption
+    public ChoiceOption? SelectedOption
     {
-        get => Selection is null ? UnsetLabel : Selection;
-        set => Selection = value == UnsetLabel ? null : value;
+        get => Selection is null ? new ChoiceOption(null, UnsetLabel) : new ChoiceOption(Selection, display(Selection));
+        set => Selection = value?.Value;
     }
 
     public string UnsetLabel => Loc.Get(LanguageManager.Instance.appearance_unset);
@@ -525,7 +553,7 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
     {
         foreach (var choice in field.Choices ?? [])
         {
-            var option = new CheckOptionViewModel(choice);
+            var option = new CheckOptionViewModel(choice, DisplayOf(choice));
             option.PropertyChanged += OnOptionChanged;
             Options.Add(option);
         }
@@ -565,9 +593,12 @@ public sealed partial class CheckListFieldViewModel : SettingsFieldViewModel
     }
 }
 
-public sealed partial class CheckOptionViewModel(string value) : ObservableObject
+public sealed partial class CheckOptionViewModel(string value, string display) : ObservableObject
 {
     public string Value { get; } = value;
+
+    /// <summary>复选框文案：choiceLabels 的本地化显示名（无映射时为原值）。</summary>
+    public string Display { get; } = display;
 
     [ObservableProperty]
     private bool _isChecked;

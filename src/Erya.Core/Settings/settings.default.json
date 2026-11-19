@@ -4,12 +4,10 @@
     {
       "id": "menu",
       "title": "候选词菜单",
-      "description": "所有方案共有的候选窗行为。",
       "fields": [
         {
           "id": "pageSize",
           "label": "候选词个数",
-          "description": "每页显示的候选词数量",
           "type": "stepper",
           "icon": "td:OrderList",
           "keyPath": "menu/page_size",
@@ -33,7 +31,6 @@
         {
           "id": "hotkeys",
           "label": "快捷键",
-          "description": "触发方案选单的全局快捷键",
           "type": "hotkeyList",
           "icon": "td:Keyboard",
           "keyPath": "switcher/hotkeys"
@@ -41,7 +38,6 @@
         {
           "id": "saveOptions",
           "label": "记忆选项",
-          "description": "在方案选单中切换后需要记住的状态",
           "type": "checkList",
           "icon": "td:Save",
           "keyPath": "switcher/save_options",
@@ -51,7 +47,14 @@
             "emoji",
             "full_shape",
             "search_single_char"
-          ]
+          ],
+          "choiceLabels": {
+            "ascii_punct": "西文标点",
+            "traditionalization": "简繁转换",
+            "emoji": "Emoji",
+            "full_shape": "全角",
+            "search_single_char": "单字检索"
+          }
         },
         {
           "id": "foldOptions",
@@ -81,7 +84,7 @@
         {
           "id": "capsLockMode",
           "label": "保持 Caps Lock 原功能",
-          "description": "开启后 Caps Lock 用于切换大写锁定；关闭则用于切换中英文输入状态",
+          "description": "关闭时 Caps Lock 切换中英文输入状态",
           "type": "toggle",
           "icon": "td:LockOn",
           "keyPath": "ascii_composer/good_old_caps_lock"
@@ -89,7 +92,6 @@
         {
           "id": "switchKey",
           "label": "切换按键行为",
-          "description": "按下该键切换到英文时的行为：行内英文会在回车上屏后切回中文",
           "type": "keyMapping",
           "icon": "td:Swap",
           "keyPath": "ascii_composer/switch_key",
@@ -100,6 +102,13 @@
             "clear",
             "noop"
           ],
+          "choiceLabels": {
+            "commit_code": "上屏编码",
+            "commit_text": "上屏候选",
+            "inline_ascii": "行内英文",
+            "clear": "清空编码",
+            "noop": "不处理"
+          },
           "keys": [
             "Caps_Lock",
             "Shift_L",
@@ -113,20 +122,18 @@
     {
       "id": "keyBinder",
       "title": "功能快捷键",
-      "description": "翻页、移动光标等通用按键映射由方案在 key_binder/bindings 预置，如需修改请在「高级设置」编辑 default.yaml 补丁。",
+      "description": "翻页、移动光标等按键映射由方案预置；修改请在「高级设置」编辑 default.yaml 补丁。",
       "fields": [
         {
           "id": "selectFirstCharacter",
-          "label": "以词定字（首字）",
-          "description": "按下后直接上屏当前候选的首个字；需方案自带以词定字脚本（如雾凇拼音），librime 引擎本身不读此键",
+          "label": "以词定字·首字（需方案支持）",
           "type": "hotkey",
           "icon": "td:CheckRectangle",
           "keyPath": "key_binder/select_first_character"
         },
         {
           "id": "selectLastCharacter",
-          "label": "以词定字（末字）",
-          "description": "按下后直接上屏当前候选的最后一个字；需方案自带以词定字脚本（如雾凇拼音），librime 引擎本身不读此键",
+          "label": "以词定字·末字（需方案支持）",
           "type": "hotkey",
           "icon": "td:CheckRectangle",
           "keyPath": "key_binder/select_last_character"
@@ -140,20 +147,23 @@
         {
           "id": "digitSeparators",
           "label": "数字分隔符",
-          "description": "连续输入数字时不上屏的分隔字符，如 \"',\"（需 librime ≥ 1.13）",
+          "description": "连续输入数字时不上屏的分隔字符，如 \"',\"",
           "type": "text",
           "keyPath": "punctuator/digit_separators"
         },
         {
           "id": "digitSeparatorAction",
           "label": "分隔符行为",
-          "description": "commit 为上屏分隔符，noop 为不处理（需 librime ≥ 1.13.1）",
           "type": "enum",
           "keyPath": "punctuator/digit_separator_action",
           "choices": [
             "commit",
             "noop"
-          ]
+          ],
+          "choiceLabels": {
+            "commit": "上屏分隔符",
+            "noop": "不处理"
+          }
         }
       ]
     }
