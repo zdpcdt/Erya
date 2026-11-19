@@ -276,7 +276,8 @@ public sealed class SettingsPageRenderTests : IDisposable
         foreach (var h in previewHosts)
         {
             var hostTexts = h.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-            Assert.Contains("ni hao", hostTexts);
+            Assert.Contains("ni", hostTexts);      // 编码行双色分段（ni + " hao"）
+            Assert.Contains(" hao", hostTexts);
             Assert.Equal(["你好", "拟好", "尼奥"],
                 hostTexts.Where(t => t is "你好" or "拟好" or "尼奥"));
         }
@@ -430,7 +431,8 @@ public sealed class SettingsPageRenderTests : IDisposable
         Assert.Equal(8, control.GetVisualDescendants().OfType<ColorPicker>().Count());
         Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").StartsWith("0x"));
         Assert.DoesNotContain(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("作者"));
-        Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni hao");
+        Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "ni");
+        Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == " hao");
         Assert.Contains(control.GetVisualDescendants().OfType<TextBlock>(), t => (t.Text ?? "").Contains("字体与排版"));
         // 取色器显示当前色（BGR 十六进制 → RGB Color，经 RimeColor 转换器），改值实时反映。
         var picker = control.GetVisualDescendants().OfType<ColorPicker>().First();
@@ -438,6 +440,16 @@ public sealed class SettingsPageRenderTests : IDisposable
         dialog2.Scheme.BackColor = "FFFFFF";
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(Color.FromRgb(0xFF, 0xFF, 0xFF), picker.Color);
+
+        // 编码行双色分段：ni 段跟随高亮编码色（hilited_text_color）， hao 段跟随编码色。
+        dialog2.Scheme.HilitedPreeditColor = "00FF00"; // BGR → G=FF
+        Dispatcher.UIThread.RunJobs();
+        var preeditHilited = control.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "ni");
+        Assert.Equal(0xFF, Assert.IsAssignableFrom<ISolidColorBrush>(preeditHilited.Foreground).Color.G);
+        dialog2.Scheme.TextColor = "FF0000"; // BGR → B=FF
+        Dispatcher.UIThread.RunJobs();
+        var preeditRest = control.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == " hao");
+        Assert.Equal(0xFF, Assert.IsAssignableFrom<ISolidColorBrush>(preeditRest.Foreground).Color.B);
 
         // 真实点击弹出下拉取色面板（Popup 挂在窗口 OverlayPopupHost），
         // 在面板色谱上选色实时写回皮肤（BGR 十六进制）。

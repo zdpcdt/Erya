@@ -33,9 +33,15 @@
                         Opacity="{Binding WindowOpacity}"
                         Effect="{Binding Shadow}">
                     <StackPanel Orientation="{Binding PanelOrientation}" Spacing="{Binding PreeditGap}">
-                        <TextBlock Text="{Binding PreeditText}" IsVisible="{Binding ShowPreedit}"
-                                   Foreground="{Binding PreeditBrush}"
-                                   FontFamily="{Binding PreviewFont}" FontSize="{Binding FontSize}" />
+                        <!--  编码行双色分段：ni（构成首选）高亮编码色 + hao 编码色  -->
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding ShowPreedit}">
+                            <TextBlock Text="{Binding PreeditHilitedText}"
+                                       Foreground="{Binding PreeditHilitedBrush}"
+                                       FontFamily="{Binding PreviewFont}" FontSize="{Binding FontSize}" />
+                            <TextBlock Text="{Binding PreeditRestText}"
+                                       Foreground="{Binding PreeditBrush}"
+                                       FontFamily="{Binding PreviewFont}" FontSize="{Binding FontSize}" />
+                        </StackPanel>
                         <ItemsControl ItemsSource="{Binding Items}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

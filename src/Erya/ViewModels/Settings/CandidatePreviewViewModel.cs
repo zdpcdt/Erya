@@ -98,11 +98,21 @@ public sealed partial class CandidatePreviewViewModel : ObservableObject
         WatchScheme(null);
     }
 
-    public string PreeditText => "ni hao";
+    /// <summary>
+    /// 编码行按真实输入法分段双色预演：已构成首选的「ni」段用高亮编码色
+    /// （hilited_text_color），剩余「 hao」段用编码色（text_color）。
+    /// </summary>
+    public string PreeditHilitedText => "ni";
+
+    public string PreeditRestText => " hao";
 
     public bool ShowPreedit => !Flag("style/inline_preedit");
 
     public IBrush PreeditBrush => Brush(SchemeColor("text_color") ?? SchemeColor("candidate_text_color"), Colors.Black);
+
+    public IBrush PreeditHilitedBrush => Brush(
+        SchemeColor("hilited_text_color") ?? SchemeColor("text_color") ?? SchemeColor("candidate_text_color"),
+        Colors.Black);
 
     public IBrush BackBrush => Brush(SchemeColor("back_color"), Colors.White);
 

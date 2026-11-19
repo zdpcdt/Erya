@@ -68,6 +68,8 @@ public sealed class CandidatePreviewTests : IDisposable
                 name: 碧水
                 back_color: 0xECEEEE
                 candidate_text_color: 0x000000
+                text_color: 0x007700
+                hilited_text_color: 0x0000FF
                 hilited_candidate_back_color: 0xD3E3F6
                 hilited_candidate_text_color: 0x000000
               aqua_dark:
@@ -88,6 +90,12 @@ public sealed class CandidatePreviewTests : IDisposable
         Assert.Equal(0xEE, ColorOf(preview.BackBrush).G);
         Assert.Equal(0xEC, ColorOf(preview.BackBrush).B);
         Assert.Equal(0xFF, ColorOf(preview.BackBrush).A); // 6 位色默认不透明
+
+        // 编码行双色分段：ni 段吃高亮编码色（0x0000FF → R=FF）、 hao 段吃编码色（0x007700 → G=77）。
+        Assert.Equal("ni", preview.PreeditHilitedText);
+        Assert.Equal(" hao", preview.PreeditRestText);
+        Assert.Equal(0xFF, ColorOf(preview.PreeditHilitedBrush).R);
+        Assert.Equal(0x77, ColorOf(preview.PreeditBrush).G);
 
         // 排版：layout/type=vertical 竖排；圆角与边距来自 layout 层。
         Assert.Equal(Orientation.Vertical, preview.PanelOrientation);
