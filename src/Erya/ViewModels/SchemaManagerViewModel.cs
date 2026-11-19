@@ -219,8 +219,13 @@ public partial class SchemaManagerViewModel : ObservableObject
         var m = LanguageManager.Instance;
         item.IsInstalling = true;
         item.Status = Loc.Get(m.schemas_prepareDownload);
+        // Progress<T> 的回调是异步 Post：没有 Dispatcher 的语境下（ViewModel 测试），
+        // 最后一帧进度可能在命令结束后才落地，把终态覆盖回进度文案——标志已复位就丢弃。
         var progress = new Progress<SchemaInstallProgress>(p =>
-            item.Status = p.Percent is { } percent ? $"{p.Phase} {percent:0}%" : p.Phase);
+        {
+            if (item.IsInstalling)
+                item.Status = p.Percent is { } percent ? $"{p.Phase} {percent:0}%" : p.Phase;
+        });
         try
         {
             ErrorMessage = "";
@@ -317,7 +322,11 @@ public partial class SchemaManagerViewModel : ObservableObject
 
         item.IsUninstalling = true;
         item.Status = Loc.Get(m.schemas_prepareManifest);
-        var progress = new Progress<SchemaInstallProgress>(p => item.Status = p.Phase);
+        // 同 InstallAsync：迟到的进度回调不覆盖终态。
+        var progress = new Progress<SchemaInstallProgress>(p =>
+        {
+            if (item.IsUninstalling) item.Status = p.Phase;
+        });
         try
         {
             ErrorMessage = "";
