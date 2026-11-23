@@ -132,8 +132,9 @@ RIME 的铁律：发行版 base 文件（`default.yaml` / `squirrel.yaml` / `wea
 - 设置行控件已退役：自研 `Cell` / `CellGroup` 于 Ursa 2.3 上游化为 `SettingsCard` / `SettingsCardGroup`（API 与伪类同构，含裸模型自动包装），全部 View 直接用 `u:SettingsCard*`，样式随 `UrsaSemiTheme` 分发。
 - `ReorderableItemsControl : ItemsControl` —— 拖拽排序，attached `IsDragHandle` 指定把手，实时移动绑定的 `ObservableCollection`，Esc 取消。
 - `DragHandle` / `ReorderableItem`（容器，`:dragging` 伪类）/ `ValidationErrorIcon`（配合 `Classes="silent-errors"` 的行内校验红叹号，主题在 `ValidationErrorTheme.axaml`；`InputStyles.axaml` 提供输入控件的 silent-errors 覆盖）。
+- `SearchablePicker : TemplatedControl` —— 可搜索选择面板（「添加应用」弹层的通用化，预备上游 Ursa）：条目是 `PickerEntry(Id, Title, IsAdded)`，渲染为模板内 `ListBox` 的 ListBoxItem 容器（ComboBox 下拉同款，选中即提交 `EntryPicked` 路由事件）；`AllowCustomEntry` 开启手输新建（回车 / 「添加 “{0}”」行 → `CustomEntryAdded`），重复（`ExistingIds`，大小写不敏感、独立于候选）与宿主校验（`ValidateCustomEntry`，文案由宿主注入，库自身无 i18n）给行内提示。控件自持全部交互逻辑、无 VM，事件参数必须带 RoutedEvent 构造（Avalonia 12）。主题在 `SearchablePickerTheme.axaml`，条目 pill 自绘（库不依赖 Ursa）。
 
-消费方只有主应用（设置页 `SettingsSectionsView` 把 section 渲染成 `SettingsCardGroup` + 按类型 DataTemplate 的 `SettingsCard`；方案管理用 `ReorderableItemsControl`）与 UiTests。`demo/Erya.Controls.Demo` 是脱离 RIME 的可视化演示 / 回归台（拖拽排序 + 校验图标假数据）。
+消费方只有主应用（设置页 `SettingsSectionsView` 把 section 渲染成 `SettingsCardGroup` + 按类型 DataTemplate 的 `SettingsCard`；方案管理用 `ReorderableItemsControl`；应用行为页弹层用 `SearchablePicker`）与 UiTests。`demo/Erya.Controls.Demo` 是脱离 RIME 的可视化演示 / 回归台（拖拽排序 + 校验图标 + 选择面板假数据）。
 
 ---
 

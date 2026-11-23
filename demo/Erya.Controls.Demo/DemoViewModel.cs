@@ -1,6 +1,8 @@
+using System;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Erya.Controls;
 
 namespace Erya.Controls.Demo;
 
@@ -45,10 +47,67 @@ public partial class DemoViewModel : ObservableObject
     [ObservableProperty]
     private int _pageSize = 5;
 
+    /// <summary>SearchablePicker 基础形态假数据：纯搜索点选（手输新建关）。</summary>
+    public IReadOnlyList<PickerEntry> BasicEntries { get; } =
+    [
+        new PickerEntry("chrome.exe"),
+        new PickerEntry("cmd.exe"),
+        new PickerEntry("com.apple.Terminal", "终端"),
+        new PickerEntry("com.googlecode.iterm2", "iTerm2")
+    ];
+
+    [ObservableProperty]
+    private string _basicPicked = "（点上面条目试试）";
+
+    /// <summary>完整形态假数据：混 Windows exe 名与 macOS 应用名+Bundle ID 两种形态。</summary>
+    private static readonly (string Id, string? Title)[] FakeApps =
+    [
+        ("chrome.exe", null),
+        ("cmd.exe", null),
+        ("rider64.exe", null),
+        ("com.apple.Terminal", "终端"),
+        ("com.jetbrains.Rider", "Rider")
+    ];
+
+    /// <summary>已添加集合：既是查重集（ExistingIds），也驱动条目的「已添加」标记。</summary>
+    public ObservableCollection<string> AddedApps { get; } = ["cmd.exe"];
+
+    /// <summary>完整形态候选（AddedApps 变化时重建，刷新 IsAdded）。</summary>
+    public IReadOnlyList<PickerEntry> FullEntries { get; private set; } = [];
+
+    [ObservableProperty]
+    private string _fullPicked = "";
+
+    /// <summary>手输校验：夹空白加不了（真实控件场景里文案来自 i18n）。</summary>
+    public Func<string, string?> PickerValidator =>
+        static t => t.Any(char.IsWhiteSpace) ? "标识不能包含空白字符。" : null;
+
+    /// <summary>点选/回车回调（MainWindow code-behind 转发）：入列并刷新候选。</summary>
+    public void Pick(string id)
+    {
+        if (!AddedApps.Any(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)))
+            AddedApps.Add(id);
+    }
+
     public DemoViewModel()
     {
         ReorderableItems.CollectionChanged += (_, _) =>
             ReorderSummary = "当前顺序：" + string.Join(" → ", ReorderableItems);
         ReorderSummary = "当前顺序：" + string.Join(" → ", ReorderableItems);
+
+        RebuildFullEntries();
+        AddedApps.CollectionChanged += (_, _) => RebuildFullEntries();
+    }
+
+    private void RebuildFullEntries()
+    {
+        FullEntries = FakeApps
+            .Select(a => new PickerEntry(a.Id, a.Title,
+                IsAdded: AddedApps.Any(x => string.Equals(x, a.Id, StringComparison.OrdinalIgnoreCase))))
+            .ToList();
+        OnPropertyChanged(nameof(FullEntries));
+        FullPicked = AddedApps.Count > 0
+            ? "已添加：" + string.Join("、", AddedApps)
+            : "（还没有添加任何应用）";
     }
 }

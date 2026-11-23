@@ -130,6 +130,47 @@
                 </Border>
             </StackPanel>
 
+            <!--  SearchablePicker：搜索点选面板（添加应用弹层的通用化）  -->
+            <StackPanel Spacing="6">
+                <TextBlock Text="可搜索选择面板" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource SemiColorText2}" />
+                <TextBlock Text="基础形态 = 纯搜索 + 点条目即回调；完整形态 = 加手输新建（回车/「添加 xxx」行），重复与校验不过给行内提示，已添加的条目灰显。"
+                           FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SemiColorText3}" />
+                <Border Background="{DynamicResource SemiColorBackground1}"
+                        BorderBrush="{DynamicResource SemiColorBorder}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource SemiBorderRadiusMedium}"
+                        Padding="16,10">
+                    <StackPanel>
+                        <c:SearchablePicker x:Name="BasicPicker" Width="340" HorizontalAlignment="Left"
+                                            ItemsSource="{Binding BasicEntries}"
+                                            PlaceholderText="搜索应用…" />
+                        <TextBlock Text="{Binding BasicPicked}" FontSize="12" Opacity="0.6"
+                                   Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{DynamicResource SemiColorBackground1}"
+                        BorderBrush="{DynamicResource SemiColorBorder}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource SemiBorderRadiusMedium}"
+                        Padding="16,10">
+                    <StackPanel>
+                        <c:SearchablePicker x:Name="FullPicker" Width="340" HorizontalAlignment="Left"
+                                            AllowCustomEntry="True"
+                                            ItemsSource="{Binding FullEntries}"
+                                            ExistingIds="{Binding AddedApps}"
+                                            ValidateCustomEntry="{Binding PickerValidator}"
+                                            PlaceholderText="搜索或输入应用标识…"
+                                            SectionHeader="正在运行" AddedText="已添加"
+                                            AddCustomFormat="添加 “{0}”"
+                                            DuplicateHintFormat="已有 {0} 的规则。" />
+                        <TextBlock Text="{Binding FullPicked}" FontSize="12" Opacity="0.6"
+                                   Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Window>

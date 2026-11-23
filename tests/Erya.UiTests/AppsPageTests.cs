@@ -1,14 +1,15 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Ursa.Controls;
+using Erya.Controls;
 using Erya.Core.Distributions;
 using Erya.Services;
 using Erya.ViewModels.Settings;
@@ -20,7 +21,8 @@ namespace Erya.UiTests;
 /// <summary>
 /// 应用行为页（专用卡片列表）与添加应用弹层：数据走共享编辑器的
 /// app_options 字段（选项集由 schema choices 按前端分流），页面自己管
-/// 卡片/搜索/空态，弹层管「点一下即添加」的合并过滤列表。
+/// 卡片/搜索/空态；弹层是 Erya.Controls 的 SearchablePicker（控件级交互
+/// 在 SearchablePickerTests），页级只验「Opened 重建数据 → 点选 → 收起并写回」。
 /// </summary>
 public sealed class AppsPageTests : IDisposable
 {
@@ -138,8 +140,8 @@ public sealed class AppsPageTests : IDisposable
         Assert.True(page.GetVisualDescendants().OfType<TextBlock>()
             .Any(t => t.Text.Contains("直接敲英文") && t.IsVisible));
         Assert.DoesNotContain(page.GetVisualDescendants(), c => c is SettingsCard { DataContext: AppOptionsRowViewModel });
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(),
-            b => b.DataContext is AddAppEntry); // 弹层没打开，运行中列表的条目按钮不在页面上
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<ListBoxItem>(),
+            i => i.DataContext is PickerEntry); // 弹层没打开，候选条目不在页面上
         window.Close();
     }
 
@@ -169,70 +171,11 @@ public sealed class AppsPageTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Add_app_picker_filters_shows_states_and_adds_in_one_click()
-    {
-        // 运行中列表注入固定值（生产取本机：Windows=进程 exe 名，macOS=应用名
-        // +Bundle ID，测试须与平台无关）——混一条带友好名的 mac 条目覆盖两态。
-        var added = new List<string>();
-        var vm = new AddAppPickerViewModel(["cmd.exe"], added.Add,
-            [new RunningApp("cmd.exe"), new RunningApp("chrome.exe"),
-             new RunningApp("rider64.exe"), new RunningApp("com.apple.Terminal", "终端")]);
-
-        // 条目在列；已有规则的那条标「已添加」（不可点，不再事后报错）。
-        Assert.Equal(["cmd.exe", "chrome.exe", "rider64.exe", "com.apple.Terminal"],
-            vm.Entries.Select(e => e.Id));
-        var macEntry = vm.Entries.Single(e => e.Id == "com.apple.Terminal");
-        Assert.Equal("终端", macEntry.Title);
-        Assert.True(macEntry.HasTitle);
-        Assert.All(vm.Entries.Where(e => !ReferenceEquals(e, macEntry)), e => Assert.False(e.HasTitle));
-        Assert.True(vm.Entries.Single(e => e.Id == "cmd.exe").IsAdded);
-        Assert.Contains(vm.Entries, e => e is { Id: "chrome.exe", IsAdded: false });
-
-        // 搜索按标识过滤；友好名也算命中（mac 用户敲应用名，不是 Bundle ID）。
-        vm.SearchText = "chrome";
-        Assert.Equal(["chrome.exe"], vm.FilteredEntries.Select(e => e.Id));
-        vm.SearchText = "终端";
-        Assert.Equal(["com.apple.Terminal"], vm.FilteredEntries.Select(e => e.Id));
-        // 敲应用名不是敲标识：没有「完全匹配」，添加行照常可用。
-        Assert.False(vm.ExactMatchExists);
-        Assert.True(vm.CanAddCustom);
-
-        // 输入恰好等于某条标识 → 点那条即可，不出「添加」行（前缀不算完全匹配）。
-        vm.SearchText = "chrome.exe";
-        Assert.True(vm.ExactMatchExists);
-        Assert.False(vm.CanAddCustom);
-
-        // 全新标识 → 首行「添加 “xxx”」，回车/点击即加。
-        vm.SearchText = "myapp.exe";
-        Assert.False(vm.ExactMatchExists);
-        Assert.True(vm.CanAddCustom);
-        Assert.Equal("添加 “myapp.exe”", vm.CustomAddLabel);
-        vm.AddCustomCommand.Execute(null);
-        Assert.Equal(["myapp.exe"], added);
-
-        // 已有规则 / 中间夹空白 → 行内提示，加不了。
-        vm.SearchText = "cmd.exe";
-        Assert.Equal("已有 cmd.exe 的规则。", vm.HintText);
-        Assert.False(vm.CanAddCustom);
-        vm.SearchText = "pu tty.exe";
-        Assert.Equal("标识不能包含空白字符。", vm.HintText);
-        Assert.False(vm.CanAddCustom);
-        vm.AddCustomCommand.Execute(null);
-        Assert.Equal(["myapp.exe"], added); // 无新增
-
-        // 点选即加：已添加的条目点了没反应，未添加的直接回调（入列的是标识不是友好名）。
-        vm.PickEntryCommand.Execute(vm.Entries.Single(e => e.Id == "cmd.exe"));
-        Assert.Equal(["myapp.exe"], added);
-        vm.PickEntryCommand.Execute(macEntry);
-        Assert.Equal(["myapp.exe", "com.apple.Terminal"], added);
-    }
-
-    [AvaloniaFact]
     public async Task Clicking_add_button_opens_populated_flyout_and_entry_click_adds()
     {
         // 真实用户路径端到端：点「＋ 添加应用」→ 弹层带着数据打开 → 点条目 → 收起并添加。
         // 回归：Button 带 Flyout 时点击不执行 Command，弹层数据必须由 Opened 事件重建
-        // （此前 Picker 无人创建，弹层是空面板，什么都加不了）。
+        // （此前弹层无人喂数据，是空面板，什么都加不了）。
         Write("squirrel.yaml", "style:\n  color_scheme: macos_light\n");
         var editor = new SettingsEditorViewModel(new StubUiDistribution(_dir, "squirrel.yaml"), "ui");
         await editor.LoadCommand.ExecuteAsync(null);
@@ -255,15 +198,16 @@ public sealed class AppsPageTests : IDisposable
 
         var flyout = Assert.IsType<Flyout>(add.Flyout);
         Assert.True(flyout.IsOpen);
-        Assert.NotNull(vm.Picker); // Opened 里重建了弹层数据
+        Assert.NotNull(vm.PickerEntries); // Opened 里重建了弹层数据
 
-        // 弹层内容有可点条目（Popup 内容不在主窗口视觉树，从 Flyout.Content 找）。
-        var flyoutView = Assert.IsType<AddAppFlyout>(flyout.Content);
-        var entry = flyoutView.GetVisualDescendants().OfType<Button>()
-            .First(b => b.DataContext is AddAppEntry { IsAdded: false });
-        var entryId = ((AddAppEntry)entry.DataContext!).Id;
+        // 弹层内容是 SearchablePicker；条目为 ListBoxItem 容器，选中即提交
+        //（Popup 内容不在主窗口视觉树，从 Flyout.Content 的子树里找）。
+        var picker = Assert.IsType<SearchablePicker>(flyout.Content);
+        var item = picker.GetVisualDescendants().OfType<ListBoxItem>()
+            .First(i => i.DataContext is PickerEntry { IsAdded: false });
+        var entryId = ((PickerEntry)item.DataContext!).Id;
 
-        entry.Command.Execute(entry.CommandParameter);
+        item.IsSelected = true;
         Dispatcher.UIThread.RunJobs();
 
         // 添加完成：弹层收起，卡片出现且默认英文开。
@@ -275,7 +219,7 @@ public sealed class AppsPageTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Open_picker_adds_app_and_requests_flyout_close()
+    public async Task Open_picker_rebuilds_entries_and_adding_requests_close()
     {
         Write("squirrel.yaml", """
             style:
@@ -290,92 +234,33 @@ public sealed class AppsPageTests : IDisposable
         var vm = new AppsPageViewModel(editor,
             runningApps: [new RunningApp("cmd.exe"), new RunningApp("mockapp.exe")]);
 
-        // 已有的应用在弹层里带「已添加」标记。
+        // 打开弹层：候选带「已添加」标记、查重集独立于候选、输入清空。
         vm.OpenPickerCommand.Execute(null);
-        Assert.NotNull(vm.Picker);
-        Assert.True(vm.Picker!.Entries.Single(e => e.Id == "cmd.exe").IsAdded);
-        var target = vm.Picker.Entries.First(e => !e.IsAdded);
+        Assert.NotNull(vm.PickerEntries);
+        Assert.True(vm.PickerEntries!.Single(e => e.Id == "cmd.exe").IsAdded);
+        Assert.Contains("cmd.exe", vm.PickerExistingIds!);
+        Assert.Equal("", vm.PickerText);
 
         // 点选条目 = 添加（默认英文）+ 请求视图收起弹层。
+        var target = vm.PickerEntries.First(e => !e.IsAdded);
         var closeRequested = false;
         vm.RequestClosePicker += (_, _) => closeRequested = true;
-        vm.Picker.PickEntryCommand.Execute(target);
+        vm.AddPicked(target.Id);
 
         Assert.True(closeRequested);
         var addedRow = vm.Field!.Rows.Single(r => r.AppId == target.Id);
         Assert.True(addedRow.Options.Single(o => o.Key == "ascii_mode").IsChecked);
         Assert.True(vm.IsDirty);
 
-        // 手输回车走同一条路（添加 + 关闭）。
-        closeRequested = false;
+        // 再次打开：「已添加」状态刷新（刚加的应用也灰显），输入复位。
         vm.OpenPickerCommand.Execute(null);
-        vm.Picker!.SearchText = "org.vim.MacVim";
-        vm.Picker.AddCustomCommand.Execute(null);
+        Assert.All(vm.PickerEntries!, e => Assert.True(e.IsAdded));
+        Assert.Equal("", vm.PickerText);
+
+        // 手输回车走同一条路（视图把 CustomEntryAdded 转发给 AddPicked）：添加 + 关闭。
+        closeRequested = false;
+        vm.AddPicked("org.vim.MacVim");
         Assert.True(closeRequested);
         Assert.Contains(vm.Field!.Rows, r => r.AppId == "org.vim.MacVim");
-    }
-
-    [AvaloniaFact]
-    public void Add_app_flyout_renders_groups_states_and_enter_key()
-    {
-        // 注入固定运行中列表——测试与平台无关（生产取本机：Windows=进程 exe 名，
-        // macOS=应用名+Bundle ID，Linux 为空）。
-        var added = new List<string>();
-        var picker = new AddAppPickerViewModel(["cmd.exe"], added.Add,
-            [new RunningApp("cmd.exe"), new RunningApp("chrome.exe"),
-             new RunningApp("com.apple.Terminal", "终端")]);
-        var flyout = new AddAppFlyout { DataContext = picker, Width = 340 };
-        var window = new Window { Width = 380, Height = 560, Content = flyout };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        // 搜索框带 ClearButton；「正在运行」组头可见。
-        var search = flyout.GetVisualDescendants().OfType<TextBox>().Single();
-        Assert.Contains(search.Classes, c => c == "ClearButton");
-        Assert.True(flyout.GetVisualDescendants().OfType<TextBlock>()
-            .Single(t => t.Text == "正在运行").IsVisible);
-
-        // 全量列表：条目渲染为按钮；已有规则的那条禁用 + 「已添加」Badge。
-        var entries = flyout.GetVisualDescendants().OfType<Button>()
-            .Where(b => b.DataContext is AddAppEntry).ToList();
-        var disabled = entries.Single(b => !b.IsEnabled);
-        Assert.Equal("cmd.exe", ((AddAppEntry)disabled.DataContext!).Id);
-        // Badge 只在那条禁用条目里可见（模板里每条都带、只是折叠）。
-        Assert.Contains(disabled.GetVisualDescendants().OfType<Ursa.Controls.Badge>(),
-            b => b.Content as string == "已添加" && b.IsVisible);
-
-        // 带友好名的条目（macOS 形态）：应用名做主行，Bundle ID 退为小字第二行
-        // （按可见文本断言——折叠的另一半 Id 行与 Badge 模板仍在视觉树里）。
-        var macEntry = entries.Single(b => ((AddAppEntry)b.DataContext!).HasTitle);
-        var macTexts = macEntry.GetVisualDescendants().OfType<TextBlock>()
-            .Where(t => t.IsVisible).Select(t => t.Text).ToList();
-        Assert.Equal(["终端", "com.apple.Terminal"], macTexts);
-
-        // 点未添加的条目直接触发回调（入列的是标识，不是友好名）。
-        var pickable = entries.First(b => b.IsEnabled);
-        var pickableId = ((AddAppEntry)pickable.DataContext!).Id;
-        pickable.Command.Execute(pickable.CommandParameter);
-        Assert.Equal([pickableId], added);
-
-        // 过滤：全新标识无匹配 → 组头隐藏，「添加 “xxx”」行出现；回车=添加。
-        picker.SearchText = "myapp.exe";
-        Dispatcher.UIThread.RunJobs();
-        Assert.False(picker.HasFilteredEntries);
-        Assert.True(picker.CanAddCustom);
-        // 「添加 “xxx”」行出现（按命令身份找——TextBox 内建清除按钮同 DataContext）。
-        var customRow = flyout.GetVisualDescendants().OfType<Button>()
-            .Single(b => ReferenceEquals(b.Command, picker.AddCustomCommand));
-        Assert.True(customRow.IsVisible);
-        Assert.Equal("添加 “myapp.exe”",
-            customRow.GetVisualDescendants().OfType<TextBlock>().Single().Text);
-
-        search.RaiseEvent(new KeyEventArgs
-        {
-            RoutedEvent = InputElement.KeyDownEvent,
-            Key = Key.Enter,
-        });
-        Dispatcher.UIThread.RunJobs();
-        Assert.Equal([pickableId, "myapp.exe"], added);
-        window.Close();
     }
 }

@@ -19,6 +19,8 @@
                 <ResourceInclude Source="avares://Erya.Controls/ValidationErrorTheme.axaml" />
                 <!-- ReorderableItemsControl / DragHandle（拖拽排序列表，Semi 风格） -->
                 <ResourceInclude Source="avares://Erya.Controls/ReorderTheme.axaml" />
+                <!-- SearchablePicker（搜索点选/手输新建面板，Semi 风格） -->
+                <ResourceInclude Source="avares://Erya.Controls/SearchablePickerTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--  候选窗预览模板：外观页亮/暗两个实例 + 皮肤编辑对话框共用（ContentTemplate 引用）  -->

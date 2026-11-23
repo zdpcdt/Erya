@@ -1,6 +1,7 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Erya.Controls;
 using Erya.ViewModels.Settings;
 
 namespace Erya.Views;
@@ -13,8 +14,8 @@ public partial class AppsPage : UserControl
     public AppsPage()
     {
         InitializeComponent();
-        // Button 带 Flyout 时点击只开弹层、不执行 Command——弹层数据（Picker，
-        // 含最新「已添加」状态）在打开瞬间同步重建，DataContext={Binding Picker} 随之更新。
+        // Button 带 Flyout 时点击只开弹层、不执行 Command——弹层数据（PickerEntries，
+        // 含最新「已添加」状态）在打开瞬间同步重建；SearchablePicker 的 Text 等随之复位。
         AddButton.Flyout!.Opened += (_, _) =>
         {
             if (DataContext is AppsPageViewModel vm) vm.OpenPickerCommand.Execute(null);
@@ -35,6 +36,16 @@ public partial class AppsPage : UserControl
         if (_subscribed is { } old) old.RequestClosePicker -= CloseAddFlyout;
         _subscribed = null;
         base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>弹层点选与手输回车走同一条路：字段添加（默认英文）并收起。</summary>
+    private void OnPickerEntryPicked(object? sender, EntryPickedEventArgs e) => AddPicked(e.Entry.Id);
+
+    private void OnPickerCustomEntryAdded(object? sender, CustomEntryAddedEventArgs e) => AddPicked(e.Id);
+
+    private void AddPicked(string appId)
+    {
+        if (DataContext is AppsPageViewModel vm) vm.AddPicked(appId);
     }
 
     private void CloseAddFlyout(object? sender, EventArgs e) => AddButton.Flyout?.Hide();

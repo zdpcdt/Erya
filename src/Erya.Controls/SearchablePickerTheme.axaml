@@ -1,0 +1,99 @@
+<!--
+    SearchablePicker 的 Semi 风格默认样式。颜色取自 Semi 主题 token，跟随浅色/深色
+    变体自动切换。使用方需要在 Application 资源中合并本字典。
+
+    条目容器是 ListBoxItem（ComboBox 下拉同款交互：Semi 自带 hover/pressed 视觉），
+    已添加的条目经 ItemContainerTheme 禁用；「已添加」pill 自绘（本库不依赖 Ursa）。
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Erya.Controls">
+    <!--  预览只展示交互骨架（搜索框 + 「添加 “xxx”」行）；候选列表由宿主注入，设计时无静态假数据  -->
+    <Design.PreviewWith>
+        <c:SearchablePicker Width="340" Margin="20" AllowCustomEntry="True" Text="wubi"
+                            PlaceholderText="搜索或输入应用标识…"
+                            SectionHeader="正在运行" AddedText="已添加"
+                            AddCustomFormat="添加 “{0}”" DuplicateHintFormat="已有 {0} 的规则。" />
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type c:SearchablePicker}" TargetType="c:SearchablePicker">
+
+        <!--  默认条目模板：无友好名（Windows）单行等宽 Id；有友好名（macOS）应用名+小字 Id；已加 pill  -->
+        <Setter Property="ItemTemplate">
+            <DataTemplate x:DataType="c:PickerEntry">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Id}" FontSize="12"
+                                   FontFamily="Consolas, Menlo, monospace"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding !HasTitle}" />
+                        <TextBlock Text="{Binding Title}" FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding HasTitle}" />
+                        <TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55"
+                                   FontFamily="Consolas, Menlo, monospace"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding HasTitle}" />
+                    </StackPanel>
+                    <Border Grid.Column="1" VerticalAlignment="Center" CornerRadius="999"
+                            Padding="8,2" Background="{DynamicResource SemiColorFill1}"
+                            IsVisible="{Binding IsAdded}">
+                        <TextBlock Text="{Binding $parent[c:SearchablePicker].AddedText}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SemiColorText2}" />
+                    </Border>
+                </Grid>
+            </DataTemplate>
+        </Setter>
+
+        <Setter Property="Template">
+            <ControlTemplate TargetType="c:SearchablePicker">
+                <StackPanel Spacing="8">
+
+                    <!--  搜索 / 手输合一  -->
+                    <TextBox x:Name="PART_SearchBox" Classes="ClearButton"
+                             Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                             PlaceholderText="{TemplateBinding PlaceholderText}">
+                        <TextBox.InnerLeftContent>
+                            <PathIcon Data="{StaticResource SemiIconSearch}"
+                                      Theme="{DynamicResource InnerPathIcon}" />
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
+
+                    <!--  首行三态：添加手输标识 / 加不了的行内提示（重复、宿主校验不过）  -->
+                    <Button x:Name="PART_AddCustomButton" Classes="Tertiary" Padding="10,8"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            IsVisible="{TemplateBinding CanAddCustom}">
+                        <TextBlock Text="{TemplateBinding AddCustomLabel}" FontWeight="SemiBold" />
+                    </Button>
+                    <TextBlock Text="{TemplateBinding HintText}" Opacity="0.55" FontSize="12"
+                               Margin="2,0,0,0" TextWrapping="Wrap"
+                               IsVisible="{TemplateBinding HintText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                    <!--  候选列表：组头固定在上方，列表内部滚动（MaxListHeight）  -->
+                    <StackPanel Spacing="6" IsVisible="{TemplateBinding HasEntries}">
+                        <TextBlock Text="{TemplateBinding SectionHeader}" FontSize="12" Opacity="0.55"
+                                   Margin="2,2,0,2"
+                                   IsVisible="{TemplateBinding HasFilteredEntries}" />
+                        <ListBox x:Name="PART_List" MaxHeight="{TemplateBinding MaxListHeight}"
+                                 ItemsSource="{TemplateBinding FilteredEntries}"
+                                 ItemTemplate="{TemplateBinding ItemTemplate}"
+                                 SelectionMode="Single"
+                                 Background="Transparent" BorderThickness="0" Padding="0">
+                            <ListBox.ItemContainerTheme>
+                                <!--  已添加的条目禁用（不可再选）；其余视觉沿用 Semi 的 ListBoxItem  -->
+                                <ControlTheme TargetType="ListBoxItem"
+                                              BasedOn="{StaticResource {x:Type ListBoxItem}}"
+                                              x:DataType="c:PickerEntry">
+                                    <Setter Property="Padding" Value="10,7" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="IsEnabled" Value="{Binding !IsAdded}" />
+                                </ControlTheme>
+                            </ListBox.ItemContainerTheme>
+                        </ListBox>
+                    </StackPanel>
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

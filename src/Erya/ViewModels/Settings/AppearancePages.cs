@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Erya.Controls;
 using Erya.Localization;
 using Erya.Services;
 using Erya.Views;
@@ -266,10 +267,9 @@ public sealed class LayoutPageViewModel : AppearancePageViewModel
 /// <summary>
 /// 应用行为页：app_options 的专用卡片列表（不走通用分节渲染）——每应用一张卡，
 /// 右侧按 schema choices 渲染该前端的选项开关（鼠须管含 Vim/内嵌编码，小狼毫
-/// 内嵌编码）+ 删除；「＋ 添加应用」是搜索式弹层（正在运行的应用点一下即加
-/// ——Windows 按进程 exe 名、macOS 按应用名+Bundle ID，手输回车即加，见
-/// AddAppPickerViewModel）。数据仍在共享编辑器的 appOptions 字段上，保存走
-/// 同一条管线。
+/// 内嵌编码）+ 删除；「＋ 添加应用」是 <see cref="SearchablePicker"/> 弹层（正在
+/// 运行的应用点一下即加——Windows 按进程 exe 名、macOS 按应用名+Bundle ID，手输
+/// 回车即加）。数据仍在共享编辑器的 appOptions 字段上，保存走同一条管线。
 /// </summary>
 public sealed partial class AppsPageViewModel : AppearancePageViewModel
 {
@@ -288,8 +288,21 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
     /// <summary>app_options 字段（重新加载后是新实例，经 <see cref="HookField"/> 重挂）。</summary>
     public AppOptionsFieldViewModel? Field => _field;
 
-    /// <summary>添加弹层的当前实例；每次点开按钮重建（已添加状态要最新）。</summary>
-    public AddAppPickerViewModel? Picker { get; private set; }
+    /// <summary>添加弹层的候选（每次点开按钮重建，「已添加」状态要最新）。</summary>
+    public IReadOnlyList<PickerEntry>? PickerEntries { get; private set; }
+
+    /// <summary>已有规则的业务键（弹层查重用，与候选无关——无候选时也要能提示重复）。</summary>
+    public IReadOnlyList<string>? PickerExistingIds { get; private set; }
+
+    /// <summary>手输校验：夹空白加不了，给行内提示（弹层的 ValidateCustomEntry）。</summary>
+    public Func<string, string?> PickerValidator =>
+        static t => t.Any(char.IsWhiteSpace)
+            ? Loc.Get(LanguageManager.Instance.apps_pickerHintWhitespace)
+            : null;
+
+    /// <summary>弹层的搜索/手输输入值（每次打开清空）。</summary>
+    [ObservableProperty]
+    private string _pickerText = "";
 
     /// <summary>弹层里点选/回车添加完成后由视图收起 Flyout。</summary>
     public event EventHandler? RequestClosePicker;
@@ -320,17 +333,25 @@ public sealed partial class AppsPageViewModel : AppearancePageViewModel
     /// <summary>有规则但全被搜索过滤掉——提示「没有匹配」（区别于空态与加载中）。</summary>
     public bool SearchMiss => HasAnyApp && !HasVisibleRows;
 
-    /// <summary>打开添加弹层：条目点选/手输回车 → <see cref="AddPicked"/>（默认英文）→ 关闭。</summary>
+    /// <summary>打开添加弹层：重建候选（已添加状态取自当前行）并清空输入。点选/回车
+    /// 经视图事件 → <see cref="AddPicked"/>（默认英文）→ 关闭。</summary>
     [RelayCommand]
     private void OpenPicker()
     {
         if (Field is null) return;
-        Picker = new AddAppPickerViewModel(
-            Field.Rows.Select(r => r.AppId.Trim()).ToList(), AddPicked, _runningApps);
-        OnPropertyChanged(nameof(Picker));
+        var existing = Field.Rows.Select(r => r.AppId.Trim()).Where(id => id.Length > 0).ToList();
+        PickerExistingIds = existing;
+        PickerEntries = (_runningApps ?? RunningApps.Enumerate())
+            .Select(app => new PickerEntry(app.Id, app.Title,
+                IsAdded: existing.Contains(app.Id, StringComparer.OrdinalIgnoreCase)))
+            .ToList();
+        OnPropertyChanged(nameof(PickerEntries));
+        OnPropertyChanged(nameof(PickerExistingIds));
+        PickerText = "";
     }
 
-    private void AddPicked(string appId)
+    /// <summary>添加一条应用规则（默认英文）；视图在弹层事件里调用，完成后收起 Flyout。</summary>
+    public void AddPicked(string appId)
     {
         Field?.AddApp(appId, asciiMode: true);
         RequestClosePicker?.Invoke(this, EventArgs.Empty);
