@@ -1,0 +1,29 @@
+{
+    "GeneralSettings": {
+        "NetProjectPath": "Erya.csproj",
+        "PackageName": "erya",
+        "AssemblyName": {
+            "$type": "msbuild",
+            "property": "AssemblyName"
+        },
+        "ApplicationName": "\u5C14\u96C5 Erya",
+        "Version": "0.1.0",
+        "Icon": "../../packaging/parcel/app-icon.png",
+        "Company": "zdpcdt"
+    },
+    "LinuxSettings": {
+        "CreateBinSymlink": "True"
+    },
+    "Win32Settings": {
+        "IncludeUninstaller": "True"
+    },
+    "MacOsSettings": {
+        "CreateBundle": true,
+        "BundleIdentifier": "irihi.erya",
+        "SigningCredentialsType": "AdHoc"
+    },
+    "PublishSettings": {
+        "PublishSingleFile": "False", "PublishAot": "True",
+        "ExtraBuildProperties": {}
+    }
+}
